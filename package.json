@@ -1,12 +1,11 @@
 {
     "name": "udmilla-whatsapp-bot",
-    "version": "0.1.0",
+    "version": "alpha-0.1",
     "description": "",
     "main": "./build/index.js",
     "scripts": {
         "build": "tsc -p tsconfig.json",
-        "start": "node --no-deprecation --trace-uncaught ./build/index.js",
-        "refresh": "node --no-deprecation --trace-uncaught ./build/index.js refresh"
+        "start": "node --no-deprecation --trace-uncaught ./build/index.js"
     },
     "keywords": [
         "whatsapp-web bot",
