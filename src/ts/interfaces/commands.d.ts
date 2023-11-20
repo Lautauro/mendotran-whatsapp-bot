@@ -1,6 +1,6 @@
 import { MessageContent, MessageSendOptions } from "whatsapp-web.js";
-import { CommandCallback, ParameterType } from "../types/commands.type";
-import { CommandResponse, CommandResponseType } from "../enums/commands.enum";
+import { CommandCallback, ParameterType } from "../types/commands";
+import { CommandResponse, CommandResponseType } from "../enums/commands";
 
 export interface ParameterInfo {
     name: string;

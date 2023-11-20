@@ -1,6 +1,6 @@
-import { Command, CommandInfo, CommandOptions, CommandResponseOptions, CommandReturn, ParameterInfo } from "../../ts/interfaces/commands.interface.js";
-import { CommandCallback, ParameterType } from "../../ts/types/commands.type.js";
-import { CommandResponse, CommandResponseType } from "../../ts/enums/commands.enum.js";
+import { Command, CommandInfo, CommandOptions, CommandResponseOptions, CommandReturn, ParameterInfo } from "../../ts/interfaces/commands.js";
+import { CommandCallback, ParameterType } from "../../ts/types/commands.js";
+import { CommandResponse, CommandResponseType } from "../../ts/enums/commands.js";
 import commandSettings from "../../config/commands.json";
 import whatsappSettings from '../../config/whatsapp.json';
 import { read_response } from "../whatsapp/read_response.js";

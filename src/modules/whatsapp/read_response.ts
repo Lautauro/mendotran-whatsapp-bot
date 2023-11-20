@@ -1,5 +1,5 @@
-import { CommandReturn } from "../../ts/interfaces/commands.interface.js";
-import { CommandResponse, CommandResponseType } from "../../ts/enums/commands.enum.js";
+import { CommandReturn } from "../../ts/interfaces/commands.js";
+import { CommandResponse, CommandResponseType } from "../../ts/enums/commands.js";
 import { Message } from "whatsapp-web.js";
 import { reply_message } from "./reply_message.js";
 import { send_message } from "./whatsapp.js";
