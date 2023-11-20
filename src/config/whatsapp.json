@@ -1,0 +1,12 @@
+{
+    "botName": "Mendotran-BOT",
+    "adminOnly": false,
+    "showMessagesInTheTerminal": true,
+    "showContactPhone": false,
+    "showContactName": false,
+    "showUserName": true,
+    "showTimestamp": true,
+    "wwebjsCache": "./.session_cache",
+    "cooldownTime": 3000,
+    "ignoreMedia": false
+}
