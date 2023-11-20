@@ -1,6 +1,6 @@
 /node_modules
 /.session_cache
 /.vscode
-/reference
 /build
 TODO
+package-lock.json
