@@ -8,7 +8,6 @@ import { bot_log, bot_log_error } from '../../utils/bot_log';
 
 export async function read_response(response: CommandReturn, message: Message): Promise<Message | void> {
     if (response.code === CommandResponse.OK) {
-        // Reaccionar
         if (typeof response.data.reaction === 'string' && response.data.reaction.length) {
             react_to_message(response.data.reaction, message);
         }
@@ -17,10 +16,8 @@ export async function read_response(response: CommandReturn, message: Message): 
             switch (response.type) {
                 case CommandResponseType.REPLY_MESSAGE:
                     return await reply_message(response.data.content, message.id, response.data.options);
-                    break;
                 case CommandResponseType.SEND_MESSAGE:
                     return await send_message(response.data.content, message.id, response.data.options);
-                    break;
             }
         }
         bot_log('Command response: OK\n', response);
