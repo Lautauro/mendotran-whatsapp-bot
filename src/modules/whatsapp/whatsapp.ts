@@ -4,54 +4,54 @@ import { LocalAuth, Client, MessageTypes, Message, MessageId, MessageSendOptions
 import * as qrcode from 'qrcode-terminal';
 import { get_time_string } from '../../utils/get_time_string.js';
 import commandsSettings from '../../config/commands.json';
-import { bot_log } from '../../utils/bot_log';
+import { bot_log, bot_log_error } from '../../utils/bot_log';
 
 const startTime = Date.now();
 
-// Configuración
 const client = new Client({
+    authStrategy: new LocalAuth({ 
+            dataPath: `${whatsappSettings.wwebjsCache}/.wwebjs_auth`,
+    }),
     restartOnAuthFail: true,
     webVersionCache: {
         type: 'local',
         path: `${whatsappSettings.wwebjsCache}/.wwwebjs_cache`,
     },
-    authStrategy: new LocalAuth({ dataPath: `${whatsappSettings.wwebjsCache}/.wwebjs_auth`}),
     puppeteer: {
         headless: true,
         args: [
             '--disable-gpu',
-            // '--no-sandbox', 
-            '--disable-accelerated-2d-canvas'
+            '--disable-setuid-sandbox',
+            '--disable-accelerated-2d-canvas',
+            '--no-sandbox',
+            '--no-first-run',
+            '--single-process',
         ],
     }
 });
 
-// Autenticación
 client.on('qr', (qr: string) => {
-
     console.log("███████████████████████████████████████████████████████\n");
 
     qrcode.generate(qr, {
         small: true
     });
 
-    console.log("Escanee el QR para iniciar sesión\n");
+    console.log("Scan the QR to log in\n");
 
     console.log("███████████████████████████████████████████████████████\n");
-    
 });
 
 client.on('authenticated', () => {
-    console.log('Autenticado\n');
+    bot_log('Authenticated\n');
 });
 
 client.on('auth_failure', msg => {
-    console.error('AUTHENTICATION FAILURE\n', msg);
+    bot_log_error('AUTHENTICATION FAILURE\n', msg);
 });
 
-// Carga de mensajes
 client.on('loading_screen', (percent: number) => {
-    // Barra de carga
+    // Loading bar
     let loading_bar = '';
 
     for(let i = 0; i < percent/2; ++i) {
@@ -59,7 +59,7 @@ client.on('loading_screen', (percent: number) => {
     }
     
     console.clear();
-    console.log('█ Cargando mensajes █\n');
+    console.log('█ Loading messages █\n');
     console.log(`${loading_bar}${percent < 100 && percent >= 0 ? '▄▀' : ''} [ ${percent}% ]`);
 
     if (percent >= 100) {
@@ -67,7 +67,6 @@ client.on('loading_screen', (percent: number) => {
     }
 });
 
-// Cliente iniciado
 client.on('ready', () => {
     console.clear();
     bot_log('El cliente está listo.\n');
@@ -80,19 +79,17 @@ client.on('ready', () => {
     let exec_command  = require(`${commandPath}/commands.js`).exec_command;
     require('../commands/commands_list.js');
 
-    // HotSwap
+    // Hot-Swap
     if (commandsSettings.hotSwappingEnabled) {
         setInterval(() => {
             try {
-                // Limpiar cache
                 delete require.cache[require.resolve(`${commandPath}/commands.js`)];
                 delete require.cache[require.resolve(`${commandPath}/commands_list.js`)];
 
-                // Reasignar variables
                 exec_command = require(`${commandPath}/commands.js`).exec_command; 
                 require(`${commandPath}/commands_list.js`);
             } catch(error) {
-                console.error('Error al limpiar los caches:', error);
+                console.error('Error while clearing caches:', error);
             }
         }, commandsSettings.hotSwappingTimer);
     } else {
@@ -101,28 +98,24 @@ client.on('ready', () => {
 
     const lastMessage: Map<string, number> = new Map();
 
-    // Mensaje recibido
     client.on('message_create', async (message: Message) => {
 
-        // Ignorar estados y mensajes pasados
+        // Ignore status messages
         if (message.isStatus || (message.timestamp * 1000 < startTime)) { return; }
 
-        // Setting: Ignorar mensajes con "media"
+        // Setting: Ignore "media" messages
         if (whatsappSettings.ignoreMedia && message.hasMedia) { return; }
 
-        // Mostrar mensajes en la terminal
         const from: string = message.fromMe ? message.to : message.from;
 
+        // Setting: Show messages in the termianal
         if (whatsappSettings.showMessagesInTheTerminal) {
             let terminalText = '';
-            let time: string | null = null;
+            // Timestamp: Time the message was sent
+            const time: string | null = whatsappSettings.showTimestamp ? get_time_string(message.timestamp * 1000, true, true, true) : null;
+            if (time) { terminalText += `[${time}] `; }
 
-            // Timestamp: Hora en la que se envió el mensaje
-            if (whatsappSettings.showTimestamp) {
-                time = get_time_string(message.timestamp * 1000, true, true, true);
-            }
-
-            // Mostrar nombre del contacto, si es que está agendado
+            // Show contact name if it is booked
             let userName: string = message.fromMe ? whatsappSettings.botName : '';
     
             if (!userName.length) {
@@ -137,7 +130,7 @@ client.on('ready', () => {
                 }
             }
             
-            // Media: Audio, mensaje de voz, video, imagen, etc
+            // Media: Audio, voice message, video, image, etc
             let messageMedia = '';
             // @ts-ignore
             if (message.isGif) { message.type = 'gif'; }
@@ -147,7 +140,7 @@ client.on('ready', () => {
                         messageMedia = '🔊 Audio 🔊';
                     break;
                     case MessageTypes.VOICE:
-                        messageMedia = '🔊 Mensaje de Voz 🔊';
+                        messageMedia = '🔊 Voice message 🔊';
                         break;
                     case MessageTypes.STICKER:
                         messageMedia = '💟 Sticker 💟 ';
@@ -156,19 +149,19 @@ client.on('ready', () => {
                         messageMedia = '📹 Video 📹';
                         break;
                     case MessageTypes.IMAGE:
-                        messageMedia = '📷 Imagen 📷';
+                        messageMedia = '📷 Image 📷';
                         break;
                     case MessageTypes.DOCUMENT:
-                        messageMedia = '📄 Documento 📄';
+                        messageMedia = '📄 Document 📄';
                         break;
                     case MessageTypes.LOCATION:
-                        message.body = ''; // Evitar que se impriman datos brutos sobre la ubicación
+                        message.body = ''; // Prevent raw location data from being printed out
                         // @ts-ignore
                         if (message.location.description.length) {
                             // @ts-ignore
                             messageMedia = `📍 ${(message.location.description).split('\n').join('. ')} 📍\n`;
                         } else {
-                            messageMedia = '📍 Ubicación 📍';
+                            messageMedia = '📍 Location 📍';
                         }
                         break;
                     // @ts-ignore
@@ -176,19 +169,16 @@ client.on('ready', () => {
                         messageMedia = '🎞️ GIF 🎞️';
                         break;
                     default:
-                        messageMedia = `${message.type} `;
+                        messageMedia = `${message.type}`;
                         break;
                 }
                 if (message.body.length) { messageMedia += ': '; }
             }
 
-            // Setting: Hora de envio
-            if (time) { terminalText += `[${time}] `; }
-
-            // Setting: Número de teléfono
-            if (whatsappSettings.showContactPhone) { terminalText += `${from}`; }
+            // Setting: Show phone number
+            if (whatsappSettings.showPhoneNumber) { terminalText += `${from}`; }
             
-            // Nombre de usuario
+            // User name
             terminalText += `| <${userName}> `;
 
             // Media
@@ -198,14 +188,14 @@ client.on('ready', () => {
             console.log(`${terminalText}${message.body}`);
         }
 
-        // Setting: Ignorar comandos que no vengan del admin
-        if ((whatsappSettings.adminOnly && !message.fromMe) || message.type !== MessageTypes.TEXT) { return; }
+        // Commands
+        if (exec_command && message.body.lastIndexOf(commandPrefix) === 0 && typeof message.body === 'string' && message.type === MessageTypes.TEXT) {
+            // Setting: Ignore commands not coming from admin
+            if (whatsappSettings.adminOnly && !message.fromMe) { return; }
 
-        // Cooldown
-        if (message.fromMe || !lastMessage.has(from) || (Date.now() - Number(lastMessage.get(from)) >= whatsappSettings.cooldownTime) ) {
-
-            // Checkear comandos
-            if (exec_command && message.body.lastIndexOf(commandPrefix) == 0) {
+            // Cooldown
+            if (message.fromMe || !lastMessage.has(from) || (Date.now() - Number(lastMessage.get(from)) >= whatsappSettings.cooldownTime) ) {
+                // Check commands
                 try {
                     exec_command(message);
                     lastMessage.set(from, Date.now());
@@ -218,29 +208,16 @@ client.on('ready', () => {
     });
 });
 
-/**
- * Funciones
- */
+// Functions
 
 export function start_whatsappweb_client(): void {
     client.initialize();
 }
 
 export async function send_message(content: MessageContent, messageId: MessageId, options?: MessageSendOptions | undefined): Promise<Message> {
-    //return new Promise((resolve, reject) => {
-        if (!client) {
-            throw new Error('No se a inicializado el cliente Whatsapp.');
-        } else {
-            // try {
-            //     client.sendMessage(messageId.remote, content, options)
-            //     .then((message) => resolve(message))
-            //     .catch((err) => {
-            //         throw err;
-            //     });
-            // } catch(err) {
-            //     console.error(err);
-            //     reject(err);
-            // }
-            return await client.sendMessage(messageId.remote, content, options);
-        }
+    if (!client) {
+        throw new Error('The Whatsapp Web client has not been initialised.');
+    } else {
+        return await client.sendMessage(messageId.remote, content, options);
+    }
 }
