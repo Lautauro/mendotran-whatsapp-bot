@@ -67,12 +67,13 @@ createCommand(['alias'],
     callback(),
     { 
         // Command options
-        // * Optional
+        // - Optional
     },
     { 
         // Command info
-        // * Optional, but recommended
+        // - Optional, but recommended
     })
+    .addParameter('number')
 .closeCommand(); // Add command to list
 ```
 
@@ -210,7 +211,7 @@ For more information on MessageSendOptions, see: https://docs.wwebjs.dev/global.
 
 ## Examples:
 
-Command with **no arguments**
+Command with **no arguments**:
 ```js
 createCommand(['ping', 'pingpong'], (args, message) => {
         send_response('Pong!', message, { reaction: '🏓' })
