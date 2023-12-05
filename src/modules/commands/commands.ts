@@ -209,8 +209,8 @@ export function exec_command(message : Message): void {
             if (!commandObject.options.adminOnly || (message.fromMe && commandObject.options.adminOnly)) {
                 // Comandos que requieren citar un mensaje
                 if (commandObject.options.needQuotedMessage === true && !message.hasQuotedMsg) {
-                    send_error_response('Este comando requiere citar un mensaje para ser ejecutado.', message); // Error
-                    send_response(command_example(commandObject), message);
+                    // Error
+                    send_error_response('Este comando requiere citar un mensaje para ser ejecutado.', message);
                     return;
                 }
                 // Comandos sin parametros
@@ -218,7 +218,7 @@ export function exec_command(message : Message): void {
 
                     console.log();
                     let from = '';
-                    if (whatsappSettings.showContactPhone) {
+                    if (whatsappSettings.showPhoneNumber) {
                         from = message.fromMe ? whatsappSettings.botName : message.from;
                     } else if (whatsappSettings.showUserName) {
                         // @ts-ignore
@@ -254,7 +254,7 @@ export function exec_command(message : Message): void {
                             let from = '';
                             if (message.fromMe) {
                                 from = whatsappSettings.botName;
-                            } else if (whatsappSettings.showContactPhone) {
+                            } else if (whatsappSettings.showPhoneNumber) {
                                 from = message.from;
                             } else if (whatsappSettings.showUserName) {
                                 // @ts-ignore
@@ -298,9 +298,9 @@ export function command_example(command: Command): string | null {
         if (command.info.description) { text += `${command.info.description}`; }
 
         if (command.parameters) {
-            text += `\n\n✍️ *Sintaxis* ✍️\n\n`;
+            text += `\n\n✍️ *Command Syntax* ✍️\n\n`;
 
-            let example = '\n\n📥 *Ejemplo* 📥\n\n' + commandSettings.commandPrefix + command.alias[0];
+            let example = '\n\n📥 *Example* 📥\n\n' + commandSettings.commandPrefix + command.alias[0];
             text += commandSettings.commandPrefix + command.alias[0];
             
             let parameterDescription = '';
@@ -312,7 +312,14 @@ export function command_example(command: Command): string | null {
                     } else {
                         text += ` { *${parameter.info.name}* }`;
                     }
-                    example += ` *${parameter.info.example}*`;
+                    
+                    bot_log(parameter.type);
+
+                    if (parameter.type.indexOf('string') != -1) {
+                        example += ` "*${parameter.info.example}*"`;
+                    } else {
+                        example += ` *${parameter.info.example}*`;
+                    }
 
                     if (parameter.info.description) {
                         parameterDescription += `\n\n*${parameter.info.name}*:\n${parameter.info.description}`;
@@ -320,7 +327,7 @@ export function command_example(command: Command): string | null {
                 }
             })
 
-            text += example + (parameterDescription.length ? '\n\n📄 *Parámetros* 📄' + parameterDescription : '');
+            text += example + (parameterDescription.length ? '\n\n📄 *Parameters* 📄' + parameterDescription : '');
         }
 
         if (command.alias.length > 1) {
@@ -360,3 +367,22 @@ export async function send_response(content: MessageContent | null, message: Mes
 export async function send_error_response(content: MessageContent | null, message: Message, options?: CommandResponseOptions | undefined): Promise<Message | void> {
     return await send_response(content, message, { ...options, asError: true });
 }
+
+createCommand(['help'],
+    (args, message) => {
+        const command = search_command(args[0]);
+
+        if (command) {
+            const example = command_example(command);
+            if (example) {
+                send_response(example, message);
+                return;
+            } else {
+                send_error_response(`No existe información para el comando ${args[0]}.`, message);
+            }
+        } else {
+            send_error_response(`No existe el comando ${args[0]}.`, message);
+        }
+    })
+    .addParameter('string')
+.closeCommand();
