@@ -22,19 +22,20 @@ Node v12+ is required.
 
 ### 1. Clone repository
 
-```sh
+```console
 git clone https://github.com/Lautauro/udmilla-whatsapp-bot.git
 ```
 
 ### 2. Install packages
 
-```sh
+```console
 npm i
 ```
 
-### 3. Log in Whatsapp Web
+### 3. Build and log in Whatsapp Web
 
-```sh
+```console
+npm run build
 npm start
 ```
 
@@ -44,9 +45,15 @@ Scan the QR code.
 
 Start playing!
 
+![ping-pong command example](/pingpong-example.png)
+You can change the command prefix **"."** in **src/config/commands.json**.
+
+## 
+
 ## Create command
 
 Go to **src/modules/commands/** and open **commands_list.ts**.
+
 
 To create a command you need to use the [create_command](#create-command) function.
 
@@ -64,6 +71,14 @@ create_command(['alias'],
 .closeCommand(); // Add command to list
 ```
 
+It is very important not to forget to add "closeCommand" at the end, otherwise the command will not be recognised by the bot.
+
+```mermaid
+graph TD;
+    create_command-->addParameter;
+    addParameter-->closeCommand;
+```
+
 ### Command alias:
 
 Names by which the command can be invoked
@@ -77,7 +92,8 @@ When a command is invoked, this function is called. You can read the arguments p
 
 ```js
 create_command(['alias'],
-    /* My callback: */ (args, message) => {
+    // My callback:
+    (args, message) => {
         if (args[0] === 'Hi') {
             // Send "Hello!"
             send_response('Hello!', message);
@@ -138,9 +154,10 @@ function send_response(MessageContent, Message, options?)
 ### Message Content
 
 ```ts
-// See: https://docs.wwebjs.dev/Client.html#sendMessage
 type MessageContent = string | MessageMedia | Location | Poll | Contact | Contact[] | List | Buttons
 ```
+
+See: https://docs.wwebjs.dev/Client.html#sendMessage
 
 ### Command response options
 
@@ -151,13 +168,14 @@ type MessageContent = string | MessageMedia | Location | Poll | Contact | Contac
     asError: boolean;   // Send message as error
     reaction: string;   // Reaction to message. Example: "🐕‍🦺"
     messageOptions: MessageSendOptions;
-    // see: https://docs.wwebjs.dev/global.html#MessageSendOptions
 }
 ```
 
+For more information on MessageSendOptions, see: https://docs.wwebjs.dev/global.html#MessageSendOptions
+
 ## Examples:
 
-Command with no arguments
+Command with **no arguments**
 ```js
 createCommand(
     ['ping', 'pingpong'],
@@ -201,25 +219,26 @@ createCommand(['cite'],
 .closeCommand();
 ```
 
-Command with quoted message:
+Command with **quoted message**:
 
 ```js
 createCommand(['quote', 'cite'],
     async (args, message) => {
         message.getQuotedMessage().then((quotedMessage) => {
-            if (quotedMessage.type === 'chat' || (quotedMessage.type === 'image' && quotedMessage.body.length)) {
+            if (quotedMessage.type === 'chat') {
                 send_response(
                     `*" ${quotedMessage.body} "*\n\n` + 
-                    // @ts-ignore
                     `- _${quotedMessage._data.notifyName}_`,
                     message
                 );
             }
         })
     },
+    // Command options
     {
         needQuotedMessage: true
     },
+    // Command info
     {
         name: 'Quote this',
         description: 'This command makes an author quote with the selected message. It needs to quote a message to work.'
