@@ -49,7 +49,10 @@ Scan the QR code.
 
 Start playing!
 
-![ping-pong command example](/docs/pingpong-example.png)
+<div align="center">
+<img src="./docs/pingpong-example.png">
+</div>
+
 You can change the command prefix **"."** in **src/config/commands.json**.
 
 ## 
@@ -77,7 +80,9 @@ createCommand(['alias'],
 
 It is very important not to forget to add "closeCommand" at the end, otherwise the command will not be recognised by the bot.
 
-![Command structure](/docs/diagram-command.png)
+<div align="center">
+<img src="./docs/diagram-command.png">
+</div>
 
 ### Command alias:
 
@@ -169,7 +174,9 @@ createCommand(['foo'], (args, message) => {
 .closeCommand()
 ```
 
-![Help command example](/docs/help-command-example1.png)
+<div align="center">
+<img src="./docs/help-command-example1.png">
+</div>
 
 ## Send Response
 
@@ -220,7 +227,10 @@ createCommand(['ping', 'pingpong'], (args, message) => {
 .closeCommand();
 ```
 
-![Ping-pong help message](/docs/help-command-example2.png)
+<div align="center">
+<img src="./docs/help-command-example2.png">
+</div>
+
 
 Command with arguments:
 
@@ -242,7 +252,9 @@ createCommand(['repeat'], (args, message) => {
 .closeCommand()
 ```
 
-![Repeat help message](/docs/repeat-command-example.png)
+<div align="center">
+<img src="./docs/repeat-command-example.png">
+</div>
 
 Command with **quoted message**:
 
