@@ -1,5 +1,5 @@
 # udmilla-mendotran-bot
 
-![](/docs/example.gif)
+![Demo de comando "micro"](/docs/demo.gif)
 
-![](/docs/example2.gif)
+![Demo de comando "parada"](/docs/demo2.gif)
