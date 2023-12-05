@@ -33,7 +33,7 @@ class CommandsManager {
         let collisions = 0;
         let filterCommandAlias = [...command.alias];
 
-        // Verificar que los alias no esten en uso
+        // Check that aliases are not in use
         for (let i = 0; i < command.alias.length; i++) {
             if (this.alias.has(command.alias[i])) {
                 collisions++;
@@ -141,11 +141,10 @@ function argument_type(arg: any): ParameterType | null {
 function verify_args(args: any[], command: Command): boolean {
     if (!command.parameters) { return false; }
 
-    // Revisar cada parámetro
+    // Check each parameter
     for (let argIndex = 0; argIndex < args.length; argIndex++) {
         const parameter = command.parameters[argIndex];
-
-        // Iterar sobre cada tipo posible
+        // Iterate on each possible type
         let match: boolean = false;
         for (let typeIndex = 0; typeIndex < parameter.type.length; typeIndex++) {
             if (parameter.type[typeIndex] === 'any') {
@@ -161,7 +160,7 @@ function verify_args(args: any[], command: Command): boolean {
                         }
                         break;
                     case 'number':
-                        // todo Números negativos
+                        // TODO: Negative numbers
                         args[argIndex] = +args[argIndex];
                         break;
                     case 'boolean':
@@ -175,7 +174,7 @@ function verify_args(args: any[], command: Command): boolean {
                 break;
             }
         }
-        // No hubo coincidencia
+        // There was no match
         if (!match) {
             return false;
         }
@@ -184,7 +183,7 @@ function verify_args(args: any[], command: Command): boolean {
 }
 
 export function search_command(commandName: string): Command | false {
-    // Verificar que no sea un string vacio
+    // Check that it's not an empty string
     if (commandName.length) {        
         const search = commandsManager.alias.get(commandName);
         if (search != undefined) { return commandsManager.list[search]; }
@@ -195,89 +194,60 @@ export function search_command(commandName: string): Command | false {
 
 export function exec_command(message : Message): void {
     try {
-        // Separar argumentos y comando
-
+        // Separate arguments and command
         let commandArgs: any[] | null = message.body.match(/"([^"]*)"|'([^']*)'|[^ ]+/gim) ?? [];
         const commandName: string | undefined = commandArgs?.shift()?.slice(commandSettings.commandPrefix.length).toLowerCase();
         
-        if (!commandName) { return; } // Si no hay commando en el string
+        if (!commandName) { return; } // If there is no command in the string
 
         const commandObject = search_command(commandName);
         
         if (commandObject) {
-            // Verificar que el usuario tenga acceso al comando
+            // Verify that the user has access to the command
             if (!commandObject.options.adminOnly || (message.fromMe && commandObject.options.adminOnly)) {
-                // Comandos que requieren citar un mensaje
+                // Commands that require a message to be quoted
                 if (commandObject.options.needQuotedMessage === true && !message.hasQuotedMsg) {
                     // Error
-                    send_error_response('Este comando requiere citar un mensaje para ser ejecutado.', message);
+                    send_error_response('This command requires quoting a message to be executed.', message);
                     return;
                 }
-                // Comandos sin parametros
+                // Commands without parameters
                 if (!commandObject.parameters) {
-
-                    console.log();
-                    let from = '';
-                    if (whatsappSettings.showPhoneNumber) {
-                        from = message.fromMe ? whatsappSettings.botName : message.from;
-                    } else if (whatsappSettings.showUserName) {
-                        // @ts-ignore
-                        from = message._data.notifyName;
-                    }
-                    bot_log(
-                        `\n\tEjecutando comando: "${commandName}"`,
-                        `\n\tFrom:`, from
-                    );
-                    console.log();
+                    command_log(commandName, null, message);
 
                     commandObject.callback(commandArgs, message);
                     return;
                 } else {
-                    // Comandos con parametros
+                    // Commands with parameters
                     const paramLength = commandObject.parameters.length;
                     const defaultValuesLength = commandObject.defaultValues?.length ?? 0;
 
                     if (commandArgs.length >= paramLength || commandObject.defaultValues && commandArgs.length >= (paramLength - defaultValuesLength)) {
-                        // Cortar elementos sobrantes del array, para evitar errores al verificar argumentos.
+                        // Cut excess elements from the array, to avoid errors when checking arguments.
                         if (commandArgs.length > paramLength) { commandArgs = commandArgs.slice(0, paramLength); }
 
-                        // Verificar parámetros
+                        // Verify parameters
                         if (verify_args(commandArgs, commandObject)) {
-                            // Añadir valores default si faltan argumentos
+                            // Add default values if missing
                             if (commandObject.defaultValues && commandArgs.length < paramLength) {
                                 for (let i = defaultValuesLength - (paramLength - commandArgs.length); i < defaultValuesLength; i++) {
                                     commandArgs.push(commandObject.defaultValues[i]);
                                 }
                             }
-                            
-                            console.log();
-                            let from = '';
-                            if (message.fromMe) {
-                                from = whatsappSettings.botName;
-                            } else if (whatsappSettings.showPhoneNumber) {
-                                from = message.from;
-                            } else if (whatsappSettings.showUserName) {
-                                // @ts-ignore
-                                from = message._data.notifyName;
-                            }
-                            bot_log(
-                                `\n\tEjecutando comando: "${commandName}"`,
-                                `\n\tFrom:`, from,
-                                `\n\tArgs:`, commandArgs
-                            );
-                            console.log();
+
+                            command_log(commandName, commandArgs, message);
                             
                             commandObject.callback(commandArgs, message);
                             return;
                         } else {
                             // Error
-                            send_error_response('Argumentos erroneos.', message);
+                            send_error_response('Wrong arguments.', message);
                             send_response(command_example(commandObject), message);
                             return;
                         }
                     } else {
                         // Error
-                        send_error_response('Faltan argumentos en el comando.', message);
+                        send_error_response('Arguments missing in the command.', message);
                         send_response(command_example(commandObject), message);
                         return;
                     }
@@ -292,10 +262,35 @@ export function exec_command(message : Message): void {
     }
 }
 
+function command_log(commandName: string, commandArgs: any[] | null, message: Message): void {
+    console.log();
+    let from = '';
+    
+    if (message.fromMe) {
+        from = whatsappSettings.botName;
+    } else if (whatsappSettings.showPhoneNumber) {
+        from = message.from;
+    } else if (whatsappSettings.showUserName) {
+        // @ts-ignore
+        from = message._data.notifyName;
+    }
+    
+    if (commandArgs) {
+        bot_log(`\n\tExecuting command: "${commandName}"`,
+        `\n\tFrom:`, from,
+        `\n\tArgs:`, commandArgs);
+    } else {
+        bot_log(`\n\tExecuting command: "${commandName}"`,
+        `\n\tFrom:`, from);
+    }
+
+    console.log();
+}
+
 export function command_example(command: Command): string | null {   
     if (command.info && command.info.name.length) {
-        let text = `🤖 *${command.info.name}* 🤖\n\n`;
-        if (command.info.description) { text += `${command.info.description}`; }
+        let text = `🤖 *${command.info.name}* 🤖`;
+        if (command.info.description?.length) { text += `\n\n${command.info.description}`; }
 
         if (command.parameters) {
             text += `\n\n✍️ *Command Syntax* ✍️\n\n`;
@@ -307,7 +302,8 @@ export function command_example(command: Command): string | null {
 
             command.parameters.forEach((parameter) => {
                 if (parameter.info && parameter.info.name) {
-                    if (parameter.defaultValue === null) {
+                    if (parameter.defaultValue !== undefined) {
+                        // Optional parameters
                         text += ` [ *${parameter.info.name}* ]`;
                     } else {
                         text += ` { *${parameter.info.name}* }`;
@@ -343,12 +339,12 @@ export function command_example(command: Command): string | null {
 
 // Send response
 export async function send_response(content: MessageContent | null, message: Message, options?: CommandResponseOptions | undefined): Promise<Message | void> {
-    // Evitar comandos que envien otros comandos, ya que esto puede generar un bucle infinito de envío de mensajes
+    // Avoid commands that send other commands, as this can generate an infinite loop of sending messages.
     if (typeof content === 'string') {
         if (content && content.lastIndexOf(commandSettings.commandPrefix) == 0) {
             const body: string = content.split(" ")[0].slice(commandSettings.commandPrefix.length);
             if (search_command(body)) {
-                throw new Error(`La respuesta de un comando no puede contener otro comando al inicio ya que esto puede generar un bucle infinito.`);
+                throw new Error(`The response to a command cannot contain another command at the beginning, as this can create an infinite loop.`);
             }
         }
     }
@@ -378,10 +374,10 @@ createCommand(['help'],
                 send_response(example, message);
                 return;
             } else {
-                send_error_response(`No existe información para el comando ${args[0]}.`, message);
+                send_error_response(`There is no information for the command *${args[0]}*.`, message);
             }
         } else {
-            send_error_response(`No existe el comando ${args[0]}.`, message);
+            send_error_response(`The command *${args[0]}* doesn't exist.`, message);
         }
     })
     .addParameter('string')
