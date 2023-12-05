@@ -1,6 +1,10 @@
 # udmilla-whatsapp-bot
 
-Udmilla it's a small bot for Whatsapp made with [whatsapp-web.js](https://github.com/pedroslopez/whatsapp-web.js).
+**Udmilla** is a small bot for Whatsapp made with [whatsapp-web.js](https://github.com/pedroslopez/whatsapp-web.js) library using **Typescript**.
+
+<div align="center">
+<img src="./docs/pingpong-example.png">
+</div>
 
 ## Quick links
 
@@ -49,13 +53,7 @@ Scan the QR code.
 
 Start playing!
 
-<div align="center">
-<img src="./docs/pingpong-example.png">
-</div>
-
-You can change the command prefix **"."** in **src/config/commands.json**.
-
-## 
+### You can change the command prefix **"."** and other configurations in **src/config/**.
 
 ## Create command
 
