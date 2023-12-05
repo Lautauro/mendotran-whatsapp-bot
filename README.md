@@ -6,11 +6,15 @@ Udmilla it's a small bot for Whatsapp made with [whatsapp-web.js](https://github
 
 * [Quick Start](#quick-start)
 * [Create command](#create-command)
-    * [Alias](#command-alias)
-    * [Callback](#command-callback)
-    * [Options](#command-options)
-    * [Command info](#command-info)
-    * [Parameters info](#parameters-info)
+    * [Command](#create-command)
+        * [Alias](#command-alias)
+        * [Callback](#command-callback)
+        * [Options](#command-options)
+        * [info](#command-info)
+    * [Parameters](#command-parameters)
+        * [Types](#parameter-type)
+        * [Default value](#parameter-default-value)
+        * [Info](#parameter-info)
 * [Send response](#send-response)
 * [Examples](#examples)
 * [Hot-swap](#hot-swap)
@@ -45,7 +49,7 @@ Scan the QR code.
 
 Start playing!
 
-![ping-pong command example](/pingpong-example.png)
+![ping-pong command example](/docs/pingpong-example.png)
 You can change the command prefix **"."** in **src/config/commands.json**.
 
 ## 
@@ -55,10 +59,10 @@ You can change the command prefix **"."** in **src/config/commands.json**.
 Go to **src/modules/commands/** and open **commands_list.ts**.
 
 
-To create a command you need to use the [create_command](#create-command) function.
+To create a command you need to use the [createCommand](#create-command) function.
 
 ```js
-create_command(['alias'],
+createCommand(['alias'],
     callback(),
     { 
         // Command options
@@ -73,25 +77,21 @@ create_command(['alias'],
 
 It is very important not to forget to add "closeCommand" at the end, otherwise the command will not be recognised by the bot.
 
-```mermaid
-graph TD;
-    create_command-->addParameter;
-    addParameter-->closeCommand;
-```
+![Command structure](/docs/diagram-command.png)
 
 ### Command alias:
 
 Names by which the command can be invoked
 
 ```js
-create_command(['ping', 'pingpong', 'p']) /* etc... */
+createCommand(['ping', 'pingpong', 'p']) /* etc... */
 ```
 ### Command callback:
 
 When a command is invoked, this function is called. You can read the arguments passed by the user using the "args" variable, and use the "message" object to interact with the chat.
 
 ```js
-create_command(['alias'],
+createCommand(['alias'],
     // My callback:
     (args, message) => {
         if (args[0] === 'Hi') {
@@ -131,7 +131,20 @@ This information will be used by the "help" command to describe the command itse
 
 ## Command Parameters:
 
-### Parameters info:
+```js
+addParameter(ParameterType, defaultValue?, ParameterInfo?);
+```
+
+### Parameter Type:
+```ts
+type ParameterType = 'string' | 'number' | 'boolean' | 'any';
+```
+
+### Parameter default value:
+
+If the parameter is an optional argument, set its default value here. Otherwise, **undefined** should do the trick.
+
+### Parameter info:
 
 This information will be used by the "help" command to describe the parameter.
 
@@ -143,13 +156,30 @@ This information will be used by the "help" command to describe the parameter.
 }
 ```
 
+### Example:
+
+```ts
+createCommand(['foo'], (args, message) => {
+        // Do something
+    })
+    .addParameter('string', undefined, { name: 'Argument', description: 'Parameter 1 description', example: 'Lorem ipsum dolor' })
+    // You should always put optional parameters at the end, such as the following. Otherwise it may cause problems.
+    .addParameter('boolean', true, { name: 'Optional Argument', description: 'Parameter 2 description', example: 'true' })
+    // ... etc ...
+.closeCommand()
+```
+
+![Help command example](/docs/help-command-example1.png)
+
 ## Send Response
 
 Send a message to a chat.
 
 ```js
-function send_response(MessageContent, Message, options?)
+send_response(MessageContent, MessageObj, options?)
 ```
+
+For **MessageObj** info see: https://docs.wwebjs.dev/Message.html
 
 ### Message Content
 
@@ -177,16 +207,12 @@ For more information on MessageSendOptions, see: https://docs.wwebjs.dev/global.
 
 Command with **no arguments**
 ```js
-createCommand(
-    ['ping', 'pingpong'],
-    (args, message) => {
-        send_response('Pong!', message, {
-            reaction: '🏓',
-        })
+createCommand(['ping', 'pingpong'], (args, message) => {
+        send_response('Pong!', message, { reaction: '🏓' })
     },
-    {
-        adminOnly: true,
-    },
+    // Command options
+    { adminOnly: true },
+    // Command info
     {
         name: 'Ping',
         description: 'Ping-pong! 🏓',
@@ -194,50 +220,43 @@ createCommand(
 .closeCommand();
 ```
 
+![Ping-pong help message](/docs/help-command-example2.png)
+
 Command with arguments:
 
-```js
-createCommand(['cite'],
-    (args, message) => {
-        send_response(
-            `*" ${args[0].trim()} "*\n\n` + 
-            `- _${(await message.getChat()).name}_`, // Username
-            message
-        )
-    },
-    null,
-    {
-        name: 'Cite this',
-        description: 'This command returns a cite from the user.'
+```ts
+createCommand(['repeat'], (args, message) => {
+        let msgToSend: string = args[0];
+
+        for (let i = 1; i < args[1]; i++) {
+            msgToSend += '\n' + args[0];
+        }
+
+        send_response(msgToSend, message, { reply: true }); // Send as reply
+    }, null, {
+        name: 'Repeat text'
     })
-    .addParameter('string',
-    undefined,
-    {
-        name: 'cite',
-        example: 'Theory and practice sometimes clash. And when that happens, theory loses. Every single time.'
-    })
-.closeCommand();
+    .addParameter('string', undefined, { name: 'Text', description: 'Text to repeat.', example: 'Hello x5' })
+    // You should always put optional parameters at the end, such as the following. Otherwise it may cause problems.
+    .addParameter('number', 1, { name: 'Times', description: 'Number of times repeated.', example: '5' })
+.closeCommand()
 ```
+
+![Repeat help message](/docs/repeat-command-example.png)
 
 Command with **quoted message**:
 
-```js
+```ts
 createCommand(['quote', 'cite'],
     async (args, message) => {
-        message.getQuotedMessage().then((quotedMessage) => {
-            if (quotedMessage.type === 'chat') {
-                send_response(
-                    `*" ${quotedMessage.body} "*\n\n` + 
-                    `- _${quotedMessage._data.notifyName}_`,
-                    message
-                );
-            }
+        message.getQuotedMessage()
+        .then((quotedMessage) => {
+            const msgToSend = `*" ${quotedMessage.body} "*\n\n` + `- _${quotedMessage._data.notifyName}_`;
+            send_response(msgToSend, message);
         })
     },
     // Command options
-    {
-        needQuotedMessage: true
-    },
+    { needQuotedMessage: true },
     // Command info
     {
         name: 'Quote this',
@@ -248,4 +267,4 @@ createCommand(['quote', 'cite'],
 
 ## Hot-swap
 
-// TODO:
+TODO
