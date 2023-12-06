@@ -1,5 +1,5 @@
 {
     "commandPrefix": ".",
-    "hotSwappingEnabled": true,
+    "hotSwappingEnabled": false,
     "hotSwappingTimer": 2000
 }
