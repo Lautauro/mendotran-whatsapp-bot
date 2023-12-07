@@ -67,7 +67,7 @@ npm start
 <img src="./docs/mendotran-gráfico.png" alt="Gráfica del funcionamiento del bot">
 </div>
 
-*Fuentes: [smartphone.svg](https://commons.wikimedia.org/wiki/File:Smartphone-.svg) [whatsapp-icon.svg](https://commons.wikimedia.org/wiki/File:2062095_application_chat_communication_logo_whatsapp_icon.svg) [server.svg](https://commons.wikimedia.org/wiki/File:Server2_by_mimooh.svg#filelinks)*
+*Fuentes: [smartphone.svg](https://commons.wikimedia.org/wiki/File:Smartphone-.svg) [whatsapp-icon.svg](https://commons.wikimedia.org/wiki/File:2062095_application_chat_communication_logo_whatsapp_icon.svg) [server.svg](https://commons.wikimedia.org/wiki/File:Server2_by_mimooh.svg)*
 
 La primera vez que inicie el bot hará una serie de peticiones al servidor de Mendotran con el fin de generar una base de datos local del mismo, ésta contendrá información sobre los colectivos y paradas de la ciudad de Mendoza. Luego de generarla, puede encontrar el archivo en **/build/json/mendotran-data.json**.
 
@@ -90,9 +90,9 @@ Así será más o menos la estructuta de la base de datos.
             "701",
             "705",
             "704",
-            "708", // etc...
+            "708"
         ]
-    }, // etc...
+    }
 },
 "buses": {
     "701": {
@@ -100,7 +100,7 @@ Así será más o menos la estructuta de la base de datos.
         "id": "1606_166733",
         "shortName": "701 UGARTECHE - Bº TIERRA SOL Y LUNA",
         "color": "🟦"
-    }, // etc...
+    }
 }
 ```
 
