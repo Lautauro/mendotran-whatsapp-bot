@@ -1,6 +1,8 @@
 # udmilla-whatsapp-bot
 
-**Udmilla** is a small bot for Whatsapp made with [whatsapp-web.js](https://github.com/pedroslopez/whatsapp-web.js) library using **Typescript**.
+**Udmilla** is a small bot for WhatsApp made with [whatsapp-web.js](https://github.com/pedroslopez/whatsapp-web.js) library using **Typescript**.
+
+A [hot-swap mode](#hot-swap) is available for development purposes, allowing new commands to be written and tested without restarting the server.
 
 <div align="center">
 <img src="./docs/pingpong-example.png">
@@ -21,7 +23,7 @@
         * [Info](#parameter-info)
 * [Send response](#send-response)
 * [Examples](#examples)
-* [Hot-swap](#hot-swap)
+* [Hot-swap mode](#hot-swap)
 
 
 ## Quick Start
@@ -40,7 +42,7 @@ git clone https://github.com/Lautauro/udmilla-whatsapp-bot.git
 npm i
 ```
 
-### 3. Build and log in Whatsapp Web
+### 3. Build and log in WhatsApp Web
 
 ```console
 npm run build
@@ -53,14 +55,14 @@ Scan the QR code.
 
 Start playing!
 
-### You can change the command prefix **"."** and other configurations in **src/config/**.
+### You can change the command prefix **"."** and other configurations in **/src/config/**.
 
 ## Create command
 
-Go to **src/modules/commands/** and open **commands_list.ts**.
+Go to **/src/modules/commands/** and open **commands_list.ts**.
 
 
-To create a command you need to use the [createCommand](#create-command) function.
+To create a command you need to use the **createCommand** function.
 
 ```js
 createCommand(['alias'],
@@ -278,4 +280,7 @@ createCommand(['quote', 'cite'],
 
 ## Hot-swap
 
-TODO
+The bot has a **command hot-swap mode**. It consists of a system that allows the developer to test the commands contained in **"/src/modules/commands_list.ts"** without having to completely restart the server, by simply recompiling the project. This is enabled by the **"hotSwappingEnabled"** configuration variable in **/src/config/commands.json**.
+
+> [!WARNING]
+> It is not recommended to enable this mode for non-development environments.
