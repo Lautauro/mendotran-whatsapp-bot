@@ -15,6 +15,7 @@ const bus_color_list: string[] = [
     '🟪', // 800
     '🟫', // 900
 ];
+
 async function get_buses_info(servicio: string | number): Promise<BusInfo[] | null> {
     let busList: BusInfo[] = [];
 
@@ -111,7 +112,6 @@ export async function get_mendotran_database(): Promise<void> {
         }
     }
 
-    // console.log(obj);
     console.log(`\nSe han encontrado:\n\t${nBuses} lineas.\n\t${nStops} paradas.\n`);
 
     // Escribir archivo
