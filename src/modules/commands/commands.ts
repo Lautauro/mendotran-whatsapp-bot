@@ -364,7 +364,7 @@ export async function send_error_response(content: MessageContent | null, messag
     return await send_response(content, message, { ...options, asError: true });
 }
 
-createCommand(['help'],
+createCommand(['help', '?'],
     (args, message) => {
         const command = search_command(args[0]);
 
