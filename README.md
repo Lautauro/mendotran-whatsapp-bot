@@ -10,7 +10,8 @@
 <img src="./docs/demo.gif" alt="Demo de comando micro">
 </div>
 
-*Nota: Puede omitir la "M" y dejar solo el número de parada.* 
+> [!NOTE]
+> Puede omitir la "M" y dejar solo el número de parada.* 
 
 <div align="center">
 <img src="./docs/demo2.gif" alt="Demo de comando parada">
@@ -112,7 +113,8 @@ npm run refresh
 
 El archivo viejo será conservado bajo el nombre de **mendotran-data.json.old** .
 
-> **NOTA:** En mi experiencia el número de paradas de colectivo que recolecta varía según si se hace un día de semana o un fin de semana. No estoy seguro del porqué de esto pero es necesario que lo mencione.
+> [!NOTE]
+> En mi experiencia el número de paradas de colectivo que recolecta varía según si se hace un día de semana o un fin de semana. No estoy seguro del porqué de esto pero es necesario que lo mencione.
 
 ## Parada cercana a tu ubicación
 
