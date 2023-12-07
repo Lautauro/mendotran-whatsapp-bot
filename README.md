@@ -32,19 +32,19 @@ Node v12+ is required.
 
 ### 1. Clone repository
 
-```console
+```bash
 git clone https://github.com/Lautauro/udmilla-whatsapp-bot.git
 ```
 
 ### 2. Install packages
 
-```console
+```bash
 npm i
 ```
 
 ### 3. Build and log in WhatsApp Web
 
-```console
+```bash
 npm run build
 npm start
 ```
