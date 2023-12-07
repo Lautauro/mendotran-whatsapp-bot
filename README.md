@@ -2,12 +2,19 @@
 
 **Mendotran-whatsapp-bot**, como su nombre bien sugiere, es un bot para WhatsApp el cual nos permite, valiéndose del servicio **Mendotran**, saber los horarios de una parada de colectivos a través del uso de comandos.
 
-![Donde localizar el número de parada](/docs/ejemplo-parada.jpg)
+<div align="center">
+<img src="./docs/ejemplo-parada.jpg" alt="Donde localizar el número de parada">
+</div>
 
-![Demo de comando "micro"](/docs/demo.gif)
+<div align="center">
+<img src="./docs/demo.gif" alt="Demo de comando micro">
+</div>
+
 *Nota: Puede omitir la "M" y dejar solo el número de parada.* 
 
-![Demo de comando "parada"](/docs/demo2.gif)
+<div align="center">
+<img src="./docs/demo2.gif" alt="Demo de comando parada">
+</div>
 
 En el caso que la parada no posea cartel, o el mismo esté vandalizado, el bot puede [localizarla usando su ubicación](#parada-cercana-a-tu-ubicación).
 
@@ -56,12 +63,17 @@ npm start
 
 ## ¿Cómo funciona?
 
-![Gráfica del funcionamiento del bot](/docs/mendotran-gráfico.png)
+<div align="center">
+<img src="./docs/mendotran-gráfico.png" alt="Gráfica del funcionamiento del bot">
+</div>
+
 *Fuentes: [smartphone.svg](https://commons.wikimedia.org/wiki/File:Smartphone-.svg) [whatsapp-icon.svg](https://commons.wikimedia.org/wiki/File:2062095_application_chat_communication_logo_whatsapp_icon.svg) [server.svg](https://commons.wikimedia.org/wiki/File:Server2_by_mimooh.svg#filelinks)*
 
 La primera vez que inicie el bot hará una serie de peticiones al servidor de Mendotran con el fin de generar una base de datos local del mismo, ésta contendrá información sobre los colectivos y paradas de la ciudad de Mendoza. Luego de generarla, puede encontrar el archivo en **/build/json/mendotran-data.json**.
 
-![Base de datos mendotran](/docs/base-de-datos.png)
+<div align="center">
+<img src="./docs/base-de-datos.png" alt="Base de datos mendotran">
+</div>
 
 Así será más o menos la estructuta de la base de datos.
 
@@ -108,11 +120,15 @@ Si se desconoce el número de parada, enviando una ubicación el bot se encargar
 
 Comando **"micro"**, para saber un colectivo en específico:
 
-![Demo de comando "micro" usando ubicación](/docs/demo3.gif)
+<div align="center">
+<img src="./docs/demo3.gif" alt="Demo de comando micro usando ubicació">
+</div>
 
 Comando **"parada"**, para mostrar todos los colectivos de una parada:
 
-![Demo de comando "parada" usando ubicación](/docs/demo4.gif)
+<div align="center">
+<img src="./docs/demo4.gif" alt="Demo de comando parada usando ubicación">
+</div>
 
 ## Pros y contras
 
