@@ -5,6 +5,7 @@ import { Message } from "whatsapp-web.js";
 /**
  * Genéricos
  */
+
 createCommand(['ping'], (args, message) => {
         send_response('Pong!', message, {
             reaction: '🏓',
