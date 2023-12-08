@@ -1,7 +1,7 @@
 <h1 align="center">mendotran-whatsapp-bot</h1>
 
 <div align="center">
-<img src="./docs/WSP-plus-Mendotran.png" alt="Donde localizar el número de parada">
+<img src="./docs/WSP-plus-Mendotran.png" alt="Banner del proyecto">
 </div>
 
 **Mendotran-whatsapp-bot**, como su nombre bien sugiere, es un bot para WhatsApp el cual nos permite, valiéndose del servicio **Mendotran**, saber los horarios de una parada de colectivos a través del uso de comandos.
