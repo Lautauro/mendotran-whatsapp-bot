@@ -1,5 +1,9 @@
 <h1 align="center">mendotran-whatsapp-bot</h1>
 
+<div align="center">
+<img src="./docs/WSP-plus-Mendotran.png" alt="Donde localizar el número de parada">
+</div>
+
 **Mendotran-whatsapp-bot**, como su nombre bien sugiere, es un bot para WhatsApp el cual nos permite, valiéndose del servicio **Mendotran**, saber los horarios de una parada de colectivos a través del uso de comandos.
 
 <div align="center">
@@ -11,7 +15,7 @@
 </div>
 
 > [!NOTE]
-> Puede omitir la "M" y dejar solo el número de parada.* 
+> Puede omitir la "M" y dejar solo el número de parada. 
 
 <div align="center">
 <img src="./docs/demo2.gif" alt="Demo de comando parada">
@@ -21,7 +25,7 @@ En el caso que la parada no posea cartel, o el mismo esté vandalizado, el bot p
 
 ## Guia
 * [Instalación](#instalación)
-* [¿Cómo funciona?](#¿cómo-funciona)
+* [¿Cómo funciona?](#cómo-funciona)
 * [Parada cercana a tu ubicación](#parada-cercana-a-tu-ubicación)
 * [Pros y contras](#pros-y-contras)
 * [Lista de comandos](#lista-de-comandos)
@@ -152,7 +156,7 @@ Para ejecutar un comando debe estar acompañado por el prefijo **"."** *(punto)*
 |**parada<br>p**|parada *[número de parada]*|Obtener **todos** los horarios de una parada de colectivos.|.parada **M5707**<br>(La "M" es opcional)|
 |**help<br>?**|help *[comando]*|Solicitar información sobre el uso de un comando.|.help **micro**|
 
-También existe la alternativa de localizar una parada por cercanía. Tan solo basta con enviar una ubicación, citarla y utilizar alguno de los comandos. [Vea el ejemplo](#usando-tu-ubicación).
+También existe la alternativa de localizar una parada por cercanía. Tan solo basta con enviar una ubicación, citarla y utilizar alguno de los comandos. [Vea el ejemplo](#parada-cercana-a-tu-ubicación).
 
 ## Cosas por hacer:
 
