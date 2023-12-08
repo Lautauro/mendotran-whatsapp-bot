@@ -41,7 +41,7 @@ En el caso que la parada no posea cartel, o el mismo esté vandalizado, el bot p
 ### 1. Clonar el repositorio
 
 ```bash
-git clone
+git clone https://github.com/Lautauro/mendotran-whatsapp-bot.git
 ```
 
 ### 2. Instalar paquetes
