@@ -37,6 +37,7 @@ function arrivals_location(message: Message, quote: Message, filter?: string) {
 }
 
 createCommand(['micro', 'm'], async (args, message) => {
+        send_response(null, message, { reaction: '⏳' });
         if (message.hasQuotedMsg) {
             message.getQuotedMessage().then((quote) => {
                 arrivals_location(message, quote, args[0]);
@@ -79,6 +80,7 @@ createCommand(['micro', 'm'], async (args, message) => {
 .closeCommand();
     
 createCommand(['parada', 'p'], (args, message) => {
+        send_response(null, message, { reaction: '⏳' });
         if (message.hasQuotedMsg) {
             message.getQuotedMessage().then((quote) => {
                 arrivals_location(message, quote);
