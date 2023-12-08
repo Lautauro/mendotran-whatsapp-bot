@@ -4,7 +4,7 @@
 <img src="./docs/WSP-plus-Mendotran.png" alt="Banner del proyecto">
 </div>
 
-**Mendotran-whatsapp-bot**, como su nombre bien sugiere, es un bot para WhatsApp el cual nos permite, valiéndose del servicio [Mendotran](https://mendotran.mendoza.gov.ar/), saber los horarios de una parada de colectivos a través del uso de comandos.
+**Mendotran-whatsapp-bot**, como su nombre bien indica, es un bot para WhatsApp el cual nos permite, valiéndose del servicio [Mendotran](https://mendotran.mendoza.gov.ar/), saber los horarios de una parada de colectivos a través del uso de comandos.
 
 <div align="center">
 <img src="./docs/ejemplo-parada.jpg" alt="Donde localizar el número de parada">
@@ -167,6 +167,6 @@ Lejos de ser este el estado final del proyecto, aún hay cosas que tengo pensada
 
 Alguna de mis ideas son:
 
-- [ ] Solicitar los horarios del metro-tranvía por el nombre de la estación. Por ejemplo: **> .estacion "San Martín"**.
+- [ ] Solicitar los horarios del metro-tranvía por el nombre de la estación. Por ejemplo: **.estacion "San Martín"**.
 - [ ] Sistema para que el usuario pueda guardar una parada o micro con un nombre. Por ejemplo: guardar la parada cercana a su hogar como "casa", entonces para saber los horarios de esa parada solo basta escribir **".micro 123 casa"** o **".parada casa"**.
-- [ ] Comando para citar todas las paradas cercanas respecto a una ubicación. Esto le permitiría al usuario conocer las paradas cercanas y las calles en las que se ubican.
+- [ ] Comando para listar todas las paradas cercanas respecto a una ubicación. Esto le permitiría al usuario conocer las paradas cercanas y las calles en las que se ubican.
