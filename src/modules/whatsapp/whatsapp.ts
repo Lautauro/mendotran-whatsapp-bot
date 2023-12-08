@@ -69,10 +69,10 @@ client.on('loading_screen', (percent: number) => {
 
 client.on('ready', () => {
     console.clear();
-    bot_log('El cliente está listo.\n');
+    bot_log('The client is ready.\n');
     
     if (!whatsappSettings.showMessagesInTheTerminal) {
-        bot_log('Mensajes ocultos.\n');
+        bot_log('Hidden messages.\n');
     }
 
     const commandPath = '../commands'
