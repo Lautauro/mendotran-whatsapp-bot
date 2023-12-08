@@ -131,8 +131,3 @@ export async function get_mendotran_database(): Promise<void> {
 
     console.log(`La operación tardó ${(Date.now() - start) / 1000} segundos en ser realizada.`);
 }
-
-if (process.argv[2] == 'refresh') {
-    get_mendotran_database();
-}
-
