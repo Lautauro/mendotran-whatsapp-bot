@@ -4,22 +4,24 @@
 <img src="./docs/WSP-plus-Mendotran.png" alt="Banner del proyecto">
 </div>
 
-**Mendotran-whatsapp-bot**, como su nombre bien sugiere, es un bot para WhatsApp el cual nos permite, valiéndose del servicio **Mendotran**, saber los horarios de una parada de colectivos a través del uso de comandos.
+**Mendotran-whatsapp-bot**, como su nombre bien sugiere, es un bot para WhatsApp el cual nos permite, valiéndose del servicio [Mendotran](https://mendotran.mendoza.gov.ar/), saber los horarios de una parada de colectivos a través del uso de comandos.
 
 <div align="center">
 <img src="./docs/ejemplo-parada.jpg" alt="Donde localizar el número de parada">
 </div>
 
+*Fuente de la fotografía: ["MendoTran: comenzaron a instalar la señalética en algunas paradas" - Diario El Sol Mendoza](https://www.elsol.com.ar/el-sol/mendotran-comenzaron-a-instalar-la-senaletica-en-algunas-paradas/)*
+
 <div align="center">
 <img src="./docs/demo.gif" alt="Demo de comando micro">
 </div>
 
-> [!NOTE]
-> Puede omitir la "M" y dejar solo el número de parada. 
-
 <div align="center">
 <img src="./docs/demo2.gif" alt="Demo de comando parada">
 </div>
+
+> [!NOTE]
+> Puede omitir la "M" y dejar solo el número de parada. 
 
 En el caso que la parada no posea cartel, o el mismo esté vandalizado, el bot puede [localizarla usando su ubicación](#parada-cercana-a-tu-ubicación).
 
@@ -42,6 +44,7 @@ En el caso que la parada no posea cartel, o el mismo esté vandalizado, el bot p
 
 ```bash
 git clone https://github.com/Lautauro/mendotran-whatsapp-bot.git
+cd mendotran-whatsapp-bot
 ```
 
 ### 2. Instalar paquetes
@@ -62,7 +65,7 @@ npm run build
 npm start
 ```
 
-**La primera vez que inicies el servidor sucederán dos cosas:**
+**La primera vez que inicie el servidor sucederán dos cosas:**
 
 1. Se generará una base de datos local que servirá para comunicarse con Mendotran.
 2. Tendrá que sincronizar, a través del escaneo de un QR, la cuenta que usará de bot.
@@ -75,13 +78,13 @@ npm start
 
 *Fuentes: [smartphone.svg](https://commons.wikimedia.org/wiki/File:Smartphone-.svg) [whatsapp-icon.svg](https://commons.wikimedia.org/wiki/File:2062095_application_chat_communication_logo_whatsapp_icon.svg) [server.svg](https://commons.wikimedia.org/wiki/File:Server2_by_mimooh.svg)*
 
-La primera vez que inicie el bot hará una serie de peticiones al servidor de Mendotran con el fin de generar una base de datos local del mismo, ésta contendrá información sobre los colectivos y paradas de la ciudad de Mendoza. Luego de generarla, puede encontrar el archivo en **/build/json/mendotran-data.json**.
+La primera vez que inicie el bot (como ilustra la imagen de abajo) hará una serie de peticiones al servidor de Mendotran con el fin de generar una base de datos local del mismo, ésta contendrá información sobre los colectivos y paradas de la ciudad de Mendoza. Luego de generarla puede encontrar el archivo en **/build/json/mendotran-data.json** .
 
 <div align="center">
 <img src="./docs/base-de-datos.png" alt="Base de datos mendotran">
 </div>
 
-Así será más o menos la estructuta de la base de datos.
+Así se verá más o menos la estructura de la base de datos:
 
 ```json
 "stops": {
@@ -110,31 +113,31 @@ Así será más o menos la estructuta de la base de datos.
 }
 ```
 
-Todos estos datos serán de gran utilidad para el bot a la hora de solicitar los horarios de un colectivo. Si por algún motivo quiere regenerar este archivo, bastará con iniciar el bot de la siguiente manera:
+Todos esta información será de gran utilidad para el bot a la hora de solicitar los horarios de un colectivo. Si por algún motivo quiere o necesita regenerar este archivo, bastará con iniciar el bot de la siguiente manera:
 
 ```bash
 npm run refresh
 ```
 
-El archivo viejo será conservado bajo el nombre de **mendotran-data.json.old** .
+Así se creará una nueva base de datos y el archivo viejo será conservado bajo el nombre de **mendotran-data.json.old** .
 
 > [!NOTE]
 > En mi experiencia el número de paradas de colectivo que recolecta varía según si se hace un día de semana o un fin de semana. No estoy seguro del porqué de esto pero es necesario que lo mencione.
 
 ## Parada cercana a tu ubicación
 
-Si se desconoce el número de parada, enviando una ubicación el bot se encargará de buscar la parada más cercana y enviar sus horarios.
+Si se desconoce el número de parada, enviando una ubicación al bot y respondiendo a la misma con alguno de los comandos, el sistema se encargará de buscar la parada más cercana y despachar sus horarios.
 
-Comando **"micro"**, para saber un colectivo en específico:
+Comando **"micro"**, para saber los horarios de **un colectivo** en específico:
 
 <div align="center">
-<img src="./docs/demo3.gif" alt="Demo de comando micro usando ubicació">
+<img src="./docs/demo3.gif" alt="Demo de comando 'micro' usando la ubicación enviada por el usuario">
 </div>
 
-Comando **"parada"**, para mostrar todos los colectivos de una parada:
+Comando **"parada"**, para mostrar los horarios de **todos los colectivos** de una parada:
 
 <div align="center">
-<img src="./docs/demo4.gif" alt="Demo de comando parada usando ubicación">
+<img src="./docs/demo4.gif" alt="Demo de comando 'parada' usando la ubicación enviada por el usuario">
 </div>
 
 ## Pros y contras
@@ -144,7 +147,7 @@ Comando **"parada"**, para mostrar todos los colectivos de una parada:
 |En caso de tener WhastApp gratis con su compañía de celular, **no necesita gastar datos entrando a la app oficial de Mendotran**.|**Usted deberá hostear el bot** por su cuenta en un servidor, o bien valerse de uno alojado por otro usuario.|
 |Puede hasta ser **más rápido que usar la aplicación oficial**. Esto dependerá de la velocidad del servidor y de la experiencia previa del usuario con el uso de bots.|**Requiere más o menos tiempo habituarse a la lógica de los comandos.** Habrá personas que prefieran el uso de una interfaz gráfica de usuario ([GUI](https://en.wikipedia.org/wiki/Graphical_user_interface)) antes que una interfaz de texto ([TUI](https://en.wikipedia.org/wiki/Text-based_user_interface)).|
 |Si la privacidad le parece un tema importante, en principio **ésta forma de usar el servicio debería ser más privada**, ya que no es el cliente quien hace las peticiones a Mendotran sino el servidor (Menos riesgo de recolección de datos). Más info en como usa nuestros datos la app [aquí](https://mendotran.mendoza.gov.ar/politica).|Estás usando WhatsApp, si la privacidad es algo que te concierne probablemente estés en el sitio equivocado. **Mendotran afirma en su [Play Store](https://play.google.com/store/apps/details?id=com.wara.mendotran&hl=es_AR) que no recolecta datos del usuario, sin embargo se contradice en las [políticas de privacidad](https://mendotran.mendoza.gov.ar/politica) de su sitio web.**|
-|No tiene que tener instalada la aplicación de Mendotran en su celular, lo que es igual a **más espacio libre**.|**Necesita saber el número de la parada de colectivos**, en el caso contrario puede pedirle al bot que busque la parada más cercana a su ubicación actual. Esto último hace que pierda sentido el punto de usar menos datos, ya que Google Maps precisa de los mismos.|
+|No tiene que tener instalada la aplicación de Mendotran en su celular, lo que es igual a **más espacio libre**.|**Necesita saber el número de la parada de colectivos**, en el caso contrario puede pedirle al bot que [busque la parada más cercana a su ubicación actual](#parada-cercana-a-tu-ubicación). Esto último hace que pierda sentido el punto de usar menos datos, ya que Google Maps haría uso de los mismos.|
 
 ## Lista de comandos
 
@@ -162,6 +165,8 @@ También existe la alternativa de localizar una parada por cercanía. Tan solo b
 
 Lejos de ser este el estado final del proyecto, aún hay cosas que tengo pensadas implementar en un futuro. Si lo desea y tiene las habilidades para hacerlo puede contribuir al mismo.
 
-- [ ] Buscar estaciones de metro-tranvía por nombre.
-- [ ] Almacenar paradas por nombre. Que el usuario pueda guardar una parada / micro por nombre, por ejemplo: "casa", entonces para saber los horarios del colectivo que pasa por su casa solo basta escribir ".micro casa" o ".parada casa".
-- [ ] Comando para buscar paradas en cierto radio respecto a una ubicación. Permitiría elegir la parada de la cual se desea saber sus horarios.
+Alguna de mis ideas son:
+
+- [ ] Solicitar los horarios del metro-tranvía por el nombre de la estación. Por ejemplo: **> .estacion "San Martín"**.
+- [ ] Sistema para que el usuario pueda guardar una parada o micro con un nombre. Por ejemplo: guardar la parada cercana a su hogar como "casa", entonces para saber los horarios de esa parada solo basta escribir **".micro 123 casa"** o **".parada casa"**.
+- [ ] Comando para citar todas las paradas cercanas respecto a una ubicación. Esto le permitiría al usuario conocer las paradas cercanas y las calles en las que se ubican.
