@@ -94,9 +94,6 @@ export async function get_stop_arrivals(stop: any, filter?: string) {
                         arrivals[i].tripHeadsign = arrivals[i].tripHeadsign.trim();
     
                         if (arrivals[i].tripHeadsign !== arrivals[i - 1]?.tripHeadsign) {
-                            console.log(arrivals[i].routeShortName);
-                            console.log(mendotranData.buses[arrivals[i].routeShortName]);
-
                             let busColor = '';
                             if (mendotranData.buses[arrivals[i].routeShortName]) {
                                 busColor = mendotranData.buses[arrivals[i].routeShortName].color;
