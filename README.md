@@ -37,9 +37,6 @@ En el caso que la parada no posea cartel, o el mismo esté vandalizado, el bot p
 
 ## Instalación
 
-> [!IMPORTANT]
-> Al ser usuario de Linux desconozco si esto funciona o no en Windows o Mac, en principio debería pero aún no lo he probado.
-
 ### 1. Clonar el repositorio
 
 ```bash
