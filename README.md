@@ -55,7 +55,8 @@ Scan the QR code.
 
 Start playing!
 
-### You can change the command prefix **"."** and other configurations in **/src/config/**.
+> [!NOTE]
+> You can change the command prefix **"."** and other configurations in **/src/config/**.
 
 ## Create command
 
