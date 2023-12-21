@@ -1,6 +1,7 @@
 import { command_example, createCommand, search_command, send_error_response, send_response } from "./commands.js";
-import { get_arrivals_by_location, get_stop_arrivals } from "../mendotran/mendotran.js";
+import { get_arrivals_by_location, get_metro_arrivals, get_stop_arrivals } from "../mendotran/mendotran.js";
 import { Message } from "whatsapp-web.js";
+import { bot_log_error } from "../../utils/bot_log.js";
 
 /**
  * Genéricos
@@ -115,4 +116,26 @@ createCommand(['parada', 'p'], (args, message) => {
         description: 'El número de parada de la cual desea saber sus horarios.',
         example: 'M1056',
     })
+.closeCommand();
+
+createCommand(['metro'], (args, message) => {
+    send_response(null, message, { reaction: '⏳' });
+    get_metro_arrivals(args[0])
+        .then((obj)=>{
+            bot_log_error(...args)
+            get_metro_arrivals(args[0])
+            .then((arrivals) => {
+                send_response(arrivals, message, { 
+                    reaction: '🚌',
+                });
+            })
+            .catch((error) => {
+                send_error_response(error, message);
+            })
+        })
+        .catch((error) => {
+            send_error_response(error, message);
+        })
+    })
+    .addParameter('string')
 .closeCommand();

@@ -1,8 +1,8 @@
-import { ScheduledArrival, Position, Stop } from '../../ts/interfaces/mendotran.d.js';
+import { ScheduledArrival, Position, Stop, MetroStopInfo } from '../../ts/interfaces/mendotran.d.js';
 import { fetch_json_mendotran } from '../../utils/fetch_json_mendotran.js';
 import mendotranSettings from '../../config/mendotran.json';
 import { get_time_string } from '../../utils/get_time_string.js';
-import { bot_log_error } from '../../utils/bot_log.js';
+import { bot_log, bot_log_error } from '../../utils/bot_log.js';
 
 const emoji_time: readonly string[][] = [
     ['🕛','🕧'], // 12
@@ -31,11 +31,14 @@ function time_to_emoji(unixTime: number): string {
 // TODO: Sistema para paradas de metrotranvía
 
 let mendotranData: any = null;
+let mendotranMetroData: any = null;
 
 try {
-    mendotranData = require(`../../json/${mendotranSettings.dataFile}`);
+    mendotranData = require(`../../../json/${mendotranSettings.dataFile}`);
+    mendotranMetroData = require(`../../../json/metrotranvia.json`);
 } catch(error) {
     mendotranData = null;
+    mendotranMetroData = null;
 }
 
 function database_exists(): boolean {
@@ -44,6 +47,93 @@ function database_exists(): boolean {
         return false;
     }
     return true;
+}
+
+function sort_by_arrival_time(arrivals: ScheduledArrival[]): ScheduledArrival[] {
+    if (arrivals.length === 1) {
+        arrivals[0].arrivalTime = arrivals[0].predicted ? arrivals[0].predictedArrivalTime : arrivals[0].scheduledArrivalTime;
+    } else {
+        arrivals.sort((a, b) => {
+            a.arrivalTime = a.predicted ? a.predictedArrivalTime : a.scheduledArrivalTime;
+            b.arrivalTime = b.predicted ? b.predictedArrivalTime : b.scheduledArrivalTime;
+
+            return a.arrivalTime - b.arrivalTime;
+        });
+    }
+    return arrivals;
+}
+
+function bus_arrivals_string(arrivals: ScheduledArrival[]): string {
+    let text = '';
+    for (let i = 0; i < arrivals.length; i++) {
+        // No repetir nombres de colectivos
+        arrivals[i].tripHeadsign = arrivals[i].tripHeadsign.trim();
+
+        if (arrivals[i].tripHeadsign !== arrivals[i - 1]?.tripHeadsign) {
+            let busColor = '';
+            if (mendotranData.buses[arrivals[i].routeShortName]) {
+                busColor = mendotranData.buses[arrivals[i].routeShortName].color;
+            } else {
+                bot_log_error(`No se ha podido cargar el color del micro ${arrivals[i].routeShortName}.`);
+                busColor = '🔲';
+            }
+
+            if (text.length) { text += '\n\n'; }
+
+            text += `${busColor} *${arrivals[i].routeShortName} ${arrivals[i].tripHeadsign}* ${busColor}\n\n`;
+        } else {
+            text += '\n\n';
+        }
+
+        // Hora de llegada
+        text += `> ${time_to_emoji(arrivals[i].arrivalTime)} ${get_time_string(arrivals[i].arrivalTime, true, true)} hs`;
+        
+        const minutesLeft = Math.floor((arrivals[i].arrivalTime - Date.now()) / 60000);
+        
+        if (minutesLeft > 0) {
+            // Indicar cuantos minutos y/o horas faltan.
+            if (minutesLeft >= 60) {
+                const hours = Math.trunc(minutesLeft / 60);
+                text += `\n> ⏳ ${hours} hora${hours > 1 ? 's' : ''} `;
+                
+                const minutes = minutesLeft % 60;
+                if (minutes) {
+                    text += `y ${minutes} minuto${minutes > 1 ? 's' : ''} `;
+                }
+
+                // Emojis expresivos
+                if (minutesLeft < 120) {
+                    text += `😩`;
+                } else if (minutesLeft < 180) {
+                    text += `😭`;
+                } else {
+                    text += `💀`;
+                }
+
+            } else {
+                text += `\n> ⏳ ${minutesLeft} minuto${minutesLeft > 1 ? 's' : ''}`;
+            }
+            
+            if (arrivals[i].predicted) {
+                const delay = Math.floor((arrivals[i].scheduledArrivalTime - arrivals[i].predictedArrivalTime) / 60000);
+                
+                // Retraso
+                if (delay === 0) {
+                    text += `\n> 🟢 A tiempo`;
+                } else if (delay > 0) {
+                    text += `\n> 🔴 ${delay} minuto${delay > 1 ? 's' : ''} antes`;
+                } else if (delay < 0) {
+                    text += `\n> 🔵 ${Math.abs(delay)} minuto${delay < -1 ? 's' : ''} tarde`;
+                }
+            } else {
+                // Horario planificado
+                text += `\n> ⚫ Planificada`;
+            }
+        } else {
+            text += `\n> 🚍 *Arribando*`;
+        }
+    }
+    return text;
 }
 
 export async function get_stop_arrivals(stop: any, filter?: string) {
@@ -63,7 +153,9 @@ export async function get_stop_arrivals(stop: any, filter?: string) {
                 .then((json) => {
                     let arrivals: ScheduledArrival[] = json.data?.entry?.arrivalsAndDepartures;     
     
-                    if (!arrivals.length || !arrivals) { resolve(`🚎 Sin llegadas para la parada *${stop}* 🏃‍♀️`); }
+                    if (!arrivals.length || !arrivals) {
+                        return reject(`🚎 Sin llegadas para la parada *${stop}* 🏃‍♀️`);
+                    }
     
                     // Filtrar micros
                     if (filter) {
@@ -71,100 +163,26 @@ export async function get_stop_arrivals(stop: any, filter?: string) {
                             return bus.routeShortName === filter;
                         });
                         if (!arrivals.length) {
-                            resolve(`🚎 Sin llegadas para *${filter}* en *${stop}* 🏃‍♀️`);
+                            return reject(`🚎 Sin llegadas para *${filter}* en *${stop}* 🏃‍♀️`);
                         }
                     }
+
+                    // Ordenar micros segun horario
+                    sort_by_arrival_time(arrivals);
     
-                    if (arrivals.length === 1) {
-                        arrivals[0].arrivalTime = arrivals[0].predicted ? arrivals[0].predictedArrivalTime : arrivals[0].scheduledArrivalTime;
-                    } else {
-                        // Ordenar micros segun horario
-                        arrivals.sort((a, b) => {
-                            a.arrivalTime = a.predicted ? a.predictedArrivalTime : a.scheduledArrivalTime;
-                            b.arrivalTime = b.predicted ? b.predictedArrivalTime : b.scheduledArrivalTime;
-    
-                            return a.arrivalTime - b.arrivalTime;
-                        });
-                    }
-    
-                    let text = `🚦 *${stop}* 🚦`;
-    
-                    for (let i = 0; i < arrivals.length; i++) {
-                        // No repetir nombres de colectivos
-                        arrivals[i].tripHeadsign = arrivals[i].tripHeadsign.trim();
-    
-                        if (arrivals[i].tripHeadsign !== arrivals[i - 1]?.tripHeadsign) {
-                            let busColor = '';
-                            if (mendotranData.buses[arrivals[i].routeShortName]) {
-                                busColor = mendotranData.buses[arrivals[i].routeShortName].color;
-                            } else {
-                                bot_log_error(`No se ha podido cargar el color del micro ${arrivals[i].routeShortName}.`);
-                                busColor = '🔲';
-                            }
-                            text += `\n\n${busColor} *${arrivals[i].routeShortName} ${arrivals[i].tripHeadsign}* ${busColor}\n\n`;
-                        } else {
-                            text += '\n\n';
-                        }
-    
-                        // Hora de llegada
-                        text += `> ${time_to_emoji(arrivals[i].arrivalTime)} ${get_time_string(arrivals[i].arrivalTime, true, true)} hs`;
-                        
-                        const minutesLeft = Math.floor((arrivals[i].arrivalTime - Date.now()) / 60000);
-                        
-                        if (minutesLeft > 0) {
-                            // Indicar cuantos minutos y/o horas faltan.
-                            if (minutesLeft >= 60) {
-                                const hours = Math.trunc(minutesLeft / 60);
-                                text += `\n> ⏳ ${hours} hora${hours > 1 ? 's' : ''} `;
-                                
-                                const minutes = minutesLeft % 60;
-                                if (minutes) {
-                                    text += `y ${minutes} minuto${minutes > 1 ? 's' : ''} `;
-                                }
-    
-                                // Emojis expresivos
-                                if (minutesLeft < 120) {
-                                    text += `😩`;
-                                } else if (minutesLeft < 180) {
-                                    text += `😭`;
-                                } else {
-                                    text += `💀`;
-                                }
-    
-                            } else {
-                                text += `\n> ⏳ ${minutesLeft} minuto${minutesLeft > 1 ? 's' : ''}`;
-                            }
-                            
-                            if (arrivals[i].predicted) {
-                                const delay = Math.floor((arrivals[i].scheduledArrivalTime - arrivals[i].predictedArrivalTime) / 60000);
-                                
-                                // Retraso
-                                if (delay === 0) {
-                                    text += `\n> 🟢 A tiempo`;
-                                } else if (delay > 0) {
-                                    text += `\n> 🔴 ${delay} minuto${delay > 1 ? 's' : ''} antes`;
-                                } else if (delay < 0) {
-                                    text += `\n> 🔵 ${Math.abs(delay)} minuto${delay < -1 ? 's' : ''} tarde`;
-                                }
-                            } else {
-                                // Horario planificado
-                                text += `\n> ⚫ Planificada`;
-                            }
-                        } else {
-                            text += `\n> 🚍 *Arribando*`;
-                        }
-                    }
-    
-                    text += `\n\n📍 *${mendotranData.stops[stop].address}* 📍`;
-    
-                    resolve(text);
+                    // String
+                    let text = `🚦 *${stop}* 🚦\n\n`
+                             + bus_arrivals_string(arrivals)
+                             + `\n\n📍 *${mendotranData.stops[stop].address}* 📍`;
+
+                    return resolve(text);
                 })
                 .catch((error) => {
                     console.error(error);
-                    reject('Ha ocurrido un error al procesar la petición.');
+                    return reject('Ha ocurrido un error al procesar la petición.');
                 })
         } else {
-            reject('No se ha podido cargar la base de datos de Mendotran.');
+            return reject('No se ha podido cargar la base de datos de Mendotran.');
         }
     });
 }
@@ -179,7 +197,7 @@ export async function get_arrivals_by_location(position: Position, filter?: stri
             fetch_json_mendotran(`${mendotranSettings.api}/stops-for-location.json?platform=web&v=&lat=${position.lat}&lon=${position.lon}&latSpan=0.006&lonSpan=0.01&version=1.0`)
                 .then((json) => {
                     if (!json.data?.list || json.data.list.length === 0) {
-                        reject('Fuera de rango: No se han encontrado paradas cercanas a la ubicación.');
+                        return reject('Fuera de rango: No se han encontrado paradas cercanas a la ubicación.');
                     }
         
                     const busesAround = json.data?.list.sort((a: Stop, b: Stop) => {
@@ -187,14 +205,71 @@ export async function get_arrivals_by_location(position: Position, filter?: stri
                         if (!b.distance) { b.distance = calculate_distance(position.lat, position.lon, b.lat, b.lon); }
                         return a.distance - b.distance;
                     });
-                    resolve(get_stop_arrivals(busesAround[0].code, filter));
+                    return resolve(get_stop_arrivals(busesAround[0].code, filter));
                 })
                 .catch((error) => {
                     console.error(error);
-                    reject('Ha ocurrido un error al procesar la petición.');
+                    return reject('Ha ocurrido un error al procesar la petición.');
                 });
         } else {
-            reject('No se ha podido cargar la base de datos de Mendotran.');
+            return reject('No se ha podido cargar la base de datos de Mendotran.');
+        }
+    });
+}
+
+
+
+export async function get_metro_arrivals(stopName: string): Promise<string> {
+    return new Promise<string>(async(resolve, reject) => {
+        search_metro_stop(stopName)
+            .then(async (stop: MetroStopInfo) => {           
+                const metro100Json = await fetch_json_mendotran(`${mendotranSettings.api}/arrivals-and-departures-for-stop/${mendotranData.stops[stop["100"]].id}.json`);
+                const metro101Json = await fetch_json_mendotran(`${mendotranSettings.api}/arrivals-and-departures-for-stop/${mendotranData.stops[stop["101"]].id}.json`);
+                let metro100Arrivals = sort_by_arrival_time(metro100Json.data?.entry?.arrivalsAndDepartures);
+                let metro101Arrivals = sort_by_arrival_time(metro101Json.data?.entry?.arrivalsAndDepartures);
+                // metro100Arrivals = []; // DEBUG
+                // metro101Arrivals = []; // DEBUG
+                const metro100Restantes = metro100Arrivals.length - 2;
+                const metro101Restantes = metro101Arrivals.length - 2;
+                metro100Arrivals = metro100Arrivals.slice(0, 2);
+                metro101Arrivals = metro101Arrivals.slice(0, 2);
+
+                if (metro100Arrivals.length > 0 || metro101Arrivals.length > 0) {
+                    let text = `🚦 *Estación ${stop.name}* 🚦\n\n`
+                            //  + `🟥 *Andén ${stop.direction[0]}* 🟥\n` // TEST
+                            + (metro100Arrivals.length > 0 ? bus_arrivals_string(metro100Arrivals) : `🚋 *Sin llegadas para andén ${stop.direction[0]}* 🏃‍♀️`)
+                            + (metro100Restantes > 0 ? `\n\n> 🚏 *${metro100Restantes} más por venir*` : '')
+                            + '\n\n'
+                            //  + `🟥 *Andén ${stop.direction[1]}* 🟥\n` // TEST
+                            + (metro101Arrivals.length > 0 ? bus_arrivals_string(metro101Arrivals) : `🚋 *Sin llegadas para andén ${stop.direction[1]}* 🏃‍♀️`)
+                            + (metro101Restantes > 0 ? `\n\n> 🚏 *${metro101Restantes} más por venir*` : '')
+                            + `\n\n📍 *${mendotranData.stops[stop["100"]].address}* 📍`;
+                    return resolve(text);
+                } else {
+                    return reject(`🚋 Sin llegadas para el metrotranvía 🏃‍♀️`);
+                }
+            })
+            .catch((error) => {
+                return reject(error);
+            })
+    });
+}
+
+async function search_metro_stop(name: string, platform?: string): Promise<MetroStopInfo> {
+    return new Promise<MetroStopInfo>(async (resolve, reject) => {
+        if (mendotranMetroData && mendotranData) {
+            name = name.replace(/á/gi, 'a').replace(/é/gi, 'e').replace(/í/gi, 'i').replace(/ó/gi, 'o').replace(/ú/gi, 'u');
+
+            const reg = new RegExp(name, 'i');
+            for (let stop of mendotranMetroData) {            
+                bot_log(stop.name);
+                if (stop.name.search(reg) >= 0) {
+                    return resolve(stop);
+                }
+            }
+            return reject(`No se ha encontrado la parada *"${name}"*`);
+        } else {
+            return reject('No se ha podido cargar la base de datos de Mendotran.');
         }
     });
 }

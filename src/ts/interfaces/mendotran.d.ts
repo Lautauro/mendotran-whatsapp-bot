@@ -5,6 +5,13 @@ export interface Position {
     lon: number;
 }
 
+export interface MetroStopInfo {
+    name: string;
+    direction: string[];
+    "101": string;
+    "100": string;
+}
+
 export interface ScheduledArrival {
     arrivalEnabled: boolean;
     arrivalTime: number;
