@@ -5,9 +5,8 @@ import commandSettings from "../../config/commands.json";
 import whatsappSettings from '../../config/whatsapp.json';
 import { read_response } from "../whatsapp/read_response.js";
 import { Message, MessageContent } from "whatsapp-web.js";
-import { bot_log } from "../../utils/bot_log.js";
+import { bot_log, bot_log_warn } from "../../utils/bot_log.js";
 
-// Default values
 const commandDefaultOptions: CommandOptions = Object.freeze({
     adminOnly: false,
     needQuotedMessage: false,
@@ -38,12 +37,12 @@ class CommandsManager {
             if (this.alias.has(command.alias[i])) {
                 collisions++;
                 filterCommandAlias.splice(i, 1);
-                console.warn(`ADVERTENCIA: El alias "${command.alias[i]}" está siendo usado por otro comando.\n`);
+                bot_log_warn(`WARNING: "${command.alias[i]}" alias is being used by another command.\n`);
             }
         }
 
         if (collisions === command.alias.length) {
-            throw new Error(`No pudo añardirse el comando a la lista, los alias [${command.alias.join(', ')}] se encuentran en uso por otro/s comando/s.`);
+            throw new Error(`The command could not be added to the list, aliases [${command.alias.join(', ')}] are being used by other command(s).`);
         }
 
         let commandIndex = this.list.length;
@@ -96,7 +95,7 @@ const addParameter = (command: Command) => (type: ParameterType | ParameterType[
     };
 
     if ((defaultValue !== null && defaultValue !== undefined) && !type.some((paramType) => { return argument_type(defaultValue) === paramType; })) {
-        throw new Error(`El valor por defecto "${defaultValue}" es de tipo "${typeof defaultValue}" y no coincide con ninguno de los tipos: [${type.join(', ')}]`);
+        throw new Error(`The dafault value "${defaultValue}" is of type "${typeof defaultValue}" and doesn't match any of the types: [${type.join(', ')}]`);
     }
 
     if (defaultValue !== undefined) {
@@ -156,7 +155,7 @@ function verify_args(args: any[], command: Command): boolean {
                 switch (parameter.type[typeIndex]) {
                     case 'string':
                         if ((args[argIndex].match(/^"([^]*)"$|^'([^]*)'$/))) {
-                            args[argIndex] = args[argIndex].slice(1,-1); // Borrar comillas
+                            args[argIndex] = args[argIndex].slice(1,-1); // Delete quotes
                         }
                         break;
                     case 'number':
@@ -224,6 +223,7 @@ export function exec_command(message : Message): void {
 
                     if (commandArgs.length >= paramLength || commandObject.defaultValues && commandArgs.length >= (paramLength - defaultValuesLength)) {
                         // Cut excess elements from the array, to avoid errors when checking arguments.
+                        // TODO: Dont't cut array
                         if (commandArgs.length > paramLength) { commandArgs = commandArgs.slice(0, paramLength); }
 
                         // Verify parameters
@@ -263,9 +263,7 @@ export function exec_command(message : Message): void {
 }
 
 function command_log(commandName: string, commandArgs: any[] | null, message: Message): void {
-    console.log();
     let from = '';
-    
     if (message.fromMe) {
         from = whatsappSettings.botName;
     } else if (whatsappSettings.showPhoneNumber) {
@@ -275,6 +273,7 @@ function command_log(commandName: string, commandArgs: any[] | null, message: Me
         from = message._data.notifyName;
     }
     
+    console.log();
     if (commandArgs) {
         bot_log(`\n\tExecuting command: "${commandName}"`,
         `\n\tFrom:`, from,
@@ -283,7 +282,6 @@ function command_log(commandName: string, commandArgs: any[] | null, message: Me
         bot_log(`\n\tExecuting command: "${commandName}"`,
         `\n\tFrom:`, from);
     }
-
     console.log();
 }
 
