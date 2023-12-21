@@ -1,15 +1,38 @@
-import { RouteId, StopId, StopCode, VehicleId } from "../types/mendotran.d.ts";
+import { RouteId, StopId, StopCode, VehicleId, BusId, MetroDirection } from "../types/mendotran.d.ts";
 
 export interface Position {
     lat: number;
     lon: number;
 }
 
+export interface MendotranData {
+    stops: MendotranStopData;
+    buses: MendotranBusesData;
+}
+
+export interface MendotranStopData {
+    [stopCode: StopCode]: {
+        id: StopId;
+        position: Position;
+        address: string;
+        busList: string[];
+    }
+}
+
+export interface MendotranBusesData {
+    [busNumber: `${number}`]: {
+        linea: string;
+        id: BusId;
+        shortName: string;
+        color: string;
+    }
+}
+
 export interface MetroStopInfo {
     name: string;
-    direction: string[];
-    "101": string;
-    "100": string;
+    direction: MetroDirection[];
+    "101": StopCode;
+    "100": StopCode;
 }
 
 export interface ScheduledArrival {
