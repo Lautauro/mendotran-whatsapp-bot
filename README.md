@@ -164,6 +164,5 @@ Lejos de ser este el estado final del proyecto, aún hay cosas que tengo pensada
 
 Alguna de mis ideas son:
 
-- [ ] Solicitar los horarios del metro-tranvía por el nombre de la estación. Por ejemplo: **.estacion "San Martín"**.
 - [ ] Sistema para que el usuario pueda guardar una parada o micro con un nombre. Por ejemplo: guardar la parada cercana a su hogar como "casa", entonces para saber los horarios de esa parada solo basta escribir **".micro 123 casa"** o **".parada casa"**.
 - [ ] Comando para listar todas las paradas cercanas respecto a una ubicación. Esto le permitiría al usuario conocer las paradas cercanas y las calles en las que se ubican.
