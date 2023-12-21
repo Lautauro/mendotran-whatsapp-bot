@@ -3,6 +3,7 @@ import { fetch_json_mendotran } from '../../utils/fetch_json_mendotran.js';
 import mendotranSettings from '../../config/mendotran.json';
 import { BusInfo, StopInfo } from '../../ts/interfaces/mendotran.d.js';
 
+const metro_emoji = '🚉';
 const bus_color_list: string[] = [
     '🔲', // Sin color definido
     '🟥', // 100
@@ -74,7 +75,12 @@ export async function get_mendotran_database(): Promise<void> {
                 // Ignorar repetidos.
                 if (linea && !obj.buses[linea]) {
                     const busColor = (+linea >= 100 && +linea <= 1000) ? (+String(+linea).charAt(0)) : 0;
-                    busList[j].color = bus_color_list[busColor];
+
+                    if (linea == '100' || linea == '101') {
+                        busList[j].color = metro_emoji;
+                    } else {
+                        busList[j].color = bus_color_list[busColor];
+                    }
 
                     // Agregar micro al objeto
                     obj.buses[linea] = busList[j];
@@ -116,13 +122,13 @@ export async function get_mendotran_database(): Promise<void> {
 
     // Escribir archivo
     try {
-        if (!fs.existsSync('./build/json')) { fs.mkdirSync('./build/json', { recursive: true }); }
+        if (!fs.existsSync('./json')) { fs.mkdirSync('./json', { recursive: true }); }
 
-        if (fs.existsSync(`./build/json/${mendotranSettings.dataFile}`)) {
-            fs.copyFileSync(`./build/json/${mendotranSettings.dataFile}`, `./build/json/${mendotranSettings.dataFile}.old`);
+        if (fs.existsSync(`./json/${mendotranSettings.dataFile}`)) {
+            fs.copyFileSync(`./json/${mendotranSettings.dataFile}`, `./json/${mendotranSettings.dataFile}.old`);
         }
 
-        fs.writeFileSync(`./build/json/${mendotranSettings.dataFile}`, JSON.stringify(obj));
+        fs.writeFileSync(`./json/${mendotranSettings.dataFile}`, JSON.stringify(obj));
         console.log(`✔  Lista de colectivos escrita exitosamente\n`);
     } catch(error) {
         console.error(`❌  Error al guardar la lista de colectivos\n`);
