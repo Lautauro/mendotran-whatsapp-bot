@@ -13,7 +13,7 @@ createCommand(['ping'],
         name: 'Ping',
         description: 'Ping-pong! 🏓',
     })
-.closeCommand()
+.closeCommand();
 
 createCommand(['pong'],
     (args, message) => {
@@ -24,4 +24,4 @@ createCommand(['pong'],
         name: 'Pong',
         description: 'Pong-ping! 🏓',
     })
-.closeCommand()
+.closeCommand();
