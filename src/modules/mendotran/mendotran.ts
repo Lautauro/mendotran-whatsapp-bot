@@ -1,22 +1,23 @@
-import { ScheduledArrival, Position, Stop, MetroStopInfo } from '../../ts/interfaces/mendotran.d.js';
+import { ScheduledArrival, Position, Stop, MetroStopInfo, MendotranData } from '../../ts/interfaces/mendotran.d.js';
 import { fetch_json_mendotran } from '../../utils/fetch_json_mendotran.js';
 import mendotranSettings from '../../config/mendotran.json';
 import { get_time_string } from '../../utils/get_time_string.js';
 import { bot_log, bot_log_error } from '../../utils/bot_log.js';
+import { MetroData } from '../../ts/types/mendotran.js';
 
 const emoji_time: readonly string[][] = [
-    ['🕛','🕧'], // 12
-    ['🕐','🕜'], // 01
-    ['🕑','🕝'], // 02
-    ['🕒','🕞'], // 03
-    ['🕓','🕟'], // 04
-    ['🕔','🕠'], // 05
-    ['🕕','🕡'], // 06
-    ['🕖','🕢'], // 07
-    ['🕗','🕣'], // 08
-    ['🕘','🕤'], // 09
-    ['🕙','🕥'], // 10
-    ['🕚','🕦'], // 11
+    ['🕛','🕧'], // 00 - 12
+    ['🕐','🕜'], // 01 - 13
+    ['🕑','🕝'], // 02 - 14
+    ['🕒','🕞'], // 03 - 15
+    ['🕓','🕟'], // 04 - 16
+    ['🕔','🕠'], // 05 - 17
+    ['🕕','🕡'], // 06 - 18
+    ['🕖','🕢'], // 07 - 19
+    ['🕗','🕣'], // 08 - 20
+    ['🕘','🕤'], // 09 - 21
+    ['🕙','🕥'], // 10 - 22
+    ['🕚','🕦'], // 11 - 23
 ];
 
 function time_to_emoji(unixTime: number): string {
@@ -28,26 +29,8 @@ function time_to_emoji(unixTime: number): string {
 }
 
 // Mendotran
-// TODO: Sistema para paradas de metrotranvía
-
-let mendotranData: any = null;
-let mendotranMetroData: any = null;
-
-try {
-    mendotranData = require(`../../../json/${mendotranSettings.dataFile}`);
-    mendotranMetroData = require(`../../../json/metrotranvia.json`);
-} catch(error) {
-    mendotranData = null;
-    mendotranMetroData = null;
-}
-
-function database_exists(): boolean {
-    if (!mendotranData) {
-        bot_log_error('No se ha genarado la base de datos de Mendotran.');
-        return false;
-    }
-    return true;
-}
+const mendotranData: MendotranData = require(`../../../json/${mendotranSettings.dataFile}`);
+const mendotranMetroData: MetroData = require(`../../../json/metrotranvia.json`);
 
 function sort_by_arrival_time(arrivals: ScheduledArrival[]): ScheduledArrival[] {
     if (arrivals.length === 1) {
@@ -137,8 +120,9 @@ function bus_arrivals_string(arrivals: ScheduledArrival[]): string {
 }
 
 export async function get_stop_arrivals(stop: any, filter?: string) {
+
     return new Promise<string>(async (resolve, reject) => {
-        if (database_exists()) {
+        if (mendotranData) {
             if (stop.charAt(0) !== 'M') { stop = 'M' + stop; }
     
             if (!mendotranData.stops || (mendotranData.stops && !mendotranData.stops[stop])) {
@@ -193,7 +177,7 @@ function calculate_distance(x1: number, y1: number, x2: number, y2: number): num
 
 export async function get_arrivals_by_location(position: Position, filter?: string) {
     return new Promise<string>(async (resolve, reject) => {
-        if (database_exists()) {
+        if (mendotranData) {
             fetch_json_mendotran(`${mendotranSettings.api}/stops-for-location.json?platform=web&v=&lat=${position.lat}&lon=${position.lon}&latSpan=0.006&lonSpan=0.01&version=1.0`)
                 .then((json) => {
                     if (!json.data?.list || json.data.list.length === 0) {
@@ -217,18 +201,16 @@ export async function get_arrivals_by_location(position: Position, filter?: stri
     });
 }
 
-
-
 export async function get_metro_arrivals(stopName: string): Promise<string> {
     return new Promise<string>(async(resolve, reject) => {
         search_metro_stop(stopName)
             .then(async (stop: MetroStopInfo) => {           
                 const metro100Json = await fetch_json_mendotran(`${mendotranSettings.api}/arrivals-and-departures-for-stop/${mendotranData.stops[stop["100"]].id}.json`);
                 const metro101Json = await fetch_json_mendotran(`${mendotranSettings.api}/arrivals-and-departures-for-stop/${mendotranData.stops[stop["101"]].id}.json`);
+                
                 let metro100Arrivals = sort_by_arrival_time(metro100Json.data?.entry?.arrivalsAndDepartures);
                 let metro101Arrivals = sort_by_arrival_time(metro101Json.data?.entry?.arrivalsAndDepartures);
-                // metro100Arrivals = []; // DEBUG
-                // metro101Arrivals = []; // DEBUG
+
                 const metro100Restantes = metro100Arrivals.length - 2;
                 const metro101Restantes = metro101Arrivals.length - 2;
                 metro100Arrivals = metro100Arrivals.slice(0, 2);
@@ -236,14 +218,12 @@ export async function get_metro_arrivals(stopName: string): Promise<string> {
 
                 if (metro100Arrivals.length > 0 || metro101Arrivals.length > 0) {
                     let text = `🚦 *Estación ${stop.name}* 🚦\n\n`
-                            //  + `🟥 *Andén ${stop.direction[0]}* 🟥\n` // TEST
                             + (metro100Arrivals.length > 0 ? bus_arrivals_string(metro100Arrivals) : `🚋 *Sin llegadas para andén ${stop.direction[0]}* 🏃‍♀️`)
                             + (metro100Restantes > 0 ? `\n\n> 🚏 *${metro100Restantes} más por venir*` : '')
                             + '\n\n'
-                            //  + `🟥 *Andén ${stop.direction[1]}* 🟥\n` // TEST
                             + (metro101Arrivals.length > 0 ? bus_arrivals_string(metro101Arrivals) : `🚋 *Sin llegadas para andén ${stop.direction[1]}* 🏃‍♀️`)
                             + (metro101Restantes > 0 ? `\n\n> 🚏 *${metro101Restantes} más por venir*` : '')
-                            + `\n\n📍 *${mendotranData.stops[stop["100"]].address}* 📍`;
+                            + `\n\n📍 *${mendotranData.stops[stop['100']].address}* 📍`;
                     return resolve(text);
                 } else {
                     return reject(`🚋 Sin llegadas para el metrotranvía 🏃‍♀️`);
@@ -251,14 +231,18 @@ export async function get_metro_arrivals(stopName: string): Promise<string> {
             })
             .catch((error) => {
                 return reject(error);
-            })
+            });
     });
 }
 
-async function search_metro_stop(name: string, platform?: string): Promise<MetroStopInfo> {
+async function search_metro_stop(name: string): Promise<MetroStopInfo> {
     return new Promise<MetroStopInfo>(async (resolve, reject) => {
         if (mendotranMetroData && mendotranData) {
-            name = name.replace(/á/gi, 'a').replace(/é/gi, 'e').replace(/í/gi, 'i').replace(/ó/gi, 'o').replace(/ú/gi, 'u');
+            name =  name.replace(/á/gi, 'a')
+                        .replace(/é/gi, 'e')
+                        .replace(/í/gi, 'i')
+                        .replace(/ó/gi, 'o')
+                        .replace(/ú/gi, 'u');
 
             const reg = new RegExp(name, 'i');
             for (let stop of mendotranMetroData) {            
