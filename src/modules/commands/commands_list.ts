@@ -118,20 +118,13 @@ createCommand(['parada', 'p'], (args, message) => {
     })
 .closeCommand();
 
-createCommand(['metro'], (args, message) => {
+createCommand(['metro', 'estacion', 'estación'], (args, message) => {
     send_response(null, message, { reaction: '⏳' });
-    get_metro_arrivals(args[0])
-        .then((obj)=>{
-            bot_log_error(...args)
-            get_metro_arrivals(args[0])
-            .then((arrivals) => {
-                send_response(arrivals, message, { 
-                    reaction: '🚌',
-                });
-            })
-            .catch((error) => {
-                send_error_response(error, message);
-            })
+    get_metro_arrivals(args.join(' '))
+        .then((arrivals)=>{
+            send_response(arrivals, message, { 
+                reaction: '🚋',
+            });
         })
         .catch((error) => {
             send_error_response(error, message);
