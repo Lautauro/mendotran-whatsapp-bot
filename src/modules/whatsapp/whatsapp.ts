@@ -85,6 +85,7 @@ client.on('ready', () => {
             try {
                 delete require.cache[require.resolve(`${commandPath}/commands.js`)];
                 delete require.cache[require.resolve(`${commandPath}/commands_list.js`)];
+                delete require.cache[require.resolve(`../mendotran/mendotran.js`)];
 
                 exec_command = require(`${commandPath}/commands.js`).exec_command; 
                 require(`${commandPath}/commands_list.js`);
