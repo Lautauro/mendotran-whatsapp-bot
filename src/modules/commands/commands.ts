@@ -140,8 +140,11 @@ function argument_type(arg: any): ParameterType | null {
 function verify_args(args: any[], command: Command): boolean {
     if (!command.parameters) { return false; }
 
+    // Ignore excess arguments, to avoid errors when checkin.
+    const argsLen = args.length > command.parameters.length ? command.parameters.length : args.length;
+    
     // Check each parameter
-    for (let argIndex = 0; argIndex < args.length; argIndex++) {
+    for (let argIndex = 0; argIndex < argsLen; argIndex++) {
         const parameter = command.parameters[argIndex];
         // Iterate on each possible type
         let match: boolean = false;
@@ -207,6 +210,7 @@ export function exec_command(message : Message): void {
                 // Commands that require a message to be quoted
                 if (commandObject.options.needQuotedMessage === true && !message.hasQuotedMsg) {
                     // Error
+                    command_log(commandName, null, message);
                     send_error_response('This command requires quoting a message to be executed.', message);
                     return;
                 }
@@ -222,10 +226,6 @@ export function exec_command(message : Message): void {
                     const defaultValuesLength = commandObject.defaultValues?.length ?? 0;
 
                     if (commandArgs.length >= paramLength || commandObject.defaultValues && commandArgs.length >= (paramLength - defaultValuesLength)) {
-                        // Cut excess elements from the array, to avoid errors when checking arguments.
-                        // TODO: Dont't cut array
-                        if (commandArgs.length > paramLength) { commandArgs = commandArgs.slice(0, paramLength); }
-
                         // Verify parameters
                         if (verify_args(commandArgs, commandObject)) {
                             // Add default values if missing
@@ -241,12 +241,14 @@ export function exec_command(message : Message): void {
                             return;
                         } else {
                             // Error
+                            command_log(commandName, commandArgs, message);
                             send_error_response('Wrong arguments.', message);
                             send_response(command_example(commandObject), message);
                             return;
                         }
                     } else {
                         // Error
+                        command_log(commandName, commandArgs, message);
                         send_error_response('Arguments missing in the command.', message);
                         send_response(command_example(commandObject), message);
                         return;
@@ -276,11 +278,11 @@ function command_log(commandName: string, commandArgs: any[] | null, message: Me
     console.log();
     if (commandArgs) {
         bot_log(`\n\tExecuting command: "${commandName}"`,
-        `\n\tFrom:`, from,
-        `\n\tArgs:`, commandArgs);
+                `\n\tFrom:`, from,
+                `\n\tArgs:`, commandArgs);
     } else {
         bot_log(`\n\tExecuting command: "${commandName}"`,
-        `\n\tFrom:`, from);
+                `\n\tFrom:`, from);
     }
     console.log();
 }
@@ -306,8 +308,6 @@ export function command_example(command: Command): string | null {
                     } else {
                         text += ` { *${parameter.info.name}* }`;
                     }
-                    
-                    bot_log(parameter.type);
 
                     if (parameter.type.indexOf('string') != -1) {
                         example += ` "*${parameter.info.example}*"`;
@@ -362,6 +362,7 @@ export async function send_error_response(content: MessageContent | null, messag
     return await send_response(content, message, { ...options, asError: true });
 }
 
+// Help command
 createCommand(['help', '?'],
     (args, message) => {
         const command = search_command(args[0]);
