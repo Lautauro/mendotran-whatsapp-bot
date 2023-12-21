@@ -20,7 +20,7 @@ const bus_color_list: string[] = [
 async function get_buses_info(servicio: string | number): Promise<BusInfo[] | null> {
     let busList: BusInfo[] = [];
 
-    return fetch_json_mendotran(`${mendotranSettings.api}/routes-for-location.json?platform=web&v=&lat=-32.89084&lon=-68.82717&query=${servicio}&radius=40000&version=1.0`)
+    return fetch_json_mendotran(`${mendotranSettings.api}/routes-for-location.json?platform=web&v=&lat=-32.89084&lon=-68.82717&query=${servicio}&radius=40000&version=1.0`, null, 10000)
         .then((json) => {
             if (json.data?.list && json.data.list.length) {
                 json.data.list.forEach((element: any) => {
