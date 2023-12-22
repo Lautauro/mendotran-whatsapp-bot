@@ -1,4 +1,4 @@
-import { ScheduledArrival, Position, Stop, MetroStopInfo, MendotranData } from '../../ts/interfaces/mendotran.d.js';
+import { ScheduledArrival, Position, MetroStopInfo, MendotranData, StopInfo } from '../../ts/interfaces/mendotran.d.js';
 import { fetch_json_mendotran } from '../../utils/fetch_json_mendotran.js';
 import mendotranSettings from '../../config/mendotran.json';
 import { get_time_string } from '../../utils/get_time_string.js';
@@ -36,7 +36,7 @@ function sort_by_arrival_time(arrivals: ScheduledArrival[]): ScheduledArrival[] 
     if (arrivals.length === 1) {
         arrivals[0].arrivalTime = arrivals[0].predicted ? arrivals[0].predictedArrivalTime : arrivals[0].scheduledArrivalTime;
     } else {
-        arrivals.sort((a, b) => {
+        arrivals.sort((a: ScheduledArrival, b: ScheduledArrival) => {
             a.arrivalTime = a.predicted ? a.predictedArrivalTime : a.scheduledArrivalTime;
             b.arrivalTime = b.predicted ? b.predictedArrivalTime : b.scheduledArrivalTime;
 
@@ -120,7 +120,6 @@ function bus_arrivals_string(arrivals: ScheduledArrival[]): string {
 }
 
 export async function get_stop_arrivals(stop: any, filter?: string) {
-
     return new Promise<string>(async (resolve, reject) => {
         if (mendotranData) {
             if (stop.charAt(0) !== 'M') { stop = 'M' + stop; }
@@ -184,12 +183,12 @@ export async function get_arrivals_by_location(position: Position, filter?: stri
                         return reject('Fuera de rango: No se han encontrado paradas cercanas a la ubicación.');
                     }
         
-                    const busesAround = json.data?.list.sort((a: Stop, b: Stop) => {
+                    const stopsAround: StopInfo[] = json.data?.list.sort((a: StopInfo, b: StopInfo) => {
                         if (!a.distance) { a.distance = calculate_distance(position.lat, position.lon, a.lat, a.lon); }
                         if (!b.distance) { b.distance = calculate_distance(position.lat, position.lon, b.lat, b.lon); }
                         return a.distance - b.distance;
                     });
-                    return resolve(get_stop_arrivals(busesAround[0].code, filter));
+                    return resolve(get_stop_arrivals(stopsAround[0].code, filter));
                 })
                 .catch((error) => {
                     console.error(error);

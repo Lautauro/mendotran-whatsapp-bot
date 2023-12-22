@@ -37,7 +37,7 @@ export interface MetroStopInfo {
 
 export interface ScheduledArrival {
     arrivalEnabled: boolean;
-    arrivalTime: number;
+    arrivalTime: number;  // No en la API oficial
     blockTripSequence: number;
     color: string;
     departureEnabled: boolean;
@@ -61,32 +61,32 @@ export interface ScheduledArrival {
     scheduledDepartureTime: number;
     serviceDate: number;
     situationIds: [];
-    status: string;
+    status: 'default' | string;
     stopId: StopId;
     stopSequence: number;
     tripHeadsign: string;
     tripId: number;
     tripStatus: {
-        lastLocationUpdateTime: number,
-        lastUpdateTime: number,
-        orientation: number,
         position: Position,
+        orientation: number,
+        status: 'default' | string,
         predicted: boolean,
-        status: string,
+        lastUpdateTime: number,
+        lastLocationUpdateTime: number,
     };
     vehicleId: VehicleId;
 }
 
-export interface Stop {
-    address: string;
+export interface StopInfo {
     code: StopCode;
+    address: string;
     direction: string;
     id: StopId;
-    locationType: number;
     lat: number;
     lon: number;
+    locationType: number;
     name: StopCode;
-    routesIds: RouteId[];
+    routeIds: RouteId[];
     wheelchairBoarding: 'UNKNOWN' | string;
     distance?: number; // No en la API oficial
 }
@@ -96,17 +96,4 @@ export interface BusInfo {
     id: string;
     shortName: string;
     color: string;
-}
-
-export interface StopInfo {
-    name: string;
-    code: string;
-    direction: string;
-    id: string;
-    lat: string;
-    lon: string;
-    locationType: number;
-    routeIds: string[];
-    wheelchairBoarding: string;
-    address: string;
 }
