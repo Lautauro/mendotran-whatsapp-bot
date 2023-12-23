@@ -1,7 +1,6 @@
 import { command_example, createCommand, search_command, send_error_response, send_response } from "./commands.js";
 import { get_arrivals_by_location, get_metro_arrivals, get_stop_arrivals } from "../mendotran/mendotran.js";
 import { Message } from "whatsapp-web.js";
-import { bot_log_error } from "../../utils/bot_log.js";
 
 /**
  * Genéricos
@@ -37,7 +36,7 @@ function arrivals_location(message: Message, quote: Message, filter?: string) {
     }
 }
 
-createCommand(['micro', 'm'], async (args, message) => {
+createCommand(['micro', 'm'], (args, message) => {
         send_response(null, message, { reaction: '⏳' });
         if (message.hasQuotedMsg) {
             message.getQuotedMessage().then((quote) => {
@@ -118,7 +117,7 @@ createCommand(['parada', 'p'], (args, message) => {
     })
 .closeCommand();
 
-createCommand(['metro', 'estacion', 'estación'], (args, message) => {
+createCommand(['metro', 'metrotranvia', 'estacion', 'estación'], (args, message) => {
     send_response(null, message, { reaction: '⏳' });
     get_metro_arrivals(args.join(' '))
         .then((arrivals)=>{
@@ -129,6 +128,12 @@ createCommand(['metro', 'estacion', 'estación'], (args, message) => {
         .catch((error) => {
             send_error_response(error, message);
         })
+    }, null, {
+        name: 'Mendotran - Metrotranvía',
+        description: 'Obtener los horarios de una estación de metrotranvía.',
     })
-    .addParameter('string')
+    .addParameter('string', undefined, {
+        name: 'Nombre de la estación', 
+        example: 'Piedra buena'
+    })
 .closeCommand();
