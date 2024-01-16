@@ -1,11 +1,12 @@
 import { Command, CommandInfo, CommandOptions, CommandResponseOptions, CommandReturn, ParameterInfo } from "../../ts/interfaces/commands.js";
 import { CommandCallback, ParameterType } from "../../ts/types/commands.js";
 import { CommandResponse, CommandResponseType } from "../../ts/enums/commands.js";
-import commandSettings from "../../config/commands.json";
-import whatsappSettings from '../../config/whatsapp.json';
 import { read_response } from "../whatsapp/read_response.js";
 import { Message, MessageContent } from "whatsapp-web.js";
 import { bot_log, bot_log_warn } from "../../utils/bot_log.js";
+
+const commandsSettings = require('../../../config/commands.json');
+const whatsappSettings = require('../../../config/whatsapp.json');
 
 const commandDefaultOptions: CommandOptions = Object.freeze({
     adminOnly: false,
@@ -198,7 +199,7 @@ export function exec_command(message : Message): void {
     try {
         // Separate arguments and command
         let commandArgs: any[] | null = message.body.match(/"([^"]*)"|'([^']*)'|[^ ]+/gim) ?? [];
-        const commandName: string | undefined = commandArgs?.shift()?.slice(commandSettings.commandPrefix.length).toLowerCase();
+        const commandName: string | undefined = commandArgs?.shift()?.slice(commandsSettings.commandPrefix.length).toLowerCase();
         
         if (!commandName) { return; } // If there is no command in the string
 
@@ -295,8 +296,8 @@ export function command_example(command: Command): string | null {
         if (command.parameters) {
             text += `\n\n✍️ *Command Syntax* ✍️\n\n`;
 
-            let example = '\n\n📥 *Example* 📥\n\n' + commandSettings.commandPrefix + command.alias[0];
-            text += commandSettings.commandPrefix + command.alias[0];
+            let example = '\n\n📥 *Example* 📥\n\n' + commandsSettings.commandPrefix + command.alias[0];
+            text += commandsSettings.commandPrefix + command.alias[0];
             
             let parameterDescription = '';
 
@@ -339,8 +340,8 @@ export function command_example(command: Command): string | null {
 export async function send_response(content: MessageContent | null, message: Message, options?: CommandResponseOptions | undefined): Promise<Message | void> {
     // Avoid commands that send other commands, as this can generate an infinite loop of sending messages.
     if (typeof content === 'string') {
-        if (content && content.lastIndexOf(commandSettings.commandPrefix) == 0) {
-            const body: string = content.split(" ")[0].slice(commandSettings.commandPrefix.length);
+        if (content && content.lastIndexOf(commandsSettings.commandPrefix) == 0) {
+            const body: string = content.split(" ")[0].slice(commandsSettings.commandPrefix.length);
             if (search_command(body)) {
                 throw new Error(`The response to a command cannot contain another command at the beginning, as this can create an infinite loop.`);
             }
