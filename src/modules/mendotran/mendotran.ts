@@ -1,9 +1,10 @@
 import { ScheduledArrival, Position, MetroStopInfo, MendotranData, StopInfo } from '../../ts/interfaces/mendotran.d.js';
 import { fetch_json_mendotran } from '../../utils/fetch_json_mendotran.js';
-import mendotranSettings from '../../config/mendotran.json';
 import { get_time_string } from '../../utils/get_time_string.js';
 import { bot_log, bot_log_error } from '../../utils/bot_log.js';
 import { MetroData } from '../../ts/types/mendotran.js';
+
+const mendotranSettings = require('../../../config/mendotran.json');
 
 const emoji_time: readonly string[][] = [
     ['🕛','🕧'], // 00 - 12
