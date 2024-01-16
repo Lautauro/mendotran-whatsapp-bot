@@ -154,6 +154,7 @@ Para ejecutar un comando debe estar acompañado por el prefijo **"."** *(punto)*
 |:---:|:---|:---:|:---|
 |**micro<br>m**|micro *[número de micro]* *[número de parada]*|Obtener los horarios de **un colectivo** en una parada.|.micro **120** **M14408**<br>(La "M" es opcional)|
 |**parada<br>p**|parada *[número de parada]*|Obtener **todos** los horarios de una parada de colectivos.|.parada **M5707**<br>(La "M" es opcional)|
+|**estacion**<br>**metro**|estacion *[nombre de la estación]*|Obtener los horarios de **una estación de metrotranvía**.|.estacion **Godoy Cruz**|
 |**help<br>?**|help *[comando]*|Solicitar información sobre el uso de un comando.|.help **micro**|
 
 También existe la alternativa de localizar una parada por cercanía. Tan solo basta con enviar una ubicación, citarla y utilizar alguno de los comandos. [Vea el ejemplo](#parada-cercana-a-tu-ubicación).
