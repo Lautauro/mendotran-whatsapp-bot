@@ -252,7 +252,7 @@ async function search_metro_stop(name: string): Promise<MetroStopInfo> {
                     return resolve(stop);
                 }
             }
-            return reject(`No se ha encontrado la parada *"${name}"*`);
+            return reject(`No se ha encontrado la estación *"${name}"*.`);
         } else {
             return reject('No se ha podido cargar la base de datos de Mendotran.');
         }
