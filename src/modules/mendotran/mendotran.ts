@@ -200,6 +200,7 @@ export async function get_arrivals_by_location(position: Position, filter?: stri
     });
 }
 
+// Metrotranvía
 export async function get_metro_arrivals(stopName: string): Promise<string> {
     return new Promise<string>(async(resolve, reject) => {
         search_metro_stop(stopName)
@@ -237,7 +238,7 @@ export async function get_metro_arrivals(stopName: string): Promise<string> {
 async function search_metro_stop(name: string): Promise<MetroStopInfo> {
     return new Promise<MetroStopInfo>(async (resolve, reject) => {
         if (mendotranMetroData && mendotranData) {
-            name =  name.replace(/á/gi, 'a')
+            name =  name.replace(/á/gi, 'a') // Ignorar acentos
                         .replace(/é/gi, 'e')
                         .replace(/í/gi, 'i')
                         .replace(/ó/gi, 'o')
