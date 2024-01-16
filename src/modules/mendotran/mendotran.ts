@@ -1,7 +1,7 @@
 import { ScheduledArrival, Position, MetroStopInfo, MendotranData, StopInfo } from '../../ts/interfaces/mendotran.d.js';
 import { fetch_json_mendotran } from '../../utils/fetch_json_mendotran.js';
 import { get_time_string } from '../../utils/get_time_string.js';
-import { bot_log, bot_log_error } from '../../utils/bot_log.js';
+import { bot_log_error } from '../../utils/bot_log.js';
 import { MetroData } from '../../ts/types/mendotran.js';
 
 const mendotranSettings = require('../../../config/mendotran.json');
@@ -247,7 +247,6 @@ async function search_metro_stop(name: string): Promise<MetroStopInfo> {
 
             const reg = new RegExp(name, 'i');
             for (let stop of mendotranMetroData) {            
-                bot_log(stop.name);
                 if (stop.name.search(reg) >= 0) {
                     return resolve(stop);
                 }
