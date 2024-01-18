@@ -109,8 +109,9 @@ createCommand(['parada', 'p'], (args, message) => {
     }, null, {
         name: 'Mendotran - Parada',
         description: 'Obtener los horarios de una parada de colectivos.\n\n' +
-        '*Opcionalmente puede buscar una parada de colectivo enviando su ubicación.* ' +
-        'Primero debe enviar su ubicación actual y luego citarla con el comando:\n\n *.parada*',
+        '*Opcionalmente* puede encontrar la parada más cercana a una ubicación enviando la misma y ' +
+        'citándola con el comando "*parada*", de esta forma no necesita saber el número de la parada para ' +
+        'solicitar sus horarios.'
     })
     .addParameter('string', null, {
         name: 'Código de parada',
