@@ -212,7 +212,7 @@ export function exec_command(message : Message): void {
                 if (commandObject.options.needQuotedMessage === true && !message.hasQuotedMsg) {
                     // Error
                     command_log(commandName, null, message);
-                    send_error_response('This command requires quoting a message to be executed.', message);
+                    send_error_response('Este comando necesita citar un mensaje para ser ejecutado.', message);
                     return;
                 }
                 // Commands without parameters
@@ -243,14 +243,14 @@ export function exec_command(message : Message): void {
                         } else {
                             // Error
                             command_log(commandName, commandArgs, message);
-                            send_error_response('Wrong arguments.', message);
+                            send_error_response('Argumentos erróneos.', message);
                             send_response(command_example(commandObject), message);
                             return;
                         }
                     } else {
                         // Error
                         command_log(commandName, commandArgs, message);
-                        send_error_response('Arguments missing in the command.', message);
+                        send_error_response('Faltan argumentos en el comando.', message);
                         send_response(command_example(commandObject), message);
                         return;
                     }
@@ -294,9 +294,9 @@ export function command_example(command: Command): string | null {
         if (command.info.description?.length) { text += `\n\n${command.info.description}`; }
 
         if (command.parameters) {
-            text += `\n\n✍️ *Command Syntax* ✍️\n\n`;
+            text += `\n\n✍️ *Sintaxis del comando* ✍️\n\n`;
 
-            let example = '\n\n📥 *Example* 📥\n\n' + commandsSettings.commandPrefix + command.alias[0];
+            let example = '\n\n📥 *Ejemplo* 📥\n\n' + commandsSettings.commandPrefix + command.alias[0];
             text += commandsSettings.commandPrefix + command.alias[0];
             
             let parameterDescription = '';
@@ -322,7 +322,7 @@ export function command_example(command: Command): string | null {
                 }
             })
 
-            text += example + (parameterDescription.length ? '\n\n📄 *Parameters* 📄' + parameterDescription : '');
+            text += example + (parameterDescription.length ? '\n\n📄 *Parámetros* 📄' + parameterDescription : '');
         }
 
         if (command.alias.length > 1) {
@@ -374,10 +374,10 @@ createCommand(['help', '?'],
                 send_response(example, message);
                 return;
             } else {
-                send_error_response(`There is no information for the command *${args[0]}*.`, message);
+                send_error_response(`No exite información sobre el comando *${args[0]}*.`, message);
             }
         } else {
-            send_error_response(`The command *${args[0]}* doesn't exist.`, message);
+            send_error_response(`El comando *${args[0]}* no existe.`, message);
         }
     })
     .addParameter('string')
