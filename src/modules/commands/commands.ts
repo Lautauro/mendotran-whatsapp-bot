@@ -185,14 +185,14 @@ function verify_args(args: any[], command: Command): boolean {
     return true;
 }
 
-export function search_command(commandName: string): Command | false {
+export function search_command(commandName: string): Command | null {
     // Check that it's not an empty string
-    if (commandName.length) {        
+    if (typeof commandName === 'string' && commandName.length) {        
         const search = commandsManager.alias.get(commandName);
         if (search != undefined) { return commandsManager.list[search]; }
     }
 
-    return false;
+    return null;
 }
 
 export function exec_command(message : Message): void {
@@ -311,7 +311,11 @@ export function command_example(command: Command): string | null {
                     }
 
                     if (parameter.type.indexOf('string') != -1) {
-                        example += ` "*${parameter.info.example}*"`;
+                        if (parameter.info.example.indexOf(' ') > -1) {
+                            example += ` "*${parameter.info.example}*"`;
+                        } else {
+                            example += ` *${parameter.info.example}*`;
+                        }
                     } else {
                         example += ` *${parameter.info.example}*`;
                     }
@@ -365,20 +369,30 @@ export async function send_error_response(content: MessageContent | null, messag
 
 // Help command
 createCommand(['help', '?'],
-    (args, message) => {
-        const command = search_command(args[0]);
-
-        if (command) {
-            const example = command_example(command);
-            if (example) {
-                send_response(example, message);
-                return;
+    function(args, message) {
+        if (args[0]) {
+            const command = search_command(args[0]);
+            if (command) {
+                const example = command_example(command);
+                if (example) {
+                    send_response(example, message);
+                    return;
+                } else {
+                    send_error_response(`There is no information for the command *${args[0]}*.`, message);
+                }
             } else {
-                send_error_response(`There is no information for the command *${args[0]}*.`, message);
+                send_error_response(`The command *${args[0]}* doesn't exist.`, message);
             }
         } else {
-            send_error_response(`The command *${args[0]}* doesn't exist.`, message);
+            // @ts-ignore
+            send_response(command_example(this), message);
         }
+    }, null, {
+        name: 'Help',   
+        description: 'Get info about a command.',
     })
-    .addParameter('string')
+    .addParameter('string', null, {
+        name: 'Command name',
+        example: 'ping',
+    })
 .closeCommand();
