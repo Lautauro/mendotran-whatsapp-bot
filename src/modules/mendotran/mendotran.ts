@@ -212,22 +212,24 @@ export async function get_metro_arrivals(stopName: string): Promise<string> {
                 let metro100Arrivals = sort_by_arrival_time(metro100Json.data?.entry?.arrivalsAndDepartures);
                 let metro101Arrivals = sort_by_arrival_time(metro101Json.data?.entry?.arrivalsAndDepartures);
 
-                const metro100Restantes = metro100Arrivals.length - 2;
-                const metro101Restantes = metro101Arrivals.length - 2;
-                metro100Arrivals = metro100Arrivals.slice(0, 2);
-                metro101Arrivals = metro101Arrivals.slice(0, 2);
+                // Limitar número de llegadas que se muestran
+                const arrivalsLimit = 2;
+                const metro100Restantes = metro100Arrivals.length - arrivalsLimit;
+                const metro101Restantes = metro101Arrivals.length - arrivalsLimit;
+                metro100Arrivals = metro100Arrivals.slice(0, arrivalsLimit);
+                metro101Arrivals = metro101Arrivals.slice(0, arrivalsLimit);
 
                 if (metro100Arrivals.length > 0 || metro101Arrivals.length > 0) {
                     let text = `🚦 *Estación ${stop.name}* 🚦\n\n`
                             + (metro100Arrivals.length > 0 ? bus_arrivals_string(metro100Arrivals) : `🚋 *Sin llegadas para andén ${stop.direction[0]}* 🏃‍♀️`)
-                            + (metro100Restantes > 0 ? `\n\n> 🚏 *${metro100Restantes} más por venir*` : '')
+                            + (metro100Restantes > 0 ? `\n\n> 🚏 *${metro100Restantes} más en camino*` : '')
                             + '\n\n'
                             + (metro101Arrivals.length > 0 ? bus_arrivals_string(metro101Arrivals) : `🚋 *Sin llegadas para andén ${stop.direction[1]}* 🏃‍♀️`)
-                            + (metro101Restantes > 0 ? `\n\n> 🚏 *${metro101Restantes} más por venir*` : '')
+                            + (metro101Restantes > 0 ? `\n\n> 🚏 *${metro101Restantes} más en camino*` : '')
                             + `\n\n📍 *${mendotranData.stops[stop['100']].address}* 📍`;
                     return resolve(text);
                 } else {
-                    return reject(`🚋 Sin llegadas para el metrotranvía 🏃‍♀️`);
+                    return reject(`🚋 Sin llegadas para esta estación 🏃‍♀️`);
                 }
             })
             .catch((error) => {
@@ -239,7 +241,7 @@ export async function get_metro_arrivals(stopName: string): Promise<string> {
 async function search_metro_stop(name: string): Promise<MetroStopInfo> {
     return new Promise<MetroStopInfo>(async (resolve, reject) => {
         if (mendotranMetroData && mendotranData) {
-            name =  name.replace(/á/gi, 'a') // Ignorar acentos
+            name =  name.replace(/á/gi, 'a') // Ignorar tildes
                         .replace(/é/gi, 'e')
                         .replace(/í/gi, 'i')
                         .replace(/ó/gi, 'o')
