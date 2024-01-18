@@ -211,7 +211,7 @@ async function print_message(message: Message, from: string, edited?: boolean): 
     // Media
     if (messageMedia) { terminalText += messageMedia; }
     // Edited
-    if (edited) { terminalText += '[EDITED] '; }
+    if (edited) { terminalText += '✍️ EDITED ✍️: '; }
 
     console.log(`${terminalText}${message.body}`);
 }
