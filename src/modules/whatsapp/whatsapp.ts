@@ -89,10 +89,9 @@ client.on('ready', () => {
 
     // Save timestamp of last command
     const lastMessage: Map<string, number> = new Map();
-    const clearHistoryTime = 3600000;
 
     // Auto-clear history
-    setInterval(() => { clear_commands_history(lastMessage); }, clearHistoryTime);
+    setInterval(() => { clear_commands_history(lastMessage); }, whatsappSettings.clearCommandsHistoryEvery);
 
     // Show edited messages in the termianal
     if (whatsappSettings.showMessagesInTheTerminal) {
