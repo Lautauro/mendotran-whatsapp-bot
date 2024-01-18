@@ -25,6 +25,17 @@
 
 En el caso que la parada no posea cartel, o el mismo esté vandalizado, el bot puede [localizarla usando su ubicación](#parada-cercana-a-tu-ubicación).
 
+### Metrotranvía
+
+Existe también la posibilidad de solicitar los horarios de una estación de [metrotranvía](https://stmendoza.com/metrotranvia/).
+
+<div align="center">
+<img src="./docs/demo5.gif" alt="Demo de comando estacion">
+</div>
+
+> [!NOTE]
+> Este comando admite 3 formas de ser invocado: "estación" (con o sin tilde), "metro" y "metrotranvía."
+
 ## Guia
 * [Instalación](#instalación)
 * [¿Cómo funciona?](#cómo-funciona)
