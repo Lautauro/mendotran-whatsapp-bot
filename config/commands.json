@@ -1,5 +1,6 @@
 {
     "commandPrefix": ".",
     "hotSwappingEnabled": false,
-    "hotSwappingTimer": 2000
+    "hotSwappingTimer": 2000,
+    "cooldownTime": 4000
 }

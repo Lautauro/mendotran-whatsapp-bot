@@ -120,7 +120,7 @@ client.on('ready', () => {
             if (whatsappSettings.adminOnly && !message.fromMe) { return; }
 
             // Cooldown
-            if (message.fromMe || !lastMessage.has(from) || (Date.now() - Number(lastMessage.get(from)) >= whatsappSettings.cooldownTime)) {
+            if (message.fromMe || !lastMessage.has(from) || (Date.now() - Number(lastMessage.get(from)) >= commandsSettings.cooldownTime)) {
                 // Check commands
                 try {
                     exec_command(message);
@@ -220,7 +220,7 @@ function clear_commands_history(lastMessage: Map<string, number>) {
     bot_log('Clearing command timestamp history:\n', lastMessage);
     const now = Date.now();
     for (let [user, timestamp] of lastMessage) {
-        if (now - timestamp >= whatsappSettings.cooldownTime) { lastMessage.delete(user); }
+        if (now - timestamp >= commandsSettings.cooldownTime) { lastMessage.delete(user); }
     }
     bot_log('Command timestamp history cleared.');
 }
