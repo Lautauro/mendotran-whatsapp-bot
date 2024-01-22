@@ -86,9 +86,9 @@ function bus_arrivals_string(arrivals: ScheduledArrival[]): string {
                 }
 
                 // Emojis expresivos
-                if (minutesLeft < 120) {
+                if (minutesLeft < 90) {
                     text += `😩`;
-                } else if (minutesLeft < 180) {
+                } else if (minutesLeft < 120) {
                     text += `😭`;
                 } else {
                     text += `💀`;
@@ -108,6 +108,9 @@ function bus_arrivals_string(arrivals: ScheduledArrival[]): string {
                     text += `\n> 🔴 ${delay} minuto${delay > 1 ? 's' : ''} antes`;
                 } else if (delay < 0) {
                     text += `\n> 🔵 ${Math.abs(delay)} minuto${delay < -1 ? 's' : ''} tarde`;
+                    if (delay <= -10 && delay > -15) { text += ' 😬'; }
+                    if (delay <= -15 && delay > -20) { text += '... Aún hay esperanzas 🫠'; }
+                    if (delay <= -20) { text += '... Quizá deba buscar una alternativa 🫥'; }
                 }
             } else {
                 // Horario planificado
@@ -163,7 +166,7 @@ export async function get_stop_arrivals(stop: any, filter?: string) {
                 })
                 .catch((error) => {
                     console.error(error);
-                    return reject('Ha ocurrido un error al procesar la petición.');
+                    return reject('Ha ocurrido un error al procesar la petición. Vuelva a intentarlo.');
                 })
         } else {
             return reject('No se ha podido cargar la base de datos de Mendotran.');
@@ -193,7 +196,7 @@ export async function get_arrivals_by_location(position: Position, filter?: stri
                 })
                 .catch((error) => {
                     console.error(error);
-                    return reject('Ha ocurrido un error al procesar la petición.');
+                    return reject('Ha ocurrido un error al procesar la petición. Vuelva a intentarlo.');
                 });
         } else {
             return reject('No se ha podido cargar la base de datos de Mendotran.');
@@ -220,7 +223,7 @@ export async function get_metro_arrivals(stopName: string): Promise<string> {
                 metro101Arrivals = metro101Arrivals.slice(0, arrivalsLimit);
 
                 if (metro100Arrivals.length > 0 || metro101Arrivals.length > 0) {
-                    let text = `🚦 *Estación ${stop.name}* 🚦\n\n`
+                    let text = `🚦 *Estación ${Array.isArray(stop.name) ? stop.name.join(' / ') : stop.name}* 🚦\n\n`
                             + (metro100Arrivals.length > 0 ? bus_arrivals_string(metro100Arrivals) : `🚋 *Sin llegadas para andén ${stop.direction[0]}* 🏃‍♀️`)
                             + (metro100Restantes > 0 ? `\n\n> 🚏 *${metro100Restantes} más en camino*` : '')
                             + '\n\n'
@@ -247,15 +250,31 @@ async function search_metro_stop(name: string): Promise<MetroStopInfo> {
                         .replace(/ó/gi, 'o')
                         .replace(/ú/gi, 'u');
 
-            const reg = new RegExp(name, 'i');
-            for (let stop of mendotranMetroData) {            
-                if (stop.name.search(reg) >= 0) {
-                    return resolve(stop);
-                }
-            }
+            const stop = search_name(mendotranMetroData, 'name', new RegExp(name, 'i'));
+            if (stop) { return resolve(stop); }
+
             return reject(`No se ha encontrado la estación *"${name}"*.`);
         } else {
             return reject('No se ha podido cargar la base de datos de Mendotran.');
         }
     });
+}
+
+function search_name(array: any[], key: string | null, regExp: RegExp) {
+    for (let value of array) {
+        let search;
+        if (key) {
+            if (value[key]) {
+                if (Array.isArray(value[key])) {
+                    if (search_name(value[key], null, regExp)) { return value; }
+                    continue;
+                }
+                search = value[key];
+            }
+        } else {
+            search = value;
+        }
+        if (search && typeof search === 'string' && search.search(regExp) >= 0) { return value; }
+    }
+    return undefined;
 }

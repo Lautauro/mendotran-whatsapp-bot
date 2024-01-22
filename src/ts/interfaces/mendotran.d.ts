@@ -29,7 +29,7 @@ export interface MendotranBusesData {
 }
 
 export interface MetroStopInfo {
-    name: string;
+    name: string | string[];
     direction: MetroDirection[];
     "101": StopCode;
     "100": StopCode;

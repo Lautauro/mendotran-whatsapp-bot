@@ -54,7 +54,7 @@
         "101": "M14354"
     },
     {
-        "name": "Lugones",
+        "name": ["Lugones", "Coto"],
         "direction": [
             "Este", 
             "Oeste"
@@ -99,7 +99,7 @@
         "101": "M1280"
     },
     {
-        "name": "Pedro Molina",
+        "name": ["Pedro Molina", "UTN"],
         "direction": [
             "Este", 
             "Oeste"
@@ -135,7 +135,7 @@
         "101": "M7001"
     },
     {
-        "name": "Mitre",
+        "name": ["Godoy Cruz", "Mitre"],
         "direction": [
             "Norte", 
             "Sur"
