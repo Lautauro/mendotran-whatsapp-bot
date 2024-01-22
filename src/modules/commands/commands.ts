@@ -266,7 +266,7 @@ export function exec_command(message : Message): void {
 }
 
 function command_log(commandName: string, commandArgs: any[] | null, message: Message): void {
-    let from = '';
+    let from = 'HIDDEN';
     if (message.fromMe) {
         from = whatsappSettings.botName;
     } else if (whatsappSettings.showPhoneNumber) {
