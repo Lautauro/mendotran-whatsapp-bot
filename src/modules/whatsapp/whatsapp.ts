@@ -6,13 +6,6 @@ import { bot_log, bot_log_error } from '../../utils/bot_log';
 const whatsappSettings = require('../../../config/whatsapp.json');
 const commandsSettings = require('../../../config/commands.json');
 
-const cooldownMultiplier = [
-    1.5, // 0
-    2,   // 1
-    2.5, // 2
-    3    // 3
-];
-
 const client = new Client({
     authStrategy: new LocalAuth({ 
             dataPath: `${whatsappSettings.wwebjsCache}/.wwebjs_auth`,
@@ -144,6 +137,13 @@ client.on('ready', () => {
 
 
     });
+
+    const cooldownMultiplier = [
+        1.5, // 0
+        2,   // 1
+        2.5, // 2
+        3    // 3
+    ];
 
     function clear_commands_history() {
         if (lastMessage.size === 0) { return; }
