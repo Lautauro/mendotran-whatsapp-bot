@@ -123,19 +123,11 @@ client.on('ready', () => {
 
         if (message.body.lastIndexOf(commandsSettings.commandPrefix) === 0 && typeof message.body === 'string' && message.type === MessageTypes.TEXT) {
             // Cooldown
-            if (verify_command_permission(message, from)) {
-                // Check commands
-                try {
-                    exec_command(message);
-                    cooldown_update(from);
-                } catch(error) {
-                    console.log();
-                    console.error(error);
-                }
+            if (can_execute(message, from)) {
+                exec_command(message);
+                cooldown_update(from);
             }
         }
-
-
     });
 
     const cooldownMultiplier = [
@@ -171,7 +163,7 @@ client.on('ready', () => {
         }
     }
 
-    function verify_command_permission(message: Message, from: string): boolean {
+    function can_execute(message: Message, from: string): boolean {
         if (message.fromMe === true) { return true; }
         if (lastMessage.has(from)) {
             const timestampList = lastMessage.get(from);
@@ -180,7 +172,6 @@ client.on('ready', () => {
             if (timestampList === undefined) { return false; }
 
             const timeElapsed = now - timestampList[timestampList.length - 1];
-
             if (timeElapsed >= commandsSettings.cooldownTime) {
                 if (timestampList.length === 1) {
                     if (timeElapsed >= commandsSettings.cooldownTime * cooldownMultiplier[0]) { timestampList.splice(0, 1); }
@@ -214,13 +205,13 @@ async function print_message(message: Message, from: string, edited?: boolean): 
     // Show contact name if it is booked
     let userName: string = message.fromMe ? whatsappSettings.botName : '';
 
-    if (userName.length > 0) {
+    if (userName.length === 0) {
         if (whatsappSettings.showContactName) {
             const contact = await message.getContact();
             userName = contact.name == undefined ? contact.pushname : contact.name;
         } else if (whatsappSettings.showUserName) {
-            // @ts-ignore
-            userName = message._data.notifyName;
+            // @ts-ignore            
+            userName = message.rawData.notifyName ?? 'UNDEFINED';
         } else {
             userName = 'HIDDEN';
         }
