@@ -200,18 +200,17 @@ export function exec_command(message : Message): void {
         const commandObject = search_command(commandName);
         
         if (commandObject) {
+            command_log(commandName, commandArgs, message);
             // Verify that the user has access to the command
             if (!commandObject.options.adminOnly || (message.fromMe && commandObject.options.adminOnly)) {
                 // Commands that require a message to be quoted
                 if (commandObject.options.needQuotedMessage === true && !message.hasQuotedMsg) {
                     // Error
-                    command_log(commandName, null, message);
                     send_error_response('This command requires quoting a message to be executed.', message);
                     return;
                 }
                 // Commands without parameters
                 if (!commandObject.parameters) {
-                    command_log(commandName, null, message);
                     commandObject.callback(commandArgs, message);
                     return;
                 } else {
@@ -228,19 +227,16 @@ export function exec_command(message : Message): void {
                                     commandArgs.push(commandObject.defaultValues[i]);
                                 }
                             }
-                            command_log(commandName, commandArgs, message);
                             commandObject.callback(commandArgs, message);
                             return;
                         } else {
                             // Error
-                            command_log(commandName, commandArgs, message);
                             send_error_response('Wrong arguments.', message);
                             send_response(command_example(commandObject), message);
                             return;
                         }
                     } else {
                         // Error
-                        command_log(commandName, commandArgs, message);
                         send_error_response('Arguments missing in the command.', message);
                         send_response(command_example(commandObject), message);
                         return;
@@ -254,7 +250,7 @@ export function exec_command(message : Message): void {
     return;
 }
 
-function command_log(commandName: string, commandArgs: any[] | null, message: Message): void {
+function command_log(commandName: string, commandArgs: any[], message: Message): void {
     let from = '';
     if (message.fromMe) {
         from = whatsappSettings.botName;
@@ -266,14 +262,10 @@ function command_log(commandName: string, commandArgs: any[] | null, message: Me
     }
     
     console.log();
-    if (commandArgs) {
-        bot_log(`\n\tExecuting command: "${commandName}"`,
-                `\n\tFrom:`, from,
-                `\n\tArgs:`, commandArgs);
-    } else {
-        bot_log(`\n\tExecuting command: "${commandName}"`,
-                `\n\tFrom:`, from);
-    }
+    bot_log(`Executing command...\n\n`,
+        `> Command: "${commandName}"\n`,
+        `> From:`, from, '\n',
+        `> Args:`, commandArgs);
     console.log();
 }
 
