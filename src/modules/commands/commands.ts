@@ -245,6 +245,7 @@ export function exec_command(message : Message): void {
             }
         }
     } catch(error) {
+        console.log();
         console.error(error);
     }
     return;
@@ -258,7 +259,7 @@ function command_log(commandName: string, commandArgs: any[], message: Message):
         from = message.from;
     } else if (whatsappSettings.showUserName) {
         // @ts-ignore
-        from = message._data.notifyName;
+        from = message.rawData.notifyName;
     }
     
     console.log();
