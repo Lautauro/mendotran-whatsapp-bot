@@ -1,5 +1,6 @@
 {
     "commandPrefix": ".",
+    "sendSeen": true,
     "hotSwappingEnabled": true,
     "hotSwappingTimer": 2000,
     "clearCommandsHistoryEvery": 1800000,
