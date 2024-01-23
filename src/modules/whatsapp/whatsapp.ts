@@ -153,7 +153,7 @@ async function print_message(message: Message, from: string, edited?: boolean): 
             // @ts-ignore
             userName = message._data.notifyName;
         } else {
-            userName = 'HIDDEN';
+            userName = 'OCULTO';
         }
     }
     
@@ -168,19 +168,19 @@ async function print_message(message: Message, from: string, edited?: boolean): 
                 messageMedia = '🔊 Audio 🔊';
             break;
             case MessageTypes.VOICE:
-                messageMedia = '🔊 Voice message 🔊';
+                messageMedia = '🔊 Mensaje de voz 🔊';
                 break;
             case MessageTypes.STICKER:
                 messageMedia = '💟 Sticker 💟 ';
                 break;
             case MessageTypes.VIDEO:
-                messageMedia = '📹 Video 📹';
+                messageMedia = '📹 Vídeo 📹';
                 break;
             case MessageTypes.IMAGE:
-                messageMedia = '📷 Image 📷';
+                messageMedia = '📷 Imagen 📷';
                 break;
             case MessageTypes.DOCUMENT:
-                messageMedia = '📄 Document 📄';
+                messageMedia = '📄 Documento 📄';
                 break;
             case MessageTypes.LOCATION:
                 // Prevent raw location data from being printed out
@@ -190,7 +190,7 @@ async function print_message(message: Message, from: string, edited?: boolean): 
                     // @ts-ignore
                     messageMedia = `📍 ${(message.location.description).split('\n').join('. ')} 📍\n`;
                 } else {
-                    messageMedia = '📍 Location 📍';
+                    messageMedia = '📍 Ubicación 📍';
                 }
                 break;
             // @ts-ignore
@@ -211,7 +211,7 @@ async function print_message(message: Message, from: string, edited?: boolean): 
     // Media
     if (messageMedia) { terminalText += messageMedia; }
     // Edited
-    if (edited) { terminalText += '[✍️ EDITED ✍️] '; }
+    if (edited) { terminalText += '[✍️ EDITADO ✍️] '; }
 
     console.log(`${terminalText}${message.body}`);
 }
