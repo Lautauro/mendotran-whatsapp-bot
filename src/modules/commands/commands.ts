@@ -266,7 +266,7 @@ export function exec_command(message : Message): void {
 }
 
 function command_log(commandName: string, commandArgs: any[] | null, message: Message): void {
-    let from = '';
+    let from = 'OCULTO';
     if (message.fromMe) {
         from = whatsappSettings.botName;
     } else if (whatsappSettings.showPhoneNumber) {
@@ -378,10 +378,10 @@ createCommand(['ayuda', 'help', '?'],
                     send_response(example, message);
                     return;
                 } else {
-                    send_error_response(`No exite información sobre el comando *${args[0]}*.`, message);
+                    send_error_response(`No exite información sobre el comando "*${args[0]}*".`, message);
                 }
             } else {
-                send_error_response(`El comando *${args[0]}* no existe.`, message);
+                send_error_response(`El comando "*${args[0]}*" no existe.`, message);
             }
         } else {
             // @ts-ignore
