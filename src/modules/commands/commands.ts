@@ -65,16 +65,14 @@ const commandBase = (command: Command) => {
     }
 }
 
-export const createCommand = (alias: string[], callback: CommandCallback, options?: CommandOptions | null, info?: CommandInfo) => {
-    options = {
-        ...commandDefaultOptions,
-        ...options,
-    }
-    
+export const createCommand = (alias: string[], callback: CommandCallback, options?: CommandOptions | null, info?: CommandInfo) => {   
     const command: Command =  {
         alias,
         parameters: null,
-        options,
+        options: {
+            ...commandDefaultOptions,
+            ...options,
+        },
         info,
         callback,
     }
@@ -90,11 +88,6 @@ const addParameter = (command: Command) => (type: ParameterType | ParameterType[
     if (!Array.isArray(command.parameters)) { command.parameters = [] };
     if (typeof type === 'string') { type = [ type ]; }
 
-    info = {
-        ...parameterDefaultInfo,
-        ...info,
-    };
-
     if ((defaultValue !== null && defaultValue !== undefined) && !type.some((paramType) => { return argument_type(defaultValue) === paramType; })) {
         throw new Error(`The dafault value "${defaultValue}" is of type "${typeof defaultValue}" and doesn't match any of the types: [${type.join(', ')}]`);
     }
@@ -107,7 +100,10 @@ const addParameter = (command: Command) => (type: ParameterType | ParameterType[
     command.parameters.push({
         type,
         defaultValue,
-        info,
+        info: {
+            ...parameterDefaultInfo,
+            ...info,
+        },
     });
 
     return commandBase(command);
@@ -200,9 +196,7 @@ export function exec_command(message : Message): void {
         // Separate arguments and command
         let commandArgs: any[] | null = message.body.match(/"([^"]*)"|'([^']*)'|[^ ]+/gim) ?? [];
         const commandName: string | undefined = commandArgs?.shift()?.slice(commandsSettings.commandPrefix.length).toLowerCase();
-        
         if (!commandName) { return; } // If there is no command in the string
-
         const commandObject = search_command(commandName);
         
         if (commandObject) {
@@ -218,7 +212,6 @@ export function exec_command(message : Message): void {
                 // Commands without parameters
                 if (!commandObject.parameters) {
                     command_log(commandName, null, message);
-
                     commandObject.callback(commandArgs, message);
                     return;
                 } else {
@@ -235,9 +228,7 @@ export function exec_command(message : Message): void {
                                     commandArgs.push(commandObject.defaultValues[i]);
                                 }
                             }
-
                             command_log(commandName, commandArgs, message);
-                            
                             commandObject.callback(commandArgs, message);
                             return;
                         } else {
@@ -256,13 +247,11 @@ export function exec_command(message : Message): void {
                     }
                 }
             }
-        } else {
-            return;
         }
-        return;
     } catch(error) {
         console.error(error);
     }
+    return;
 }
 
 function command_log(commandName: string, commandArgs: any[] | null, message: Message): void {
