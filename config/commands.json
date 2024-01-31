@@ -1,6 +1,8 @@
 {
     "commandPrefix": ".",
+    "sendSeen": true,
     "hotSwappingEnabled": false,
     "hotSwappingTimer": 2000,
-    "cooldownTime": 4000
+    "clearCommandsHistoryEvery": 1800000,
+    "cooldownTime": 1500
 }

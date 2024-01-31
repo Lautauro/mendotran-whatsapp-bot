@@ -28,6 +28,7 @@ const client = new Client({
 });
 
 client.on('qr', (qr: string) => {
+    console.clear();
     console.log("███████████████████████████████████████████████████████\n");
     qrcode.generate(qr, { small: true });
     console.log("Scan the QR to log in\n");
@@ -43,7 +44,7 @@ client.on('auth_failure', (msg) => {
 });
 
 client.on('disconnected', (reason) => {
-    bot_log_error('Client was logged out\n', reason);
+    bot_log_error('Client was logged out. Reason:', reason);
 });
 
 client.on('loading_screen', (percent: number) => {
@@ -61,7 +62,7 @@ client.on('loading_screen', (percent: number) => {
 
 client.on('ready', () => {
     const startTime = Date.now();
-    const commandPath = '../commands'
+    const commandPath = '../commands';
     let exec_command  = require(`${commandPath}/commands.js`).exec_command;
     require('../commands/commands_list.js');
 
@@ -89,10 +90,10 @@ client.on('ready', () => {
     }
 
     // Save timestamp of last command
-    const lastMessage: Map<string, number> = new Map();
+    const lastMessage: Map<string, number[]> = new Map();
 
     // Auto-clear history
-    setInterval(() => { clear_commands_history(lastMessage); }, whatsappSettings.clearCommandsHistoryEvery);
+    setInterval(() => { clear_commands_history(); }, commandsSettings.clearCommandsHistoryEvery);
 
     // Show edited messages in the termianal
     if (whatsappSettings.showMessagesInTheTerminal) {
@@ -113,25 +114,83 @@ client.on('ready', () => {
 
         // Setting: Show messages in the termianal
         if (whatsappSettings.showMessagesInTheTerminal) { print_message(message, from); }
-        
-        // Commands
-        if (exec_command && message.body.lastIndexOf(commandsSettings.commandPrefix) === 0 && typeof message.body === 'string' && message.type === MessageTypes.TEXT) {
-            // Setting: Ignore commands not coming from admin
-            if (whatsappSettings.adminOnly && !message.fromMe) { return; }
 
+        /* Commands */ 
+        
+        // Setting: Ignore commands not coming from admin
+        if (whatsappSettings.adminOnly && !message.fromMe) { return; }
+        
+        if (exec_command === undefined) { return; }
+
+        if (message.body.lastIndexOf(commandsSettings.commandPrefix) === 0 && typeof message.body === 'string' && message.type === MessageTypes.TEXT) {
             // Cooldown
-            if (message.fromMe || !lastMessage.has(from) || (Date.now() - Number(lastMessage.get(from)) >= commandsSettings.cooldownTime)) {
-                // Check commands
-                try {
-                    exec_command(message);
-                    lastMessage.set(from, Date.now());
-                } catch(error) {
-                    console.log();
-                    console.error(error);
-                }
+            if (can_execute(message, from)) {
+                exec_command(message);
+                cooldown_update(from);
             }
         }
     });
+
+    function clear_commands_history() {
+        if (lastMessage.size === 0) { return; }
+        
+        bot_log('Clearing command timestamp history:\n');  
+        const now = Date.now();
+        for (let [user, timestampList] of lastMessage) {
+            if (now - timestampList[timestampList.length - 1] >= commandsSettings.cooldownTime * cooldownMultiplier[3]) {
+                lastMessage.delete(user);
+                bot_log(user, '=>', timestampList);
+            }
+        }
+        bot_log('Command timestamp history cleared.');
+    }
+
+    const cooldownMultiplier = [
+        1.4, // 0
+        2,   // 1
+        2.8, // 2
+        3.6  // 3
+    ];
+    function can_execute(message: Message, from: string): boolean {
+        if (message.fromMe === true) { return true; }
+
+        // Cooldown check
+        if (lastMessage.has(from)) {
+            const timestampList = lastMessage.get(from);
+
+            if (timestampList === undefined) { return false; }
+
+            const now = Date.now();
+            const timeElapsed = now - timestampList[timestampList.length - 1];
+            
+            if (timeElapsed >= commandsSettings.cooldownTime) {
+                const actualCooldown = commandsSettings.cooldownTime * cooldownMultiplier[timestampList.length - 1];
+                const nextCooldown = actualCooldown + commandsSettings.cooldownTime;
+
+                if (timeElapsed >= nextCooldown) {
+                    timestampList.splice(0, timestampList.length);
+                    return true;
+                } else if (timeElapsed >= actualCooldown) {
+                    return true;
+                }
+            }
+        } else {
+            return true;
+        }
+        return false;
+    }
+
+    function cooldown_update(from: string) {
+        if (lastMessage.has(from)) {
+            const timestampList = lastMessage.get(from);
+            if (timestampList !== undefined) {
+                if (timestampList.length >= cooldownMultiplier.length) { timestampList.splice(0, 1); }
+                timestampList.push(Date.now());
+            }
+        } else {
+            lastMessage.set(from, [ Date.now() ]);
+        }
+    }
 });
 
 // Functions
@@ -145,13 +204,13 @@ async function print_message(message: Message, from: string, edited?: boolean): 
     // Show contact name if it is booked
     let userName: string = message.fromMe ? whatsappSettings.botName : '';
 
-    if (!userName.length) {
+    if (userName.length === 0) {
         if (whatsappSettings.showContactName) {
             const contact = await message.getContact();
             userName = contact.name == undefined ? contact.pushname : contact.name;
         } else if (whatsappSettings.showUserName) {
-            // @ts-ignore
-            userName = message._data.notifyName;
+            // @ts-ignore            
+            userName = message.rawData.notifyName ?? 'UNDEFINED';
         } else {
             userName = 'OCULTO';
         }
@@ -201,7 +260,7 @@ async function print_message(message: Message, from: string, edited?: boolean): 
                 messageMedia = `${message.type}`;
                 break;
         }
-        if (message.body.length) { messageMedia += ': '; }
+        if (message.body.length > 0) { messageMedia += ': '; }
     }
 
     // Setting: Show phone number
@@ -214,15 +273,6 @@ async function print_message(message: Message, from: string, edited?: boolean): 
     if (edited) { terminalText += '[✍️ EDITADO ✍️] '; }
 
     console.log(`${terminalText}${message.body}`);
-}
-
-function clear_commands_history(lastMessage: Map<string, number>) {
-    bot_log('Clearing command timestamp history:\n', lastMessage);
-    const now = Date.now();
-    for (let [user, timestamp] of lastMessage) {
-        if (now - timestamp >= commandsSettings.cooldownTime) { lastMessage.delete(user); }
-    }
-    bot_log('Command timestamp history cleared.');
 }
 
 export async function send_message(content: MessageContent, messageId: MessageId, options?: MessageSendOptions | undefined): Promise<Message> {

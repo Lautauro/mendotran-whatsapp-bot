@@ -7,6 +7,5 @@
     "showUserName": true,
     "showTimestamp": true,
     "wwebjsCache": "./.session_cache",
-    "clearCommandsHistoryEvery": 3600000,
     "ignoreMedia": false
 }
