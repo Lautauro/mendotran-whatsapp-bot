@@ -62,7 +62,7 @@ client.on('loading_screen', (percent: number) => {
 
 client.on('ready', () => {
     const startTime = Date.now();
-    const commandPath = '../commands'
+    const commandPath = '../commands';
     let exec_command  = require(`${commandPath}/commands.js`).exec_command;
     require('../commands/commands_list.js');
 
@@ -130,13 +130,6 @@ client.on('ready', () => {
         }
     });
 
-    const cooldownMultiplier = [
-        1.5, // 0
-        2,   // 1
-        2.5, // 2
-        3    // 3
-    ];
-
     function clear_commands_history() {
         if (lastMessage.size === 0) { return; }
         
@@ -151,6 +144,41 @@ client.on('ready', () => {
         bot_log('Command timestamp history cleared.');
     }
 
+    const cooldownMultiplier = [
+        1.4, // 0
+        2,   // 1
+        2.5, // 2
+        3    // 3
+    ];
+    function can_execute(message: Message, from: string): boolean {
+        if (message.fromMe === true) { return true; }
+
+        // Cooldown check
+        if (lastMessage.has(from)) {
+            const timestampList = lastMessage.get(from);
+
+            if (timestampList === undefined) { return false; }
+
+            const now = Date.now();
+            const timeElapsed = now - timestampList[timestampList.length - 1];
+            
+            if (timeElapsed >= commandsSettings.cooldownTime) {
+                const actualCooldown = commandsSettings.cooldownTime * cooldownMultiplier[timestampList.length - 1];
+                const nextCooldown = actualCooldown + commandsSettings.cooldownTime;
+
+                if (timeElapsed >= nextCooldown) {
+                    timestampList.splice(0, timestampList.length);
+                    return true;
+                } else if (timeElapsed >= actualCooldown) {
+                    return true;
+                }
+            }
+        } else {
+            return true;
+        }
+        return false;
+    }
+
     function cooldown_update(from: string) {
         if (lastMessage.has(from)) {
             const timestampList = lastMessage.get(from);
@@ -161,36 +189,6 @@ client.on('ready', () => {
         } else {
             lastMessage.set(from, [ Date.now() ]);
         }
-    }
-
-    function can_execute(message: Message, from: string): boolean {
-        if (message.fromMe === true) { return true; }
-        if (lastMessage.has(from)) {
-            const timestampList = lastMessage.get(from);
-            const now = Date.now();
-            
-            if (timestampList === undefined) { return false; }
-
-            const timeElapsed = now - timestampList[timestampList.length - 1];
-            if (timeElapsed >= commandsSettings.cooldownTime) {
-                if (timestampList.length === 1) {
-                    if (timeElapsed >= commandsSettings.cooldownTime * cooldownMultiplier[0]) { timestampList.splice(0, 1); }
-                    return true;
-                }
-
-                if (timeElapsed >= commandsSettings.cooldownTime * cooldownMultiplier[timestampList.length] ||
-                    timeElapsed >= (commandsSettings.cooldownTime * cooldownMultiplier[timestampList.length - 1]) + commandsSettings.cooldownTime) {
-                    timestampList.splice(0, timestampList.length - 1);
-                }
-
-                if (timeElapsed >= commandsSettings.cooldownTime * cooldownMultiplier[timestampList.length - 1]) {
-                    return true;
-                }
-            }
-        } else {
-            return true;
-        }
-        return false;
     }
 });
 
