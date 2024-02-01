@@ -97,6 +97,8 @@ client.on('ready', () => {
     // Show edited messages in the termianal
     if (whatsappSettings.showMessagesInTheTerminal) {
         client.on('message_edit', async (message: Message) => {
+            // Ignore previous messages
+            if (message.timestamp * 1000 < startTime) { return; }
             const from: string = message.fromMe ? message.to : message.from;
             print_message(message, from, true);
         });
@@ -150,6 +152,7 @@ client.on('ready', () => {
         2.5, // 2
         3    // 3
     ];
+
     function can_execute(message: Message, from: string): boolean {
         if (message.fromMe === true) { return true; }
 
