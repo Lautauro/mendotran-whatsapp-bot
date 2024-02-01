@@ -123,7 +123,7 @@ client.on('ready', () => {
         
         if (exec_command === undefined) { return; }
 
-        if ((commandsSettings.commandPrefix.length === 0) || (message.body.lastIndexOf(commandsSettings.commandPrefix) === 0 && typeof message.body === 'string' && message.type === MessageTypes.TEXT)) {
+        if ((commandsSettings.commandPrefix.length === 0) || (message.body.indexOf(commandsSettings.commandPrefix) === 0 && typeof message.body === 'string' && message.type === MessageTypes.TEXT)) {
             // Cooldown
             if (can_execute(message, from)) {
                 exec_command(message);
