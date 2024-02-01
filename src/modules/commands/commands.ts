@@ -193,6 +193,13 @@ export function search_command(commandName: string): Command | null {
 
 export function exec_command(message : Message): void {
     try {
+        // Verificar si se está utilizando el viejo prefijo
+        let oldPrefix = false;
+        if (message.body.indexOf('.') === 0) {
+            message.body = message.body.slice(1);
+            oldPrefix = true;
+        }
+
         // Separate arguments and command
         let commandArgs: any[] | null = message.body.match(/"([^"]*)"|'([^']*)'|[^ ]+/gim) ?? [];
 
@@ -201,6 +208,15 @@ export function exec_command(message : Message): void {
 
         const commandObject = search_command(commandName);
         if (!commandObject) { return; }
+
+        // Notificar sobre el uso obsoleto del prefijo
+        if (oldPrefix === true) {
+            setTimeout(() => {
+                send_response('*¡Ojo al piojo!* 🤓☝️\n\n' +
+                              'Ya no es necesario escribir "*.*" al comienzo de un comando. *Los mensajes con este prefijo serán ignorados en futuras versiones.*',
+                            message, { reply: true });
+            }, 6000);
+        }
         
         // Verify that the user has access to the command
         if (!commandObject.options.adminOnly || (message.fromMe && commandObject.options.adminOnly)) {

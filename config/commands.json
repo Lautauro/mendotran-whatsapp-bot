@@ -1,5 +1,5 @@
 {
-    "commandPrefix": ".",
+    "commandPrefix": "",
     "sendSeen": true,
     "hotSwappingEnabled": false,
     "hotSwappingTimer": 2000,
