@@ -195,52 +195,54 @@ export function exec_command(message : Message): void {
     try {
         // Separate arguments and command
         let commandArgs: any[] | null = message.body.match(/"([^"]*)"|'([^']*)'|[^ ]+/gim) ?? [];
+
         const commandName: string | undefined = commandArgs?.shift()?.slice(commandsSettings.commandPrefix.length).toLowerCase();
         if (!commandName) { return; } // If there is no command in the string
-        const commandObject = search_command(commandName);
-        
-        if (commandObject) {
-            command_log(commandName, commandArgs, message);
-            // Verify that the user has access to the command
-            if (!commandObject.options.adminOnly || (message.fromMe && commandObject.options.adminOnly)) {
-                // Commands that require a message to be quoted
-                if (commandObject.options.needQuotedMessage === true && !message.hasQuotedMsg) {
-                    // Error
-                    send_error_response('Este comando necesita citar un mensaje para ser ejecutado.', message);
-                    return;
-                }
-                // Commands without parameters
-                if (!commandObject.parameters) {
-                    commandObject.callback(commandArgs, message);
-                    return;
-                } else {
-                    // Commands with parameters
-                    const paramLength = commandObject.parameters.length;
-                    const defaultValuesLength = commandObject.defaultValues?.length ?? 0;
 
-                    if (commandArgs.length >= paramLength || commandObject.defaultValues && commandArgs.length >= (paramLength - defaultValuesLength)) {
-                        // Verify parameters
-                        if (verify_args(commandArgs, commandObject)) {
-                            // Add default values if missing
-                            if (commandObject.defaultValues && commandArgs.length < paramLength) {
-                                for (let i = defaultValuesLength - (paramLength - commandArgs.length); i < defaultValuesLength; i++) {
-                                    commandArgs.push(commandObject.defaultValues[i]);
-                                }
+        const commandObject = search_command(commandName);
+        if (!commandObject) { return; }
+        
+        // Verify that the user has access to the command
+        if (!commandObject.options.adminOnly || (message.fromMe && commandObject.options.adminOnly)) {
+            command_log(commandName, commandArgs, message);
+            
+            // Commands that require a message to be quoted
+            if (commandObject.options.needQuotedMessage === true && !message.hasQuotedMsg) {
+                // Error
+                send_error_response('Este comando necesita citar un mensaje para ser ejecutado.', message);
+                return;
+            }
+            // Commands without parameters
+            if (!commandObject.parameters) {
+                commandObject.callback(commandArgs, message);
+                return;
+            } else {
+                // Commands with parameters
+                const paramLength = commandObject.parameters.length;
+                const defaultValuesLength = commandObject.defaultValues?.length ?? 0;
+
+                if (commandArgs.length >= paramLength || commandObject.defaultValues && commandArgs.length >= (paramLength - defaultValuesLength)) {
+                    // Verify parameters
+                    if (verify_args(commandArgs, commandObject)) {
+                        // Add default values if missing
+                        if (commandObject.defaultValues && commandArgs.length < paramLength) {
+                            for (let i = defaultValuesLength - (paramLength - commandArgs.length); i < defaultValuesLength; i++) {
+                                commandArgs.push(commandObject.defaultValues[i]);
                             }
-                            commandObject.callback(commandArgs, message);
-                            return;
-                        } else {
-                            // Error
-                            send_error_response('Argumentos erróneos.', message);
-                            send_response(command_example(commandObject), message);
-                            return;
                         }
+                        commandObject.callback(commandArgs, message);
+                        return;
                     } else {
                         // Error
-                        send_error_response('Faltan argumentos en el comando.', message);
+                        send_error_response('Argumentos erróneos.', message);
                         send_response(command_example(commandObject), message);
                         return;
                     }
+                } else {
+                    // Error
+                    send_error_response('Faltan argumentos en el comando.', message);
+                    send_response(command_example(commandObject), message);
+                    return;
                 }
             }
         }

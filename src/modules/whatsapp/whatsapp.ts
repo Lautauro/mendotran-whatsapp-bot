@@ -98,6 +98,8 @@ client.on('ready', () => {
     // Show edited messages in the termianal
     if (whatsappSettings.showMessagesInTheTerminal) {
         client.on('message_edit', async (message: Message) => {
+            // Ignore previous messages
+            if (message.timestamp * 1000 < startTime) { return; }
             const from: string = message.fromMe ? message.to : message.from;
             print_message(message, from, true);
         });
@@ -122,7 +124,7 @@ client.on('ready', () => {
         
         if (exec_command === undefined) { return; }
 
-        if (message.body.lastIndexOf(commandsSettings.commandPrefix) === 0 && typeof message.body === 'string' && message.type === MessageTypes.TEXT) {
+        if ((commandsSettings.commandPrefix.length === 0) || (message.body.lastIndexOf(commandsSettings.commandPrefix) === 0 && typeof message.body === 'string' && message.type === MessageTypes.TEXT)) {
             // Cooldown
             if (can_execute(message, from)) {
                 exec_command(message);
@@ -151,6 +153,7 @@ client.on('ready', () => {
         2.8, // 2
         3.6  // 3
     ];
+
     function can_execute(message: Message, from: string): boolean {
         if (message.fromMe === true) { return true; }
 
