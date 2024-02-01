@@ -294,11 +294,16 @@ export function command_example(command: Command): string | null {
         if (command.info.description?.length) { text += `\n\n${command.info.description}`; }
 
         if (command.parameters) {
-            text += `\n\n✍️ *Sintaxis del comando* ✍️\n\n`;
-
-            let example = '\n\n📥 *Ejemplo* 📥\n\n' + commandsSettings.commandPrefix + command.alias[0];
-            text += commandsSettings.commandPrefix + command.alias[0];
+            let alias = command.alias[0];
             
+            if (commandsSettings.commandPrefix.length === 0) {
+                alias = command.alias[0].charAt(0).toUpperCase() + command.alias[0].slice(1);
+            }
+            
+            text += `\n\n✍️ *Sintaxis del comando* ✍️\n\n`;
+            text += commandsSettings.commandPrefix + alias;
+
+            let example = '\n\n📥 *Ejemplo* 📥\n\n' + commandsSettings.commandPrefix + alias;
             let parameterDescription = '';
 
             command.parameters.forEach((parameter) => {
