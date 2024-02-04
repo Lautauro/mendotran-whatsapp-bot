@@ -126,6 +126,8 @@ function bus_arrivals_string(arrivals: ScheduledArrival[]): string {
 export async function get_stop_arrivals(stop: any, filter?: string) {
     return new Promise<string>(async (resolve, reject) => {
         if (mendotranData) {
+            
+            stop = stop.toUpperCase();
             if (stop.charAt(0) !== 'M') { stop = 'M' + stop; }
     
             if (!mendotranData.stops || (mendotranData.stops && !mendotranData.stops[stop])) {
