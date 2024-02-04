@@ -40,8 +40,8 @@ function arrivals_location(message: Message, quote: Message, filter?: string) {
 }
 
 // Micro
-createCommand(['micro', 'm'], (args, message) => {
-        send_response(null, message, { reaction: '⏳' });
+createCommand(['micro', 'm'], async (args, message) => {
+        await send_response(null, message, { reaction: '⏳' });
         if (message.hasQuotedMsg) {
             message.getQuotedMessage().then((quote) => {
                 arrivals_location(message, quote, args[0]);
@@ -88,8 +88,8 @@ createCommand(['micro', 'm'], (args, message) => {
 .closeCommand();
 
 // Parada 
-createCommand(['parada', 'p'], (args, message) => {
-        send_response(null, message, { reaction: '⏳' });
+createCommand(['parada', 'p'], async (args, message) => {
+        await send_response(null, message, { reaction: '⏳' });
         if (message.hasQuotedMsg) {
             message.getQuotedMessage().then((quote) => {
                 arrivals_location(message, quote);
@@ -130,8 +130,8 @@ createCommand(['parada', 'p'], (args, message) => {
 .closeCommand();
 
 // Metrotranvia
-createCommand(['metro', 'metrotranvia', 'metrotranvía', 'estacion', 'estación'], (args, message) => {
-    send_response(null, message, { reaction: '⏳' });
+createCommand(['metro', 'metrotranvia', 'metrotranvía', 'estacion', 'estación'], async (args, message) => {
+    await send_response(null, message, { reaction: '⏳' });
     get_metro_arrivals(args.join(' '))
         .then((arrivals)=>{
             send_response(arrivals, message, { 
