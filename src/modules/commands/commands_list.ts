@@ -26,6 +26,9 @@ function arrivals_location(message: Message, quote: Message, filter?: string) {
             .then((arrivals) => {
                 send_response(arrivals, message, { 
                     reaction: '🚌',
+                    messageOptions: {
+                        linkPreview: false,
+                    },
                 });
             })
             .catch((error) => {
@@ -50,6 +53,9 @@ createCommand(['micro', 'm'], (args, message) => {
                     .then((arrivals) => {
                         send_response(arrivals, message, { 
                             reaction: '🚌',
+                            messageOptions: {
+                                linkPreview: false,
+                            },
                         });
                     })
                     .catch((error) => {
@@ -95,6 +101,9 @@ createCommand(['parada', 'p'], (args, message) => {
                     .then((arrivals) => {
                         send_response(arrivals, message, { 
                             reaction: '🚌',
+                            messageOptions: {
+                                linkPreview: false,
+                            },
                         });
                     })
                     .catch((error) => {
