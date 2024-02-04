@@ -136,7 +136,7 @@ Así se creará una nueva base de datos y el archivo viejo será conservado bajo
 
 Si se desconoce el número de parada, enviando una ubicación al bot y respondiendo a la misma con alguno de los comandos, el sistema se encargará de buscar la parada más cercana y despachar sus horarios.
 
-**Comando "micro"** para saber los horarios de **UN** colectivo en específico:
+**Comando "micro"** para saber los horarios de **UNA** línea en específico:
 
 <div align="center">
 <img src="./docs/demo3.gif" alt="Demo de comando 'micro' usando la ubicación enviada por el usuario">
