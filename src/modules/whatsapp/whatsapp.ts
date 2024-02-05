@@ -5,6 +5,7 @@ import { bot_log, bot_log_error } from '../../utils/bot_log';
 
 const whatsappSettings = require('../../../config/whatsapp.json');
 const commandsSettings = require('../../../config/commands.json');
+const packageInfo = require('../../../package.json');
 
 const client = new Client({
     authStrategy: new LocalAuth({ 
@@ -48,16 +49,38 @@ client.on('disconnected', (reason) => {
 });
 
 client.on('loading_screen', (percent: number) => {
-    // Loading bar
     let loading_bar: string = '';
+    while (loading_bar.length < Math.round(100 * .5)) {
+        if (loading_bar.length < Math.round(percent * .5)) {
+            loading_bar += '█';
+        } else {
+            loading_bar += ':';
+        }
+    }
 
-    for(let i = 0; i < Math.round(percent * .5); ++i) { loading_bar += '█'; }
-    
     console.clear();
-    console.log('█ Loading messages █\n');
-    console.log(`${loading_bar}${percent < 100 && percent >= 0 ? '▄▀' : ''} [ ${percent}% ]`);
-
-    if (percent >= 100) { console.log(''); }
+    console.log('\n'                                                +
+        '                          #########\n'                     +
+        '                      #################\n'                 +
+        '                    #####           #####\n'               +
+        '                  ####                 ####\n'             +
+        '                 ###                     ###\n'            +
+        '                ###    #####              ###\n'           +
+        '               ###     #####               ###\n'          +
+        '               ###     #####               ###\n'          +
+        '               ###      ###                ###\n'          +
+        '               ###       ####              ###\n'          +
+        '               ###         ####   ####     ###\n'          +
+        '                ###         ##########    ###\n'           +
+        '                 ###            #####    ###\n'            +
+        '                 ###                   ####\n'             +
+        '                ###                 #####\n'               +
+        '                #######################\n'                 +
+        '               ########   #########\n\n\n'                 +
+        `                █  ${packageInfo.name.toUpperCase()}  █\n` +
+        `                    Version: ${packageInfo.version}\n`
+    );
+    console.log(` ${loading_bar} [ ${percent} % ]\n`);
 });
 
 client.on('ready', () => {
