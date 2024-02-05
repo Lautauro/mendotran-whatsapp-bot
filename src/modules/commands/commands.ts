@@ -332,12 +332,11 @@ export function command_example(command: Command): string | null {
 // Send response
 export async function send_response(content: MessageContent | null, message: Message, options?: CommandResponseOptions | undefined): Promise<Message | void> {
     // Avoid commands that send other commands, as this can generate an infinite loop of sending messages.
-    if (typeof content === 'string') {
-        if (content && content.lastIndexOf(commandsSettings.commandPrefix) == 0) {
-            const body: string = content.split(" ")[0].slice(commandsSettings.commandPrefix.length);
-            if (search_command(body)) {
-                throw new Error(`The response to a command cannot contain another command at the beginning, as this can create an infinite loop.`);
-            }
+    if (content && typeof content === 'string' && content.indexOf(commandsSettings.commandPrefix) === 0) {
+        const strHead: string = content.split(" ")[0].slice(commandsSettings.commandPrefix.length);
+        if (search_command(strHead)) {
+            throw new Error(`The response to a command cannot contain another command at the beginning, as this can create an infinite loop.\n\n`+
+                            `\tResponse: "\x1b[41m${commandsSettings.commandPrefix}${strHead}\x1b[0m${content.slice(commandsSettings.commandPrefix.length + strHead.length)}"\n`);
         }
     }
     const response: CommandReturn = {
