@@ -7,6 +7,5 @@
     "showUserName": true,
     "showTimestamp": true,
     "wwebjsCache": "./.session_cache",
-    "cooldownTime": 3000,
     "ignoreMedia": false
 }

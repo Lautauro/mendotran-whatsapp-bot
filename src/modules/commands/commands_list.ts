@@ -1,5 +1,5 @@
 import { command_example, createCommand, search_command, send_error_response, send_response } from "./commands.js";
-import { get_arrivals_by_location, get_stop_arrivals } from "../mendotran/mendotran.js";
+import { get_arrivals_by_location, get_metro_arrivals, get_stop_arrivals } from "../mendotran/mendotran.js";
 import { Message } from "whatsapp-web.js";
 
 /**
@@ -26,6 +26,9 @@ function arrivals_location(message: Message, quote: Message, filter?: string) {
             .then((arrivals) => {
                 send_response(arrivals, message, { 
                     reaction: '🚌',
+                    messageOptions: {
+                        linkPreview: false,
+                    },
                 });
             })
             .catch((error) => {
@@ -36,8 +39,9 @@ function arrivals_location(message: Message, quote: Message, filter?: string) {
     }
 }
 
+// Micro
 createCommand(['micro', 'm'], async (args, message) => {
-        send_response(null, message, { reaction: '⏳' });
+        await send_response(null, message, { reaction: '⏳' });
         if (message.hasQuotedMsg) {
             message.getQuotedMessage().then((quote) => {
                 arrivals_location(message, quote, args[0]);
@@ -49,6 +53,9 @@ createCommand(['micro', 'm'], async (args, message) => {
                     .then((arrivals) => {
                         send_response(arrivals, message, { 
                             reaction: '🚌',
+                            messageOptions: {
+                                linkPreview: false,
+                            },
                         });
                     })
                     .catch((error) => {
@@ -65,22 +72,24 @@ createCommand(['micro', 'm'], async (args, message) => {
         name: 'Mendotran - Micro',
         description: 'Obtener los horarios de un colectivo en una parada.\n\n' +
         '*Opcionalmente puede buscar los horarios de un micro enviando su ubicación.* ' +
-        'Primero debe enviar su ubicación actual y luego citarla con el comando:\n\n *.micro { Número de colectivo }*',
+        'Primero debe enviar su ubicación actual y luego citarla con el comando:\n\n' +
+        '*Micro { Línea }*',
     })
     .addParameter('string', undefined, {
-        name: 'Número de colectivo',
-        description: 'El número de colectivo del cual desea saber sus horarios.',
+        name: 'Línea',
+        description: 'La línea de colectivo de la cual desea saber sus horarios.',
         example: '330',
     })
     .addParameter('string', null, {
-        name: 'Código de parada',
+        name: 'Nº de parada',
         description: 'El número de parada del colectivo.',
         example: 'M1056',
     })
 .closeCommand();
-    
-createCommand(['parada', 'p'], (args, message) => {
-        send_response(null, message, { reaction: '⏳' });
+
+// Parada 
+createCommand(['parada', 'p'], async (args, message) => {
+        await send_response(null, message, { reaction: '⏳' });
         if (message.hasQuotedMsg) {
             message.getQuotedMessage().then((quote) => {
                 arrivals_location(message, quote);
@@ -92,6 +101,9 @@ createCommand(['parada', 'p'], (args, message) => {
                     .then((arrivals) => {
                         send_response(arrivals, message, { 
                             reaction: '🚌',
+                            messageOptions: {
+                                linkPreview: false,
+                            },
                         });
                     })
                     .catch((error) => {
@@ -107,12 +119,34 @@ createCommand(['parada', 'p'], (args, message) => {
     }, null, {
         name: 'Mendotran - Parada',
         description: 'Obtener los horarios de una parada de colectivos.\n\n' +
-        '*Opcionalmente puede buscar una parada de colectivo enviando su ubicación.* ' +
-        'Primero debe enviar su ubicación actual y luego citarla con el comando:\n\n *.parada*',
+        '*Opcionalmente puede buscar los horarios de una parada enviando su ubicación.* ' +
+        'Primero debe enviar su ubicación actual y luego citarla con el comando: *Parada*',
     })
     .addParameter('string', null, {
-        name: 'Código de parada',
+        name: 'Nº de parada',
         description: 'El número de parada de la cual desea saber sus horarios.',
         example: 'M1056',
+    })
+.closeCommand();
+
+// Metrotranvia
+createCommand(['metro', 'metrotranvia', 'metrotranvía', 'estacion', 'estación'], async (args, message) => {
+    await send_response(null, message, { reaction: '⏳' });
+    get_metro_arrivals(args.join(' '))
+        .then((arrivals)=>{
+            send_response(arrivals, message, { 
+                reaction: '🚋',
+            });
+        })
+        .catch((error) => {
+            send_error_response(error, message);
+        })
+    }, null, {
+        name: 'Mendotran - Metrotranvía',
+        description: 'Obtener los horarios de una estación de metrotranvía.',
+    })
+    .addParameter('string', undefined, {
+        name: 'Nombre de la estación', 
+        example: 'Piedra buena'
     })
 .closeCommand();

@@ -25,6 +25,17 @@
 
 En el caso que la parada no posea cartel, o el mismo esté vandalizado, el bot puede [localizarla usando su ubicación](#parada-cercana-a-tu-ubicación).
 
+### Metrotranvía
+
+Con este comando podrá solicitar los horarios de una estación de [metrotranvía](https://stmendoza.com/metrotranvia/).
+
+<div align="center">
+<img src="./docs/demo5.gif" alt="Demo de comando estacion">
+</div>
+
+> [!NOTE]
+> Este comando admite 3 formas de ser invocado: "estación" (con o sin tilde), "metro" y "metrotranvía".
+
 ## Guia
 * [Instalación](#instalación)
 * [¿Cómo funciona?](#cómo-funciona)
@@ -125,13 +136,13 @@ Así se creará una nueva base de datos y el archivo viejo será conservado bajo
 
 Si se desconoce el número de parada, enviando una ubicación al bot y respondiendo a la misma con alguno de los comandos, el sistema se encargará de buscar la parada más cercana y despachar sus horarios.
 
-Comando **"micro"**, para saber los horarios de **un colectivo** en específico:
+**Comando "micro"** para saber los horarios de **UNA** línea en específico:
 
 <div align="center">
 <img src="./docs/demo3.gif" alt="Demo de comando 'micro' usando la ubicación enviada por el usuario">
 </div>
 
-Comando **"parada"**, para mostrar los horarios de **todos los colectivos** de una parada:
+**Comando "parada"** para mostrar los horarios de **TODOS** los colectivos de una parada:
 
 <div align="center">
 <img src="./docs/demo4.gif" alt="Demo de comando 'parada' usando la ubicación enviada por el usuario">
@@ -148,22 +159,11 @@ Comando **"parada"**, para mostrar los horarios de **todos los colectivos** de u
 
 ## Lista de comandos
 
-Para ejecutar un comando debe estar acompañado por el prefijo **"."** *(punto)* seguido del alias del comando *(sin espacio)* y los parámetros *(estos sí espaciados)*.
-
 |Alias|Sintaxis|Función|Ejemplo|
 |:---:|:---|:---:|:---|
-|**micro<br>m**|micro *[número de micro]* *[número de parada]*|Obtener los horarios de **un colectivo** en una parada.|.micro **120** **M14408**<br>(La "M" es opcional)|
-|**parada<br>p**|parada *[número de parada]*|Obtener **todos** los horarios de una parada de colectivos.|.parada **M5707**<br>(La "M" es opcional)|
-|**help<br>?**|help *[comando]*|Solicitar información sobre el uso de un comando.|.help **micro**|
+|**Micro<br>M**|Micro *[Línea]* *[Nº de parada]*|Obtener los horarios de **un colectivo** en una parada.|Micro **120** **M14408**<br>(La "M" es opcional)|
+|**Parada<br>P**|Parada *[Nº de parada]*|Obtener **todos** los horarios de una parada de colectivos.|Parada **M5707**<br>(La "M" es opcional)|
+|**Estación<br>Metro<br>Metrotranvía**|Estacion *[Nombre de la estación]*|Obtener los horarios de **una estación de metrotranvía**.|Estacion **Godoy**|
+|**Ayuda<br>Help<br>?**|Ayuda *[Comando]*|Solicitar información sobre el uso de un comando.|Ayuda **Micro**|
 
 También existe la alternativa de localizar una parada por cercanía. Tan solo basta con enviar una ubicación, citarla y utilizar alguno de los comandos. [Vea el ejemplo](#parada-cercana-a-tu-ubicación).
-
-## Cosas por hacer:
-
-Lejos de ser este el estado final del proyecto, aún hay cosas que tengo pensadas implementar en un futuro. Si lo desea y tiene las habilidades para hacerlo puede contribuir al mismo.
-
-Alguna de mis ideas son:
-
-- [ ] Solicitar los horarios del metro-tranvía por el nombre de la estación. Por ejemplo: **.estacion "San Martín"**.
-- [ ] Sistema para que el usuario pueda guardar una parada o micro con un nombre. Por ejemplo: guardar la parada cercana a su hogar como "casa", entonces para saber los horarios de esa parada solo basta escribir **".micro 123 casa"** o **".parada casa"**.
-- [ ] Comando para listar todas las paradas cercanas respecto a una ubicación. Esto le permitiría al usuario conocer las paradas cercanas y las calles en las que se ubican.
