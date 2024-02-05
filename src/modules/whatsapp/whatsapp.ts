@@ -5,6 +5,7 @@ import { bot_log, bot_log_error } from '../../utils/bot_log';
 
 const whatsappSettings = require('../../../config/whatsapp.json');
 const commandsSettings = require('../../../config/commands.json');
+const packageInfo = require('../../../package.json');
 
 const client = new Client({
     authStrategy: new LocalAuth({ 
@@ -48,21 +49,43 @@ client.on('disconnected', (reason) => {
 });
 
 client.on('loading_screen', (percent: number) => {
-    // Loading bar
-    let loading_bar = '';
+    let loading_bar: string = '';
+    while (loading_bar.length < Math.round(100 * .5)) {
+        if (loading_bar.length < Math.round(percent * .5)) {
+            loading_bar += '█';
+        } else {
+            loading_bar += ':';
+        }
+    }
 
-    for(let i = 0; i < percent/2; ++i) { loading_bar += '█'; }
-    
     console.clear();
-    console.log('█ Loading messages █\n');
-    console.log(`${loading_bar}${percent < 100 && percent >= 0 ? '▄▀' : ''} [ ${percent}% ]`);
-
-    if (percent >= 100) { console.log(''); }
+    console.log('\n'                                                    +
+        `                █  ${packageInfo.name.toUpperCase()}  █\n\n`   +
+        '                          #########\n'                         +
+        '                      #################\n'                     +
+        '                    #####           #####\n'                   +
+        '                  ####                 ####\n'                 +
+        '                 ###                     ###\n'                +
+        '                ###    #####              ###\n'               +
+        '               ###     #####               ###\n'              +
+        '               ###     #####               ###\n'              +
+        '               ###      ###                ###\n'              +
+        '               ###       ####              ###\n'              +
+        '               ###         ####   ####     ###\n'              +
+        '                ###         ##########    ###\n'               +
+        '                 ###            #####    ###\n'                +
+        '                 ###                   ####\n'                 +
+        '                ###                 #####\n'                   +
+        '                #######################\n'                     +
+        '               ########   #########\n\n'                       +
+        `                     Version: ${packageInfo.version}\n`
+    );
+    console.log(` ${loading_bar} [ ${percent} % ]\n`);
 });
 
 client.on('ready', () => {
     const startTime = Date.now();
-    const commandPath = '../commands';
+    const commandPath: string = '../commands';
     let exec_command  = require(`${commandPath}/commands.js`).exec_command;
     require('../commands/commands_list.js');
 
@@ -147,12 +170,7 @@ client.on('ready', () => {
         bot_log('Command timestamp history cleared.');
     }
 
-    const cooldownMultiplier = [
-        1.4, // 0
-        2,   // 1
-        2.8, // 2
-        3.6  // 3
-    ];
+    const cooldownMultiplier = [ 1.4, 2, 2.8, 3.6];
 
     function can_execute(message: Message, from: string): boolean {
         if (message.fromMe === true) { return true; }
@@ -199,18 +217,22 @@ client.on('ready', () => {
 // Functions
 
 async function print_message(message: Message, from: string, edited?: boolean): Promise<void> {
-    let terminalText = '';
+    let terminalText: string = '';
+
     // Timestamp: Time the message was sent
-    const time: string | null = whatsappSettings.showTimestamp ? get_time_string(message.timestamp * 1000, true, true, true) : null;
-    if (time) { terminalText += `[${time}] `; }
+    if (whatsappSettings.showTimestamp === true) { 
+        terminalText += `[${get_time_string(message.timestamp * 1000, true, true, true)}] `;
+    }
 
     // Show contact name if it is booked
-    let userName: string = message.fromMe ? whatsappSettings.botName : '';
+    let userName: string = 'UNKNOWN';
 
-    if (userName.length === 0) {
+    if (message.fromMe === true) {
+        userName = whatsappSettings.botName;
+    } else {
         if (whatsappSettings.showContactName) {
             const contact = await message.getContact();
-            userName = contact.name == undefined ? contact.pushname : contact.name;
+            userName = (contact.name === undefined) ? contact.pushname : contact.name;
         } else if (whatsappSettings.showUserName) {
             // @ts-ignore            
             userName = message.rawData.notifyName ?? 'UNDEFINED';
@@ -220,11 +242,11 @@ async function print_message(message: Message, from: string, edited?: boolean): 
     }
     
     // Media: Audio, voice message, video, image, etc
-    let messageMedia = '';
+    let messageMedia: string = '';
 
     // @ts-ignore
     if (message.isGif) { message.type = 'gif'; }
-    if (message.hasMedia || message.location) {
+    if (message.hasMedia === true || message.location) {
         switch (message.type) {
             case MessageTypes.AUDIO:
                 messageMedia = '🔊 Audio 🔊';
@@ -267,7 +289,7 @@ async function print_message(message: Message, from: string, edited?: boolean): 
     }
 
     // Setting: Show phone number
-    if (whatsappSettings.showPhoneNumber) { terminalText += `${from}`; }
+    if (whatsappSettings.showPhoneNumber === true) { terminalText += `${from}`; }
     // User name
     terminalText += `| <${userName}> `;
     // Media
