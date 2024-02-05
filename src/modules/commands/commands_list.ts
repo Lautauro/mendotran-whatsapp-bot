@@ -62,7 +62,11 @@ createCommand(['micro', 'm'], async (args, message) => {
                         send_error_response(error, message);
                     });
             } else {
-                send_error_response('Debe indicar un número de parada.', message);
+                if (typeof args[0] == 'number') {
+                    await send_error_response('Debe indicar un número de parada.', message);
+                } else {
+                    await send_error_response('Argumentos erróneos. La línea del colectivo debe ser un número.', message);
+                }
                 // @ts-ignore
                 const example = command_example(search_command('micro'));
                 send_response(example, message);
@@ -110,7 +114,7 @@ createCommand(['parada', 'p'], async (args, message) => {
                         send_error_response(error, message);
                     });
             } else {
-                send_error_response('Debe indicar un número de parada.', message);
+                await send_error_response('Debe indicar un número de parada.', message);
                 // @ts-ignore
                 const example = command_example(search_command('parada'));
                 send_response(example, message);
