@@ -213,7 +213,7 @@ export function exec_command(message : Message): void {
         if (oldPrefix === true) {
             setTimeout(() => {
                 send_response('*¡Ojo al piojo!* 🤓☝️\n\n' +
-                              'Ya no es necesario escribir "*.*" al comienzo de un comando. *Los mensajes con este prefijo serán ignorados en futuras versiones.*',
+                              'Ya no es necesario escribir "*.*" (punto) al comienzo de un comando. *Los mensajes con este prefijo serán ignorados en futuras versiones.*',
                             message, { reply: true });
             }, 6000);
         }
