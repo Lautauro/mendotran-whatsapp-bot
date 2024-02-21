@@ -1,4 +1,4 @@
-import { Command, CommandInfo, CommandOptions, CommandResponseOptions, CommandReturn, ParameterInfo } from "../../ts/interfaces/commands.js";
+import { Command, CommandData, CommandOptions, CommandResponseOptions, CommandReturn, ParameterInfo } from "../../ts/interfaces/commands.js";
 import { CommandCallback, ParameterType } from "../../ts/types/commands.js";
 import { CommandResponse, CommandResponseType } from "../../ts/enums/commands.js";
 import { read_response } from "../whatsapp/read_response.js";
@@ -69,31 +69,32 @@ const commandsManager = new CommandsManager();
 const commandBase = (command: Command) => {
     return {
         ...command,
+        setCallback: setCallback(command),
         addParameter: addParameter(command),
         closeCommand: closeCommand(command),
     }
 }
 
-export const createCommand = (alias: string[], callback: CommandCallback, options?: CommandOptions | null, info?: CommandInfo) => {   
+export const createCommand = (alias: string[], data?: CommandData) => {   
     const command: Command =  {
         alias,
         parameters: null,
         options: {
             ...commandDefaultOptions,
-            ...options,
+            ...data?.options,
         },
-        info,
-        callback,
+        info: data?.info,
+        callback: () => {},
     }
 
-    return {
-        ...command,
-        addParameter: addParameter(command),
-        closeCommand: closeCommand(command),
-    }
+    return commandBase({ ...command });
 }
 
-const addParameter = (command: Command) => (type: ParameterType | ParameterType[], defaultValue?: any, info?: ParameterInfo) => {
+const setCallback = (command: Command) => (callback: CommandCallback) => {
+    return commandBase({ ...command, callback });
+}
+
+const addParameter = (command: Command) => (type: ParameterType | ParameterType[], info?: ParameterInfo, defaultValue?: any) => {
     if (!Array.isArray(command.parameters)) { command.parameters = [] };
     if (typeof type === 'string') { type = [ type ]; }
 
@@ -359,9 +360,14 @@ export async function send_error_response(content: MessageContent | null, messag
 }
 
 // Help command
-createCommand(['help', '?'],
-    function(args, message) {
-        if (args[0]) {
+createCommand(['help', '?'], {
+    info: {
+        name: 'Help',
+        description: 'Get info about a command.',
+    }
+    })
+    .setCallback(function(args, message) {
+        if (args.length > 0) {
             const command = search_command(args[0]);
             if (command) {
                 const example = command_example(command);
@@ -378,12 +384,6 @@ createCommand(['help', '?'],
             // @ts-ignore
             send_response(command_example(this), message);
         }
-    }, null, {
-        name: 'Help',   
-        description: 'Get info about a command.',
     })
-    .addParameter('string', null, {
-        name: 'Command name',
-        example: 'ping',
-    })
+    .addParameter('string', { name: 'Command name', example: 'ping', }, null)
 .closeCommand();
