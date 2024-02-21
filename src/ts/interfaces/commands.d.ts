@@ -5,6 +5,7 @@ import { CommandResponse, CommandResponseType } from "../enums/commands";
 export interface ParameterInfo {
     name: string;
     description?: string;
+    note?: string;
     example: string;
 }
 
@@ -31,6 +32,11 @@ export interface Command {
     defaultValues?: any[];
     info?: CommandInfo;
     callback: CommandCallback;
+}
+
+export interface CommandData {
+    options?: CommandOptions;
+    info?: CommandInfo;
 }
 
 export interface CommandResponseOptions {
