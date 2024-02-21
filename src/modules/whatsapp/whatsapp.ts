@@ -78,7 +78,7 @@ client.on('loading_screen', (percent: number) => {
         '                ###                  #####\n'                  +
         '                #######################\n'                     +
         '               ########   ##########\n\n'                      +
-        `                   Version: ${packageInfo.version}\n`
+        `                     Version: ${packageInfo.version}\n`
     );
     console.log(` ${loading_bar} [ ${percent} % ]\n`);
 });
