@@ -191,7 +191,7 @@ export function search_command(commandName: string): Command | null {
     return null;
 }
 
-export function exec_command(message : Message): void {
+export async function exec_command(message : Message): Promise<void> {
     try {
         // Verificar si se está utilizando el viejo prefijo
         let oldPrefix = false;
@@ -230,6 +230,7 @@ export function exec_command(message : Message): void {
             }
             // Commands without parameters
             if (!commandObject.parameters) {
+                await send_response(null, message, { reaction: '⏳' });
                 commandObject.callback(commandArgs, message);
                 return;
             } else {
@@ -246,6 +247,7 @@ export function exec_command(message : Message): void {
                                 commandArgs.push(commandObject.defaultValues[i]);
                             }
                         }
+                        await send_response(null, message, { reaction: '⏳' });
                         commandObject.callback(commandArgs, message);
                         return;
                     } else {

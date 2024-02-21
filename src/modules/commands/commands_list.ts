@@ -41,7 +41,6 @@ function arrivals_location(message: Message, quote: Message, filter?: string) {
 
 // Micro
 createCommand(['micro', 'm'], async (args, message) => {
-        await send_response(null, message, { reaction: '⏳' });
         if (message.hasQuotedMsg) {
             message.getQuotedMessage().then((quote) => {
                 arrivals_location(message, quote, args[0]);
@@ -79,7 +78,7 @@ createCommand(['micro', 'm'], async (args, message) => {
         'Primero debe enviar su ubicación actual y luego citarla con el comando:\n\n' +
         '*Micro { Línea }*',
     })
-    .addParameter('string', undefined, {
+    .addParameter('number', undefined, {
         name: 'Línea',
         description: 'La línea de colectivo de la cual desea saber sus horarios.',
         example: '330',
@@ -93,7 +92,6 @@ createCommand(['micro', 'm'], async (args, message) => {
 
 // Parada 
 createCommand(['parada', 'p'], async (args, message) => {
-        await send_response(null, message, { reaction: '⏳' });
         if (message.hasQuotedMsg) {
             message.getQuotedMessage().then((quote) => {
                 arrivals_location(message, quote);
@@ -135,7 +133,6 @@ createCommand(['parada', 'p'], async (args, message) => {
 
 // Metrotranvia
 createCommand(['metro', 'metrotranvia', 'metrotranvía', 'estacion', 'estación'], async (args, message) => {
-    await send_response(null, message, { reaction: '⏳' });
     get_metro_arrivals(args.join(' '))
         .then((arrivals)=>{
             send_response(arrivals, message, { 
