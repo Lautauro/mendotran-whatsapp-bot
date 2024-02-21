@@ -123,12 +123,17 @@ function bus_arrivals_string(arrivals: ScheduledArrival[]): string {
     return text;
 }
 
-export async function get_stop_arrivals(stop: any, filter?: string) {
+export async function get_stop_arrivals(stopNumber: any, filter?: string) {
     return new Promise<string>(async (resolve, reject) => {
         if (mendotranData) {
-            
-            stop = stop.toUpperCase();
+            let stop = stopNumber;
+            if (filter) { filter = filter.toString(); }
+            if (stop.charAt(0) === 'm') { stop = stop.toUpperCase(); }
             if (stop.charAt(0) !== 'M') { stop = 'M' + stop; }
+
+            if (!stop.match(/\bM\d+\b/)) {
+                return reject(`"*${stopNumber}*" no es una parada. El formato ha de ser *M + Número de parada* o simplemente el número de la misma.\n\nPor ejemplo: *M1234*`);
+            }
     
             if (!mendotranData.stops || (mendotranData.stops && !mendotranData.stops[stop])) {
                 return reject(`No existe la parada *${stop}*`);
@@ -167,8 +172,11 @@ export async function get_stop_arrivals(stop: any, filter?: string) {
                     return resolve(text);
                 })
                 .catch((error) => {
-                    console.error(error);
-                    return reject('Ha ocurrido un error al procesar la petición. Vuelva a intentarlo.');
+                    if (typeof error === 'string') {
+                        return reject(error);
+                    } else if (error instanceof Error) {
+                        return reject(handle_errors(error));
+                    }
                 })
         } else {
             return reject('No se ha podido cargar la base de datos de Mendotran.');
@@ -197,8 +205,11 @@ export async function get_arrivals_by_location(position: Position, filter?: stri
                     return resolve(get_stop_arrivals(stopsAround[0].code, filter));
                 })
                 .catch((error) => {
-                    console.error(error);
-                    return reject('Ha ocurrido un error al procesar la petición. Vuelva a intentarlo.');
+                    if (typeof error === 'string') {
+                        return reject(error);
+                    } else if (error instanceof Error) {
+                        return reject(handle_errors(error));
+                    }
                 });
         } else {
             return reject('No se ha podido cargar la base de datos de Mendotran.');
@@ -238,7 +249,11 @@ export async function get_metro_arrivals(stopName: string): Promise<string> {
                 }
             })
             .catch((error) => {
-                return reject(error);
+                if (typeof error === 'string') {
+                    return reject(error);
+                } else if (error instanceof Error) {
+                    return reject(handle_errors(error));
+                }
             });
     });
 }
@@ -279,4 +294,13 @@ function search_name(array: any[], key: string | null, regExp: RegExp) {
         if (search && typeof search === 'string' && search.search(regExp) >= 0) { return value; }
     }
     return undefined;
+}
+
+function handle_errors(error: Error): string {
+    console.error('\n', error, '\n');
+    if (error.name === 'TimeoutError') {
+        return 'La petición tardó demasiado en responder. Vuelva a intentarlo.\n\n🐌 🦥';
+    } else {
+        return `Ha ocurrido un error al procesar la petición, "*${error.name}*". Vuelva a intentarlo.`;
+    }
 }
