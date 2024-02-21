@@ -4,24 +4,28 @@ import { createCommand, send_response } from "./commands.js";
  * Basic commands
  */
 
-createCommand(['ping'],
-    (args, message) => {
+createCommand(['ping'], {
+    info: {
+        name: 'Ping',
+        description: 'Ping-pong! 🏓',
+    }
+    })
+    .setCallback((args, message) => {
         send_response('Pong!', message, {
             reaction: '🏓',
         })
-    }, null, {
-        name: 'Ping',
-        description: 'Ping-pong! 🏓',
     })
 .closeCommand();
 
-createCommand(['pong'],
-    (args, message) => {
+createCommand(['pong'], {
+    info: {
+        name: 'Pong',
+        description: 'Ping-pong! 🏓',
+    }
+    })
+    .setCallback(function (args, message) {
         send_response('Ping!', message, {
             reaction: '🏓',
         })
-    }, null, {
-        name: 'Pong',
-        description: 'Pong-ping! 🏓',
     })
 .closeCommand();
