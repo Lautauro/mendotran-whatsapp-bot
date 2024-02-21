@@ -6,13 +6,16 @@ import { Message } from "whatsapp-web.js";
  * Genéricos
  */
 
-createCommand(['ping'], (args, message) => {
+createCommand(['ping'], {
+    info: {
+        name: 'Ping',
+        description: 'Ping-pong! 🏓',
+    }
+    })
+    .setCallback((args, message) => {
         send_response('Pong!', message, {
             reaction: '🏓',
         })
-    }, null, {
-        name: 'Ping',
-        description: 'Ping-pong! 🏓',
     })
 .closeCommand();
 
@@ -40,58 +43,73 @@ function arrivals_location(message: Message, quote: Message, filter?: string) {
 }
 
 // Micro
-createCommand(['micro', 'm'], async (args, message) => {
-        if (message.hasQuotedMsg) {
-            message.getQuotedMessage().then((quote) => {
-                arrivals_location(message, quote, args[0]);
-                return;
-            })
-        } else {
-            if (args[1]) {
-                get_stop_arrivals(args[1], args[0])
-                    .then((arrivals) => {
-                        send_response(arrivals, message, { 
-                            reaction: '🚌',
-                            messageOptions: {
-                                linkPreview: false,
-                            },
-                        });
-                    })
-                    .catch((error) => {
-                        send_error_response(error, message);
-                    });
-            } else {
-                if (typeof args[0] == 'number') {
-                    await send_error_response('Debe indicar un número de parada.', message);
-                } else {
-                    await send_error_response('Argumentos erróneos. La línea del colectivo debe ser un número.', message);
-                }
-                // @ts-ignore
-                const example = command_example(search_command('micro'));
-                send_response(example, message);
-            }
-        }
-    }, null, {
+createCommand(['micro', 'm'], {
+    info: {
         name: 'Mendotran - Micro',
         description: 'Obtener los horarios de un colectivo en una parada.\n\n' +
         '*Opcionalmente puede buscar los horarios de un micro enviando su ubicación.* ' +
         'Primero debe enviar su ubicación actual y luego citarla con el comando:\n\n' +
         '*Micro { Línea }*',
-    })
-    .addParameter('number', undefined, {
+    }})
+    .addParameter('number', {
         name: 'Línea',
         description: 'La línea de colectivo de la cual desea saber sus horarios.',
         example: '330',
     })
-    .addParameter('string', null, {
+    .addParameter('string', {
         name: 'Nº de parada',
         description: 'El número de parada del colectivo.',
+        note: 'No es estríctamente necesaria la "M".',
         example: 'M1056',
+    }, null)
+    .setCallback(async (args, message) => {
+        if (message.hasQuotedMsg) {
+            message.getQuotedMessage()
+                .then((quote) => {
+                    arrivals_location(message, quote, args[0]);
+                });
+            return;
+        }
+        if (args[1] !== null) {
+            get_stop_arrivals(args[1], args[0])
+                .then((arrivals) => {
+                    send_response(arrivals, message, {
+                        reaction: '🚌',
+                        messageOptions: {
+                            linkPreview: false,
+                        },
+                    });
+                })
+                .catch((error) => {
+                    send_error_response(error, message);
+                });
+        } else {
+            if (typeof args[0] === 'number') {
+                await send_error_response('Debe indicar un número de parada.', message);
+            } else {
+                await send_error_response('Argumentos erróneos. La línea del colectivo debe ser un número.', message);
+            }
+            // @ts-ignore
+            const example = command_example(search_command('micro'));
+            send_response(example, message);
+        }
     })
 .closeCommand();
 
 // Parada 
-createCommand(['parada', 'p'], async (args, message) => {
+createCommand(['parada', 'p'], {
+    info: {
+        name: 'Mendotran - Parada',
+        description: 'Obtener los horarios de una parada de colectivos.\n\n' +
+        '*Opcionalmente puede buscar los horarios de una parada enviando su ubicación.* ' +
+        'Primero debe enviar su ubicación actual y luego citarla con el comando: *Parada*',
+    }})
+    .addParameter('string', {
+        name: 'Nº de parada',
+        description: 'El número de parada de la cual desea saber sus horarios.',
+        example: 'M1056',
+    }, null)
+    .setCallback(async (args, message) => {
         if (message.hasQuotedMsg) {
             message.getQuotedMessage().then((quote) => {
                 arrivals_location(message, quote);
@@ -118,36 +136,28 @@ createCommand(['parada', 'p'], async (args, message) => {
                 send_response(example, message);
             }
         }
-    }, null, {
-        name: 'Mendotran - Parada',
-        description: 'Obtener los horarios de una parada de colectivos.\n\n' +
-        '*Opcionalmente puede buscar los horarios de una parada enviando su ubicación.* ' +
-        'Primero debe enviar su ubicación actual y luego citarla con el comando: *Parada*',
-    })
-    .addParameter('string', null, {
-        name: 'Nº de parada',
-        description: 'El número de parada de la cual desea saber sus horarios.',
-        example: 'M1056',
     })
 .closeCommand();
 
 // Metrotranvia
-createCommand(['metro', 'metrotranvia', 'metrotranvía', 'estacion', 'estación'], async (args, message) => {
-    get_metro_arrivals(args.join(' '))
-        .then((arrivals)=>{
-            send_response(arrivals, message, { 
-                reaction: '🚋',
-            });
-        })
-        .catch((error) => {
-            send_error_response(error, message);
-        })
-    }, null, {
+createCommand(['metro', 'metrotranvia', 'metrotranvía', 'estacion', 'estación'], {
+    info: {
         name: 'Mendotran - Metrotranvía',
         description: 'Obtener los horarios de una estación de metrotranvía.',
-    })
-    .addParameter('string', undefined, {
+    }})
+    .addParameter('string', {
         name: 'Nombre de la estación', 
         example: 'Piedra buena'
+    })
+    .setCallback(async (args, message) => {
+        get_metro_arrivals(args.join(' '))
+            .then((arrivals)=>{
+                send_response(arrivals, message, { 
+                    reaction: '🚋',
+                });
+            })
+            .catch((error) => {
+                send_error_response(error, message);
+            })
     })
 .closeCommand();

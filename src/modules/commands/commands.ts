@@ -1,4 +1,4 @@
-import { Command, CommandInfo, CommandOptions, CommandResponseOptions, CommandReturn, ParameterInfo } from "../../ts/interfaces/commands.js";
+import { Command, CommandData, CommandOptions, CommandResponseOptions, CommandReturn, ParameterInfo } from "../../ts/interfaces/commands.js";
 import { CommandCallback, ParameterType } from "../../ts/types/commands.js";
 import { CommandResponse, CommandResponseType } from "../../ts/enums/commands.js";
 import { read_response } from "../whatsapp/read_response.js";
@@ -19,7 +19,16 @@ const parameterDefaultInfo: ParameterInfo = Object.freeze({
     example: 'UNDEFINED',
 });
 
-// Commands
+class CommandError {
+    message: string;
+    options?: CommandResponseOptions;
+    
+    constructor(message: string, options?: CommandResponseOptions) {
+        this.message = message;
+        this.options = options;
+    }
+}
+
 class CommandsManager {
     list: Command[];
     alias: Map<string, number>;
@@ -60,31 +69,32 @@ const commandsManager = new CommandsManager();
 const commandBase = (command: Command) => {
     return {
         ...command,
+        setCallback: setCallback(command),
         addParameter: addParameter(command),
         closeCommand: closeCommand(command),
     }
 }
 
-export const createCommand = (alias: string[], callback: CommandCallback, options?: CommandOptions | null, info?: CommandInfo) => {   
+export const createCommand = (alias: string[], data?: CommandData) => {   
     const command: Command =  {
         alias,
         parameters: null,
         options: {
             ...commandDefaultOptions,
-            ...options,
+            ...data?.options,
         },
-        info,
-        callback,
+        info: data?.info,
+        callback: () => {},
     }
 
-    return {
-        ...command,
-        addParameter: addParameter(command),
-        closeCommand: closeCommand(command),
-    }
+    return commandBase({ ...command });
 }
 
-const addParameter = (command: Command) => (type: ParameterType | ParameterType[], defaultValue?: any, info?: ParameterInfo) => {
+const setCallback = (command: Command) => (callback: CommandCallback) => {
+    return commandBase({ ...command, callback });
+}
+
+const addParameter = (command: Command) => (type: ParameterType | ParameterType[], info?: ParameterInfo, defaultValue?: any) => {
     if (!Array.isArray(command.parameters)) { command.parameters = [] };
     if (typeof type === 'string') { type = [ type ]; }
 
@@ -137,8 +147,8 @@ function argument_type(arg: any): ParameterType | null {
 function verify_args(args: any[], command: Command): boolean {
     if (!command.parameters) { return false; }
 
-    // Ignore excess arguments, to avoid errors when checkin.
-    const argsLen = args.length > command.parameters.length ? command.parameters.length : args.length;
+    // Ignore excess arguments, to avoid errors when checkin
+    const argsLen: number = args.length > command.parameters.length ? command.parameters.length : args.length;
     
     // Check each parameter
     for (let argIndex = 0; argIndex < argsLen; argIndex++) {
@@ -224,9 +234,7 @@ export async function exec_command(message : Message): Promise<void> {
             
             // Commands that require a message to be quoted
             if (commandObject.options.needQuotedMessage === true && !message.hasQuotedMsg) {
-                // Error
-                send_error_response('Este comando necesita citar un mensaje para ser ejecutado.', message);
-                return;
+                throw new CommandError('Este comando necesita citar un mensaje para ser ejecutado.');
             }
             // Commands without parameters
             if (!commandObject.parameters) {
@@ -251,22 +259,19 @@ export async function exec_command(message : Message): Promise<void> {
                         commandObject.callback(commandArgs, message);
                         return;
                     } else {
-                        // Error
-                        send_error_response('Argumentos erróneos.', message);
-                        send_response(command_example(commandObject), message);
-                        return;
+                        throw new CommandError('Argumentos erróneos.');
                     }
                 } else {
-                    // Error
-                    send_error_response('Faltan argumentos en el comando.', message);
-                    send_response(command_example(commandObject), message);
-                    return;
+                    throw new CommandError('Faltan argumentos en el comando.');
                 }
             }
         }
     } catch(error) {
-        console.log();
-        console.error(error);
+        if (error instanceof CommandError) {
+            send_error_response(error.message, message, { ...error.options });
+        } else {
+            console.error(error);
+        }
     }
     return;
 }
@@ -286,8 +291,7 @@ function command_log(commandName: string, commandArgs: any[], message: Message):
     bot_log(`Executing command...\n\n`,
         `> Command: "${commandName}"\n`,
         `> From:`, from, '\n',
-        `> Args:`, commandArgs);
-    console.log();
+        `> Args:`, commandArgs, '\n');
 }
 
 export function command_example(command: Command): string | null {   
@@ -374,9 +378,13 @@ export async function send_error_response(content: MessageContent | null, messag
 }
 
 // Help command
-createCommand(['ayuda', 'help', '?'],
-    function(args, message) {
-        if (args[0]) {
+createCommand(['ayuda', 'help', '?'], {
+    info: {
+        name: 'Ayuda',   
+        description: 'Obtener información sobre el uso de un comando.',
+    }})
+    .setCallback(function(args, message) {
+        if (args.length > 0) {
             const command = search_command(args[0]);
             if (command) {
                 const example = command_example(command);
@@ -393,12 +401,6 @@ createCommand(['ayuda', 'help', '?'],
             // @ts-ignore
             send_response(command_example(this), message);
         }
-    }, null, {
-        name: 'Ayuda',   
-        description: 'Obtener información sobre el uso de un comando.',
     })
-    .addParameter('string', null, {
-        name: 'Nombre del comando',
-        example: 'parada',
-    })
+    .addParameter('string', { name: 'Nombre del comando', example: 'parada', }, null)
 .closeCommand();

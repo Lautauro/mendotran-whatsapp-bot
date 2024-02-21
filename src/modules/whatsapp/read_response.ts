@@ -11,7 +11,7 @@ const commandsSettings = require('../../../config/commands.json');
 export async function read_response(response: CommandReturn, message: Message): Promise<Message | void> {
     if (response.code === CommandResponse.OK) {
         if (typeof response.data.reaction === 'string' && response.data.reaction.length) {
-            react_to_message(response.data.reaction, message);
+            await react_to_message(response.data.reaction, message);
         }
 
         if (response.data.content) {
@@ -25,7 +25,7 @@ export async function read_response(response: CommandReturn, message: Message): 
         bot_log('Command response: OK\n', response);
     } else if (response.code === CommandResponse.ERROR && typeof response.data.content === 'string') {
         bot_log_error('Command response: ERROR\n', response);
-        react_to_message('😵', message);
+        await react_to_message(response.data.reaction ?? '😵', message);
         return await send_message(`⚠️ *Ha ocurrido un error* ⚠️\n\n${response.data.content}`, message.id, { sendSeen: commandsSettings.sendSeen, ...response.data.options});
     }
 }
