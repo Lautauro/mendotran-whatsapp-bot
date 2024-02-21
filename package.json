@@ -1,6 +1,6 @@
 {
     "name": "mendotran-whatsapp-bot",
-    "version": "alpha-1.1",
+    "version": "alpha-1.1.1",
     "description": "",
     "main": "./build/index.js",
     "scripts": {
