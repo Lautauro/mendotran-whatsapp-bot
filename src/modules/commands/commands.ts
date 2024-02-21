@@ -19,7 +19,16 @@ const parameterDefaultInfo: ParameterInfo = Object.freeze({
     example: 'UNDEFINED',
 });
 
-// Commands
+class CommandError {
+    message: string;
+    options?: CommandResponseOptions;
+    
+    constructor(message: string, options?: CommandResponseOptions) {
+        this.message = message;
+        this.options = options;
+    }
+}
+
 class CommandsManager {
     list: Command[];
     alias: Map<string, number>;
@@ -137,8 +146,8 @@ function argument_type(arg: any): ParameterType | null {
 function verify_args(args: any[], command: Command): boolean {
     if (!command.parameters) { return false; }
 
-    // Ignore excess arguments, to avoid errors when checkin.
-    const argsLen = args.length > command.parameters.length ? command.parameters.length : args.length;
+    // Ignore excess arguments, to avoid errors when checkin
+    const argsLen: number = args.length > command.parameters.length ? command.parameters.length : args.length;
     
     // Check each parameter
     for (let argIndex = 0; argIndex < argsLen; argIndex++) {
@@ -208,9 +217,7 @@ export function exec_command(message : Message): void {
             
             // Commands that require a message to be quoted
             if (commandObject.options.needQuotedMessage === true && !message.hasQuotedMsg) {
-                // Error
-                send_error_response('This command requires quoting a message to be executed.', message);
-                return;
+                throw new CommandError('This command requires quoting a message to be executed.');
             }
             // Commands without parameters
             if (!commandObject.parameters) {
@@ -233,22 +240,19 @@ export function exec_command(message : Message): void {
                         commandObject.callback(commandArgs, message);
                         return;
                     } else {
-                        // Error
-                        send_error_response('Wrong arguments.', message);
-                        send_response(command_example(commandObject), message);
-                        return;
+                        throw new CommandError('Wrong arguments.');
                     }
                 } else {
-                    // Error
-                    send_error_response('Arguments missing in the command.', message);
-                    send_response(command_example(commandObject), message);
-                    return;
+                    throw new CommandError('Arguments missing in the command.');
                 }
             }
         }
     } catch(error) {
-        console.log();
-        console.error(error);
+        if (error instanceof CommandError) {
+            send_error_response(error.message, message, { ...error.options });
+        } else {
+            console.error(error);
+        }
     }
     return;
 }
@@ -268,8 +272,7 @@ function command_log(commandName: string, commandArgs: any[], message: Message):
     bot_log(`Executing command...\n\n`,
         `> Command: "${commandName}"\n`,
         `> From:`, from, '\n',
-        `> Args:`, commandArgs);
-    console.log();
+        `> Args:`, commandArgs, '\n');
 }
 
 export function command_example(command: Command): string | null {   
