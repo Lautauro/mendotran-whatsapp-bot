@@ -140,7 +140,7 @@ export async function get_stop_arrivals(stopNumber: any, filter?: string) {
             }
 
             if (filter && !mendotranData.stops[stop].busList.includes(filter)) {
-                return reject(`El micro *${filter}* no pasa por *${stop}*`);
+                return reject(`El micro *${filter}* no pasa por la parada *${stop}*`);
             }
     
             fetch_json_mendotran(`${mendotranSettings.api}/arrivals-and-departures-for-stop/${mendotranData.stops[stop].id}.json`)
@@ -157,7 +157,7 @@ export async function get_stop_arrivals(stopNumber: any, filter?: string) {
                             return bus.routeShortName === filter;
                         });
                         if (!arrivals.length) {
-                            return reject(`🚎 Sin llegadas para *${filter}* en *${stop}* 🏃‍♀️`);
+                            return reject(`🚎 Sin llegadas para *${filter}* en la parada *${stop}* 🏃‍♀️`);
                         }
                     }
 
@@ -194,7 +194,7 @@ export async function get_arrivals_by_location(position: Position, filter?: stri
             fetch_json_mendotran(`${mendotranSettings.api}/stops-for-location.json?platform=web&v=&lat=${position.lat}&lon=${position.lon}&latSpan=0.006&lonSpan=0.01&version=1.0`)
                 .then((json) => {
                     if (!json.data?.list || json.data.list.length === 0) {
-                        return reject('Fuera de rango: No se han encontrado paradas cercanas a la ubicación.');
+                        return reject('No se han encontrado paradas de Mendotran cercanas a la ubicación.\n\n🧭 ❓');
                     }
         
                     const stopsAround: StopInfo[] = json.data?.list.sort((a: StopInfo, b: StopInfo) => {
