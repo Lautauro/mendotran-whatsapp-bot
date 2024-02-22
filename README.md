@@ -66,15 +66,16 @@ Go to **/src/modules/commands/** and open **commands_list.ts**.
 To create a command you need to use the **createCommand** function.
 
 ```js
-createCommand(['alias'],
-    callback(),
-    { 
-        // Command options
-        // - Optional
-    },
-    { 
-        // Command info
-        // - Optional, but recommended
+createCommand(['alias'], {
+        // Command options (Optional)
+        options: { /* ... */ },
+
+        // Command info (Optional, but recommended)
+        info: { /* ... */ },
+    })
+    // Command callback
+    .setCallback((args, message) => {
+        console.log('Number: ', args[0]);
     })
     .addParameter('number')
 .closeCommand(); // Add command to list
@@ -98,9 +99,11 @@ createCommand(['ping', 'pingpong', 'p']) /* etc... */
 When a command is invoked, this function is called. You can read the arguments passed by the user using the "args" variable, and use the "message" object to interact with the chat.
 
 ```js
-createCommand(['alias'],
-    // My callback:
-    (args, message) => {
+createCommand(['alias'])
+    // Receive argument of type string
+    .addParameter('string')
+    // Command execution
+    .setCallback((args, message) => {
         if (args[0] === 'Hi') {
             // Send "Hello!"
             send_response('Hello!', message);
@@ -108,48 +111,41 @@ createCommand(['alias'],
             // Send "Bye!"
             send_response('Bye!', message);
         }
-    } /* etc... */)
+    })
 .closeCommand(); // Add command to list
 ```
 [Send Response](#send-response)
 
-### Command options:
+### Command Data:
 
 ```js
 {
-    // If true, command can only be executed by admin
-    adminOnly: boolean,
+    options: {
+        // If true, command can only be executed by admin
+        adminOnly: boolean,
 
-    // The command must be or not a quoted message
-    needQuotedMessage: boolean,
-}
-```
+        // The command must be or not a quoted message
+        needQuotedMessage: boolean,
+    },
 
-### Command info:
-
-This information will be used by the "help" command to describe the command itself.
-
-```js
-{
-    name: string,           // Command name
-    description: string     // What it does
+    // This information will be used by the "help" command to describe the command itself.
+    info: {
+        name: string,           // Command name
+        description: string,    // What it does
+    }
 }
 ```
 
 ## Command Parameters:
 
 ```js
-addParameter(ParameterType, defaultValue?, ParameterInfo?);
+addParameter(ParameterType, ParameterInfo?, defaultValue?);
 ```
 
 ### Parameter Type:
 ```ts
 type ParameterType = 'string' | 'number' | 'boolean' | 'any';
 ```
-
-### Parameter default value:
-
-If the parameter is an optional argument, set its default value here. Otherwise, **undefined** should do the trick.
 
 ### Parameter info:
 
@@ -159,21 +155,33 @@ This information will be used by the "help" command to describe the parameter.
 {
     name: string,           // Parameter name
     description: string,    // What it does
-    example: string         // Example value for parameter
+    example: string         // Value used in the example 
 }
 ```
+
+### Parameter default value:
+
+If the parameter is an optional argument, set its default value here. Otherwise, **undefined** should do the trick.
 
 ### Example:
 
 ```ts
-createCommand(['foo'], (args, message) => {
+createCommand(['foo'])
+    .addParameter('string', {
+        name: 'Argument',
+        description: 'Parameter 1 description',
+        example: 'Lorem ipsum dolor',
+    })
+    // You should always put optional parameters at the end, such as the following. Otherwise it may cause problems.
+    .addParameter('number', {
+        name: 'Optional Argument',
+        description: 'Parameter 2 description',
+        example: '123',
+    }, 456 /* Now it's an optional parameter */ )
+    .setCallback((args, message) => {
         // Do something
     })
-    .addParameter('string', undefined, { name: 'Argument', description: 'Parameter 1 description', example: 'Lorem ipsum dolor' })
-    // You should always put optional parameters at the end, such as the following. Otherwise it may cause problems.
-    .addParameter('boolean', true, { name: 'Optional Argument', description: 'Parameter 2 description', example: 'true' })
-    // ... etc ...
-.closeCommand()
+.closeCommand();
 ```
 
 <div align="center">
@@ -216,15 +224,19 @@ For more information on MessageSendOptions, see: https://docs.wwebjs.dev/global.
 
 Command with **no arguments**:
 ```js
-createCommand(['ping', 'pingpong'], (args, message) => {
-        send_response('Pong!', message, { reaction: '🏓' })
-    },
-    // Command options
-    { adminOnly: true },
-    // Command info
-    {
-        name: 'Ping',
-        description: 'Ping-pong! 🏓',
+createCommand(['ping', 'pingpong'], {
+        // Command options
+        options: {
+            adminOnly: true,
+        },
+        // Command info
+        info: {
+            name: 'Ping',
+            description: 'Ping-pong! 🏓',
+        }
+    })
+    .setCallback((args, message) => {
+        send_response('Pong!', message, { reaction: '🏓', });
     })
 .closeCommand();
 ```
@@ -237,7 +249,23 @@ createCommand(['ping', 'pingpong'], (args, message) => {
 Command with arguments:
 
 ```ts
-createCommand(['repeat'], (args, message) => {
+createCommand(['repeat'], {
+        info: {
+            name: 'Repeat text'
+        }
+    })
+    .addParameter('string', {
+        name: 'Text',
+        description: 'Text to repeat.',
+        example: 'Hello x5',
+    })
+    // You should always put optional parameters at the end, such as the following. Otherwise it may cause problems.
+    .addParameter('number', {
+        name: 'Times', 
+        description: 'Number of times repeated.', 
+        example: '5',
+    }, 1)
+    .setCallback((args, message) => {
         let msgToSend: string = args[0];
 
         for (let i = 1; i < args[1]; i++) {
@@ -245,12 +273,7 @@ createCommand(['repeat'], (args, message) => {
         }
 
         send_response(msgToSend, message, { reply: true }); // Send as reply
-    }, null, {
-        name: 'Repeat text'
     })
-    .addParameter('string', undefined, { name: 'Text', description: 'Text to repeat.', example: 'Hello x5' })
-    // You should always put optional parameters at the end, such as the following. Otherwise it may cause problems.
-    .addParameter('number', 1, { name: 'Times', description: 'Number of times repeated.', example: '5' })
 .closeCommand()
 ```
 
@@ -261,22 +284,23 @@ createCommand(['repeat'], (args, message) => {
 Command with **quoted message**:
 
 ```ts
-createCommand(['quote', 'cite'],
-    async (args, message) => {
+createCommand(['quote', 'cite'], {
+        options: { 
+            needQuotedMessage: true,
+        },
+        info: {
+            name: 'Quote this',
+            description: 'This command makes an author quote with the selected message. It needs to quote a message to work.',
+        }
+    })
+    .setCallback(async (args, message) => {
         message.getQuotedMessage()
         .then((quotedMessage) => {
             const msgToSend = `*" ${quotedMessage.body} "*\n\n` + `- _${quotedMessage._data.notifyName}_`;
             send_response(msgToSend, message);
-        })
-    },
-    // Command options
-    { needQuotedMessage: true },
-    // Command info
-    {
-        name: 'Quote this',
-        description: 'This command makes an author quote with the selected message. It needs to quote a message to work.'
+        });
     })
-.closeCommand();
+.closeCommand();    
 ```
 
 ## Hot-swap
