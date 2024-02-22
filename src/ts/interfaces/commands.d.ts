@@ -16,6 +16,7 @@ export interface CommandInfo {
 
 export interface Parameter {
     type: ParameterType[];
+    isOptional: boolean;
     defaultValue?: any;
     info?: ParameterInfo;
 }
@@ -29,7 +30,7 @@ export interface Command {
     alias: string[];
     parameters: Parameter[] | null;
     options: CommandOptions;
-    defaultValues?: any[];
+    hasOptionalValues: boolean;
     info?: CommandInfo;
     callback: CommandCallback;
 }

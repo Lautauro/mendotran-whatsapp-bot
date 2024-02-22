@@ -1,4 +1,4 @@
-import { Command, CommandData, CommandOptions, CommandResponseOptions, CommandReturn, ParameterInfo } from "../../ts/interfaces/commands.js";
+import { Command, CommandData, CommandOptions, CommandResponseOptions, CommandReturn, Parameter, ParameterInfo } from "../../ts/interfaces/commands.js";
 import { CommandCallback, ParameterType } from "../../ts/types/commands.js";
 import { CommandResponse, CommandResponseType } from "../../ts/enums/commands.js";
 import { read_response } from "../whatsapp/read_response.js";
@@ -17,6 +17,33 @@ const parameterDefaultInfo: ParameterInfo = Object.freeze({
     name: 'UNDEFINED',
     description: '',
     example: 'UNDEFINED',
+});
+
+const COMMAND_ERROR_MESSAGES = Object.freeze({
+    MISSING_ARGUMENT: (commandObject: Command, args: any[]) => {
+        
+        let commandArgs = `${args.length > 0 ? `_${args.join(' ')}_ ` : ''}`;
+
+        if (commandObject.parameters) {
+            for (let i = args.length; i < commandObject.parameters.length; i++ ) {
+                if (commandObject.parameters[i].isOptional === true) {
+                    commandArgs += `[ *${commandObject.parameters[i].info?.name}* ]`;
+                } else {
+                    commandArgs += `{ *${commandObject.parameters[i].info?.name}* }`;
+                }
+                if (i !== commandObject.parameters.length -1) { commandArgs += ' '; }
+            }
+        }
+
+        return `Arguments missing in the command.\n\n` +
+                `_${commandsSettings.commandPrefix}${commandObject.alias[0]}_ ${commandArgs}`
+    },
+    MISSING_QUOTE: 'This command requires quoting a message to be executed.',
+    INVALID_ARGUMENT: (commandAlias: string, arg: any, param: Parameter) => {
+        return `Invalid argument "*${arg}*".\n\n`+
+                `The parameter "*${param.info?.name}*" must be *${param.type}*.\n\n` +
+                `For more info use: *${commandsSettings.commandPrefix}${commandsSettings.commandPrefix.length > 0 ? 'help' : 'Help' } ${commandAlias}*`;
+    }
 });
 
 class CommandError {
@@ -79,6 +106,7 @@ export const createCommand = (alias: string[], data?: CommandData) => {
     const command: Command =  {
         alias,
         parameters: null,
+        hasOptionalValues: false,
         options: {
             ...commandDefaultOptions,
             ...data?.options,
@@ -99,17 +127,20 @@ const addParameter = (command: Command) => (type: ParameterType | ParameterType[
     if (typeof type === 'string') { type = [ type ]; }
 
     if ((defaultValue !== null && defaultValue !== undefined) && !type.some((paramType) => { return argument_type(defaultValue) === paramType; })) {
-        throw new Error(`The dafault value "${defaultValue}" is of type "${typeof defaultValue}" and doesn't match any of the types: [${type.join(', ')}]`);
+        throw new Error(`The dafault value "${defaultValue}" is of type "${typeof defaultValue}" and doesn't match any of the types: [${type.join(', ')}]\n`);
     }
 
+    let isOptional = false;
+
     if (defaultValue !== undefined) {
-        if (!command.defaultValues) { command.defaultValues = []; }
-        command.defaultValues?.push(defaultValue);
+        command.hasOptionalValues = true;
+        isOptional = true;
     }
 
     command.parameters.push({
         type,
         defaultValue,
+        isOptional,
         info: {
             ...parameterDefaultInfo,
             ...info,
@@ -120,6 +151,14 @@ const addParameter = (command: Command) => (type: ParameterType | ParameterType[
 }
 
 const closeCommand = (command: Command) => () => {
+    // Check that the optional parameters are at the end of the command.
+    if (command.parameters && command.parameters.length > 1) {
+        for (let i = 0; i < command.parameters.length - 1; i++) {            
+            if (command.parameters[i].isOptional === true && command.parameters[i + 1].isOptional === false) {
+                throw new Error(`Optional parameters must be placed at the end of the command.\n`);
+            }
+        }
+    }
     commandsManager.add(command);
     return command;
 }
@@ -185,7 +224,7 @@ function verify_args(args: any[], command: Command): boolean {
         }
         // There was no match
         if (!match) {
-            return false;
+            throw new CommandError(COMMAND_ERROR_MESSAGES.INVALID_ARGUMENT(command.alias[0], args[argIndex], parameter));
         }
     }
     return true;
@@ -201,7 +240,7 @@ export function search_command(commandName: string): Command | null {
     return null;
 }
 
-export function exec_command(message : Message): void {
+export async function exec_command(message : Message): Promise<void> {
     try {
         // Separate arguments and command
         let commandArgs: any[] | null = message.body.match(/"([^"]*)"|'([^']*)'|[^ ]+/gim) ?? [];
@@ -215,36 +254,37 @@ export function exec_command(message : Message): void {
         // Verify that the user has access to the command
         if (!commandObject.options.adminOnly || (message.fromMe && commandObject.options.adminOnly)) {
             command_log(commandName, commandArgs, message);
+            await send_response(null, message, { reaction: '⏳' });
             
             // Commands that require a message to be quoted
             if (commandObject.options.needQuotedMessage === true && !message.hasQuotedMsg) {
-                throw new CommandError('This command requires quoting a message to be executed.');
+                throw new CommandError(COMMAND_ERROR_MESSAGES.MISSING_QUOTE);
             }
             // Commands without parameters
-            if (!commandObject.parameters) {
+            if (!commandObject.parameters) {     
                 commandObject.callback(commandArgs, message);
                 return;
             } else {
                 // Commands with parameters
                 const paramLength = commandObject.parameters.length;
-                const defaultValuesLength = commandObject.defaultValues?.length ?? 0;
-
-                if (commandArgs.length >= paramLength || commandObject.defaultValues && commandArgs.length >= (paramLength - defaultValuesLength)) {
-                    // Verify parameters
-                    if (verify_args(commandArgs, commandObject)) {
-                        // Add default values if missing
-                        if (commandObject.defaultValues && commandArgs.length < paramLength) {
-                            for (let i = defaultValuesLength - (paramLength - commandArgs.length); i < defaultValuesLength; i++) {
-                                commandArgs.push(commandObject.defaultValues[i]);
-                            }
+                const optionalValues = [];
+                
+                // Add default values if missing
+                if (commandObject.hasOptionalValues && commandArgs.length < paramLength) {
+                    for (let i = commandArgs.length; i < paramLength; i++) {
+                        if (commandObject.parameters[i].isOptional) {
+                            optionalValues.push(commandObject.parameters[i].defaultValue);
                         }
-                        commandObject.callback(commandArgs, message);
+                    }
+                }
+
+                if ([...commandArgs, ...optionalValues].length >= paramLength) {
+                    if (verify_args(commandArgs, commandObject)) {
+                        commandObject.callback([...commandArgs, ...optionalValues], message);
                         return;
-                    } else {
-                        throw new CommandError('Wrong arguments.');
                     }
                 } else {
-                    throw new CommandError('Arguments missing in the command.');
+                    throw new CommandError(COMMAND_ERROR_MESSAGES.MISSING_ARGUMENT(commandObject, commandArgs));
                 }
             }
         }
@@ -296,7 +336,7 @@ export function command_example(command: Command): string | null {
 
             command.parameters.forEach((parameter) => {
                 if (parameter.info && parameter.info.name) {
-                    if (parameter.defaultValue !== undefined) {
+                    if (parameter.isOptional === true) {
                         // Optional parameters
                         text += ` [ *${parameter.info.name}* ]`;
                     } else {
@@ -368,7 +408,7 @@ createCommand(['help', '?'], {
     })
     .setCallback(function(args, message) {
         if (args.length > 0) {
-            const command = search_command(args[0]);
+            const command = search_command(args[0].toLowerCase());
             if (command) {
                 const example = command_example(command);
                 if (example) {
