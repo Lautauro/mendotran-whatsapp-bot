@@ -1,4 +1,4 @@
-import { command_example, createCommand, search_command, send_error_response, send_response } from "./commands.js";
+import { COMMAND_ERROR_MESSAGES, createCommand, send_error_response, send_response } from "./commands.js";
 import { get_arrivals_by_location, get_metro_arrivals, get_stop_arrivals } from "../mendotran/mendotran.js";
 import { Message } from "whatsapp-web.js";
 
@@ -29,9 +29,7 @@ function arrivals_location(message: Message, quote: Message, filter?: string) {
             .then((arrivals) => {
                 send_response(arrivals, message, { 
                     reaction: '🚌',
-                    messageOptions: {
-                        linkPreview: false,
-                    },
+                    messageOptions: { linkPreview: false },
                 });
             })
             .catch((error) => {
@@ -62,36 +60,29 @@ createCommand(['micro', 'm'], {
         note: 'No es estríctamente necesaria la "M".',
         example: 'M1056',
     }, null)
-    .setCallback(async (args, message) => {
+    .setCallback(async function (args, message) {
         if (message.hasQuotedMsg) {
             message.getQuotedMessage()
                 .then((quote) => {
                     arrivals_location(message, quote, args[0]);
                 });
             return;
-        }
-        if (args[1] !== null) {
-            get_stop_arrivals(args[1], args[0])
-                .then((arrivals) => {
-                    send_response(arrivals, message, {
-                        reaction: '🚌',
-                        messageOptions: {
-                            linkPreview: false,
-                        },
-                    });
-                })
-                .catch((error) => {
-                    send_error_response(error, message);
-                });
         } else {
-            if (typeof args[0] === 'number') {
-                await send_error_response('Debe indicar un número de parada.', message);
+            if (args[1] === null) {
+                // @ts-ignore
+                return send_error_response(COMMAND_ERROR_MESSAGES.MISSING_ARGUMENT(this, [args[0]]), message);
             } else {
-                await send_error_response('Argumentos erróneos. La línea del colectivo debe ser un número.', message);
+                get_stop_arrivals(args[1], args[0])
+                    .then((arrivals) => {
+                        send_response(arrivals, message, {
+                            reaction: '🚌',
+                            messageOptions: { linkPreview: false },
+                        });
+                    })
+                    .catch((error) => {
+                        send_error_response(error, message);
+                    });
             }
-            // @ts-ignore
-            const example = command_example(search_command('micro'));
-            send_response(example, message);
         }
     })
 .closeCommand();
@@ -109,7 +100,7 @@ createCommand(['parada', 'p'], {
         description: 'El número de parada de la cual desea saber sus horarios.',
         example: 'M1056',
     }, null)
-    .setCallback(async (args, message) => {
+    .setCallback(async function (args, message) {
         if (message.hasQuotedMsg) {
             message.getQuotedMessage().then((quote) => {
                 arrivals_location(message, quote);
@@ -130,10 +121,8 @@ createCommand(['parada', 'p'], {
                         send_error_response(error, message);
                     });
             } else {
-                await send_error_response('Debe indicar un número de parada.', message);
                 // @ts-ignore
-                const example = command_example(search_command('parada'));
-                send_response(example, message);
+                return send_error_response(COMMAND_ERROR_MESSAGES.MISSING_ARGUMENT(this, []), message);
             }
         }
     })
