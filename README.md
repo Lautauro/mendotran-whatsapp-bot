@@ -15,12 +15,11 @@ A [hot-swap mode](#hot-swap) is available for development purposes, allowing new
     * [Command](#create-command)
         * [Alias](#command-alias)
         * [Callback](#command-callback)
-        * [Options](#command-options)
-        * [info](#command-info)
+        * [Data](#command-data)
     * [Parameters](#command-parameters)
         * [Types](#parameter-type)
-        * [Default value](#parameter-default-value)
         * [Info](#parameter-info)
+        * [Default value](#parameter-default-value)
 * [Send response](#send-response)
 * [Examples](#examples)
 * [Hot-swap mode](#hot-swap)
@@ -226,9 +225,7 @@ Command with **no arguments**:
 ```js
 createCommand(['ping', 'pingpong'], {
         // Command options
-        options: {
-            adminOnly: true,
-        },
+        options: { adminOnly: true, },
         // Command info
         info: {
             name: 'Ping',
@@ -250,9 +247,7 @@ Command with arguments:
 
 ```ts
 createCommand(['repeat'], {
-        info: {
-            name: 'Repeat text'
-        }
+        info: { name: 'Repeat text', }
     })
     .addParameter('string', {
         name: 'Text',
@@ -285,9 +280,7 @@ Command with **quoted message**:
 
 ```ts
 createCommand(['quote', 'cite'], {
-        options: { 
-            needQuotedMessage: true,
-        },
+        options: { needQuotedMessage: true, },
         info: {
             name: 'Quote this',
             description: 'This command makes an author quote with the selected message. It needs to quote a message to work.',
@@ -295,10 +288,11 @@ createCommand(['quote', 'cite'], {
     })
     .setCallback(async (args, message) => {
         message.getQuotedMessage()
-        .then((quotedMessage) => {
-            const msgToSend = `*" ${quotedMessage.body} "*\n\n` + `- _${quotedMessage._data.notifyName}_`;
-            send_response(msgToSend, message);
-        });
+            .then((quotedMessage) => {
+                const msgToSend = `*" ${quotedMessage.body} "*\n\n` +
+                                  `- _${quotedMessage._data.notifyName}_`;
+                send_response(msgToSend, message);
+            });
     })
 .closeCommand();    
 ```
