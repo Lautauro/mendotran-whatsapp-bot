@@ -19,10 +19,10 @@ const parameterDefaultInfo: ParameterInfo = Object.freeze({
     example: 'UNDEFINED',
 });
 
-const COMMAND_ERROR_MESSAGES = Object.freeze({
+export const COMMAND_ERROR_MESSAGES = Object.freeze({
     MISSING_ARGUMENT: (commandObject: Command, args: any[]) => {
-        
         let commandArgs = `${args.length > 0 ? `_${args.join(' ')}_ ` : ''}`;
+        let alias: string = commandsSettings.commandPrefix > 0 ? commandObject.alias[0] : commandObject.alias[0].charAt(0).toUpperCase() + commandObject.alias[0].slice(1);
 
         if (commandObject.parameters) {
             for (let i = args.length; i < commandObject.parameters.length; i++ ) {
@@ -36,7 +36,7 @@ const COMMAND_ERROR_MESSAGES = Object.freeze({
         }
 
         return `Arguments missing in the command.\n\n` +
-                `_${commandsSettings.commandPrefix}${commandObject.alias[0]}_ ${commandArgs}`
+                `_${commandsSettings.commandPrefix}${alias}_ ${commandArgs}`
     },
     MISSING_QUOTE: 'This command requires quoting a message to be executed.',
     INVALID_ARGUMENT: (commandAlias: string, arg: any, param: Parameter) => {
@@ -46,7 +46,7 @@ const COMMAND_ERROR_MESSAGES = Object.freeze({
     }
 });
 
-class CommandError {
+export class CommandError {
     message: string;
     options?: CommandResponseOptions;
     
@@ -404,8 +404,7 @@ createCommand(['help', '?'], {
     info: {
         name: 'Help',
         description: 'Get info about a command.',
-    }
-    })
+    }})
     .setCallback(function(args, message) {
         if (args.length > 0) {
             const command = search_command(args[0].toLowerCase());
