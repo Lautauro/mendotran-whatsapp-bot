@@ -1,4 +1,5 @@
 import { LocalAuth, Client, MessageTypes, Message, MessageId, MessageSendOptions, MessageContent } from 'whatsapp-web.js';
+import { search_command } from '../commands/commands'
 import * as qrcode from 'qrcode-terminal';
 import { get_time_string } from '../../utils/get_time_string.js';
 import { bot_log, bot_log_error } from '../../utils/bot_log';
@@ -147,6 +148,11 @@ client.on('ready', () => {
         if (exec_command === undefined) { return; }
 
         if (message.body.indexOf(commandsSettings.commandPrefix) === 0 && typeof message.body === 'string' && message.type === MessageTypes.TEXT) {
+            if (commandsSettings.commandPrefix.length === 0) {
+                const checkCommand: string[] | null = message.body.match(/[a-z]+/i);
+                if (checkCommand && !search_command(checkCommand[0])) { return; }
+            }
+            
             // Cooldown
             if (can_execute(message, from)) {
                 exec_command(message);
