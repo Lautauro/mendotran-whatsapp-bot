@@ -84,13 +84,13 @@ client.on('loading_screen', (percent: number) => {
 });
 
 client.on('ready', () => {
+    console.clear();
+    bot_log('The client is ready.\n');
+
     const startTime = Date.now();
     const commandPath: string = '../commands';
     let exec_command  = require(`${commandPath}/commands.js`).exec_command;
     require('../commands/commands_list.js');
-
-    console.clear();
-    bot_log('The client is ready.\n');
     
     if (!whatsappSettings.showMessagesInTheTerminal) { bot_log('Hidden messages.\n'); }
 
@@ -146,7 +146,7 @@ client.on('ready', () => {
         
         if (exec_command === undefined) { return; }
 
-        if ((commandsSettings.commandPrefix.length === 0) || (message.body.indexOf(commandsSettings.commandPrefix) === 0 && typeof message.body === 'string' && message.type === MessageTypes.TEXT)) {
+        if (message.body.indexOf(commandsSettings.commandPrefix) === 0 && typeof message.body === 'string' && message.type === MessageTypes.TEXT) {
             // Cooldown
             if (can_execute(message, from)) {
                 exec_command(message);
