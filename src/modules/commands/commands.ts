@@ -3,7 +3,7 @@ import { CommandCallback, ParameterType } from "../../ts/types/commands.js";
 import { CommandResponse, CommandResponseType } from "../../ts/enums/commands.js";
 import { read_response } from "../whatsapp/read_response.js";
 import { Message, MessageContent } from "whatsapp-web.js";
-import { bot_log, bot_log_warn } from "../../utils/bot_log.js";
+import { bot_log, bot_log_warn, bot_log_error } from "../../utils/bot_log.js";
 
 const commandPrefix = require('../../../config/commands.json').commandPrefix ?? '';
 const whatsappSettings = require('../../../config/whatsapp.json');
@@ -72,6 +72,7 @@ class CommandsManager {
 
         // Check that aliases are not in use
         for (let i = 0; i < command.alias.length; i++) {
+            command.alias[i] = command.alias[i].toLowerCase();
             if (this.alias.has(command.alias[i])) {
                 collisions++;
                 filterCommandAlias.splice(i, 1);
@@ -80,12 +81,13 @@ class CommandsManager {
         }
 
         if (collisions === command.alias.length) {
-            throw new Error(`The command could not be added to the list, aliases [${command.alias.join(', ')}] are being used by other command(s).`);
+            bot_log_error(`ERROR: The command could not be added to the list, aliases [ ${command.alias.join(', ')} ] are being used by other command(s).\n`);
+            return;
         }
 
         let commandIndex = this.list.length;
 
-        command.alias = filterCommandAlias;
+        command.alias = [...filterCommandAlias];
         command.alias.forEach((alias) => { this.alias.set(alias, commandIndex) } );
 
         this.list.push(command);
@@ -234,7 +236,7 @@ function verify_args(args: any[], command: Command): boolean {
 export function search_command(commandName: string): Command | null {
     // Check that it's not an empty string
     if (typeof commandName === 'string' && commandName.length) {        
-        const search = commandsManager.alias.get(commandName);
+        const search = commandsManager.alias.get(commandName.toLowerCase());
         if (search != undefined) { return commandsManager.list[search]; }
     }
 
@@ -246,7 +248,7 @@ export async function exec_command(message : Message): Promise<void> {
         // Separate arguments and command
         let commandArgs: any[] | null = message.body.match(/"([^"]*)"|'([^']*)'|[^ ]+/gim) ?? [];
 
-        const commandName: string | undefined = commandArgs?.shift()?.slice(commandPrefix.length).toLowerCase();
+        const commandName: string | undefined = commandArgs?.shift()?.slice(commandPrefix.length);
         if (!commandName) { return; } // If there is no command in the string
 
         const commandObj = search_command(commandName);
@@ -254,7 +256,7 @@ export async function exec_command(message : Message): Promise<void> {
         
         // Verify that the user has access to the command
         if (!commandObj.options.adminOnly || (message.fromMe && commandObj.options.adminOnly)) {
-            command_log(commandName, commandArgs, message);
+            command_log(commandObj.alias[0], commandArgs, message);
             await send_response(null, message, { reaction: '⏳' });
             
             // Commands that require a message to be quoted
@@ -407,7 +409,7 @@ createCommand(['help', '?'], {
     }})
     .setCallback(function(args, message) {
         if (args.length > 0) {
-            const command = search_command(args[0].toLowerCase());
+            const command = search_command(args[0]);
             if (command) {
                 const example = command_example(command);
                 if (example) {
