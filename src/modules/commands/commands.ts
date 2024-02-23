@@ -245,12 +245,12 @@ export function search_command(commandName: string): Command | null {
 
 export async function exec_command(message : Message): Promise<void> {
     try {
+        // Check if string is empty
+        if (!message.body || message.body.length === 0) { return; }
+
         // Separate arguments and command
-        let commandArgs: any[] | null = message.body.match(/"([^"]*)"|'([^']*)'|[^ ]+/gim) ?? [];
-
-        const commandName: string | undefined = commandArgs?.shift()?.slice(commandPrefix.length);
-        if (!commandName) { return; } // If there is no command in the string
-
+        const commandArgs: string[] = message.body.match(/"([^"]*)"|'([^']*)'|[^ ]+/gim) ?? [];
+        const commandName: string = commandArgs.shift()?.slice(commandPrefix.length) ?? '';
         const commandObj = search_command(commandName);
         if (!commandObj) { return; }
         
