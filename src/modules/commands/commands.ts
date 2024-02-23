@@ -413,7 +413,7 @@ createCommand(['help', '?'], {
             if (command) {
                 const example = command_example(command);
                 if (example) {
-                    send_response(example, message);
+                    send_response(example, message, { reaction: '👍' });
                     return;
                 } else {
                     send_error_response(`There is no information for the command *${args[0]}*.`, message);
@@ -423,7 +423,7 @@ createCommand(['help', '?'], {
             }
         } else {
             // @ts-ignore
-            send_response(command_example(this), message);
+            send_response(command_example(this), message, { reaction: '👍' });
         }
     })
     .addParameter('string', { name: 'Command name', example: 'ping', }, null)
