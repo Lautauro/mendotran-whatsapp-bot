@@ -1,4 +1,5 @@
 import { LocalAuth, Client, MessageTypes, Message, MessageId, MessageSendOptions, MessageContent } from 'whatsapp-web.js';
+import { command_exists } from '../commands/commands'
 import * as qrcode from 'qrcode-terminal';
 import { get_time_string } from '../../utils/get_time_string.js';
 import { bot_log, bot_log_error } from '../../utils/bot_log';
@@ -84,13 +85,13 @@ client.on('loading_screen', (percent: number) => {
 });
 
 client.on('ready', () => {
+    console.clear();
+    bot_log('The client is ready.\n');
+
     const startTime = Date.now();
     const commandPath: string = '../commands';
     let exec_command  = require(`${commandPath}/commands.js`).exec_command;
     require('../commands/commands_list.js');
-
-    console.clear();
-    bot_log('The client is ready.\n');
     
     if (!whatsappSettings.showMessagesInTheTerminal) { bot_log('Hidden messages.\n'); }
 
@@ -147,7 +148,12 @@ client.on('ready', () => {
         
         if (exec_command === undefined) { return; }
 
-        if ((commandsSettings.commandPrefix.length === 0) || (message.body.indexOf(commandsSettings.commandPrefix) === 0 && typeof message.body === 'string' && message.type === MessageTypes.TEXT)) {
+        if (message.body.indexOf(commandsSettings.commandPrefix) === 0 && typeof message.body === 'string' && message.type === MessageTypes.TEXT) {
+            if (commandsSettings.commandPrefix.length === 0) {
+                const checkCommand: string[] | null = message.body.match(/[a-z]+/i);
+                if (checkCommand && !command_exists(checkCommand[0])) { return; }
+            }
+            
             // Cooldown
             if (can_execute(message, from)) {
                 exec_command(message);
