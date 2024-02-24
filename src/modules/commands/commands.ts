@@ -412,7 +412,7 @@ createCommand(['help', '?'], {
         description: 'Get info about a command.',
     }})
     .setCallback(function(args, message) {
-        if (args.length > 0) {
+        if (args.length > 0 && args[0]) {
             const command = search_command(args[0]);
             if (command) {
                 const example = command_example(command);
