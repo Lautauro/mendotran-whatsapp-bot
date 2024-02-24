@@ -243,6 +243,10 @@ export function search_command(commandName: string): Command | null {
     return null;
 }
 
+export function command_exists(commandName: string): boolean {
+    return commandsManager.alias.has(commandName.toLocaleLowerCase());
+}
+
 export async function exec_command(message : Message): Promise<void> {
     try {
         // Check if string is empty
