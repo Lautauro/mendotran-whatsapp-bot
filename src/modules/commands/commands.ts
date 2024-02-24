@@ -22,6 +22,7 @@ const parameterDefaultInfo: ParameterInfo = Object.freeze({
 export const COMMAND_ERROR_MESSAGES = Object.freeze({
     MISSING_ARGUMENT: (commandObject: Command, args: any[]) => {
         let commandArgs = `${args.length > 0 ? `_${args.join(' ')}_ ` : ''}`;
+        let alias: string = commandsSettings.commandPrefix > 0 ? commandObject.alias[0] : commandObject.alias[0].charAt(0).toUpperCase() + commandObject.alias[0].slice(1);
 
         if (commandObject.parameters) {
             for (let i = args.length; i < commandObject.parameters.length; i++ ) {
@@ -35,7 +36,7 @@ export const COMMAND_ERROR_MESSAGES = Object.freeze({
         }
 
         return `Faltan argumentos en el comando.\n\n` +
-                `_${commandsSettings.commandPrefix}${commandObject.alias[0]}_ ${commandArgs}`
+                `_${commandsSettings.commandPrefix}${alias}_ ${commandArgs}`
     },
     MISSING_QUOTE: 'Este comando necesita citar un mensaje para ser ejecutado.',
     INVALID_ARGUMENT: (commandAlias: string, arg: any, param: Parameter) => {
