@@ -91,7 +91,7 @@ client.on('ready', () => {
     const startTime = Date.now();
     const commandPath: string = '../commands';
     let exec_command  = require(`${commandPath}/commands.js`).exec_command;
-    require('../commands/commands_list.js');
+    require(`${commandPath}/commands_list.js`);
     
     if (!whatsappSettings.showMessagesInTheTerminal) { bot_log('Hidden messages.\n'); }
 
@@ -106,11 +106,9 @@ client.on('ready', () => {
                 exec_command = require(`${commandPath}/commands.js`).exec_command; 
                 require(`${commandPath}/commands_list.js`);
             } catch(error) {
-                console.error('Error while clearing caches:', error);
+                console.error('Error while clearing cache:', error);
             }
         }, commandsSettings.hotSwappingTimer);
-    } else {
-        require(`${commandPath}/commands_list.js`);
     }
 
     // Save timestamp of last command
@@ -252,7 +250,7 @@ async function print_message(message: Message, from: string, edited?: boolean): 
 
     // @ts-ignore
     if (message.isGif) { message.type = 'gif'; }
-    if (message.hasMedia === true || message.location) {
+    if (message.hasMedia === true || message.type !== MessageTypes.TEXT) {
         switch (message.type) {
             case MessageTypes.AUDIO:
                 messageMedia = '🔊 Audio 🔊';
@@ -278,7 +276,7 @@ async function print_message(message: Message, from: string, edited?: boolean): 
                 // @ts-ignore
                 if (message.location.description.length) {
                     // @ts-ignore
-                    messageMedia = `📍 ${(message.location.description).split('\n').join('. ')} 📍\n`;
+                    messageMedia = `📍 Location: ${(message.location.description).split('\n').join('. ')} 📍\n`;
                 } else {
                     messageMedia = '📍 Ubicación 📍';
                 }
@@ -286,6 +284,18 @@ async function print_message(message: Message, from: string, edited?: boolean): 
             // @ts-ignore
             case 'gif':
                 messageMedia = '🎞️ GIF 🎞️';
+                break;
+            case MessageTypes.CONTACT_CARD:
+                message.body = '';
+                messageMedia = '📒 Contact card 📒';
+                break;
+            case MessageTypes.POLL_CREATION:
+                messageMedia = '📊 Poll 📊';
+                message.body = `\n"${message.body}":`;
+                for (let i = 0; i < message.pollOptions.length; i++) {
+                    // @ts-ignore
+                    message.body += `\n  ${i+1}) - ${message.pollOptions[i].name}`;
+                }
                 break;
             default:
                 messageMedia = `${message.type}`;
