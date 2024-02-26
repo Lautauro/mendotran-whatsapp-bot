@@ -249,7 +249,7 @@ async function print_message(message: Message, from: string, edited?: boolean): 
 
     // @ts-ignore
     if (message.isGif) { message.type = 'gif'; }
-    if (message.hasMedia === true || message.location) {
+    if (message.hasMedia === true || message.type !== MessageTypes.TEXT) {
         switch (message.type) {
             case MessageTypes.AUDIO:
                 messageMedia = '🔊 Audio 🔊';
@@ -275,7 +275,7 @@ async function print_message(message: Message, from: string, edited?: boolean): 
                 // @ts-ignore
                 if (message.location.description.length) {
                     // @ts-ignore
-                    messageMedia = `📍 ${(message.location.description).split('\n').join('. ')} 📍\n`;
+                    messageMedia = `📍 Location: ${(message.location.description).split('\n').join('. ')} 📍\n`;
                 } else {
                     messageMedia = '📍 Location 📍';
                 }
@@ -283,6 +283,18 @@ async function print_message(message: Message, from: string, edited?: boolean): 
             // @ts-ignore
             case 'gif':
                 messageMedia = '🎞️ GIF 🎞️';
+                break;
+            case MessageTypes.CONTACT_CARD:
+                message.body = '';
+                messageMedia = '📒 Contact card 📒';
+                break;
+            case MessageTypes.POLL_CREATION:
+                messageMedia = '📊 Poll 📊';
+                message.body = `\n"${message.body}":`;
+                for (let i = 0; i < message.pollOptions.length; i++) {
+                    // @ts-ignore
+                    message.body += `\n  ${i+1}) - ${message.pollOptions[i].name}`;
+                }
                 break;
             default:
                 messageMedia = `${message.type}`;
