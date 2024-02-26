@@ -131,15 +131,15 @@ client.on('ready', () => {
         // Ignore status messages and previous messages
         if (message.isStatus || (message.timestamp * 1000 < startTime)) { return; }
 
-        // Setting: Ignore "media" messages
-        if (whatsappSettings.ignoreMedia && message.hasMedia) { return; }
-
         const from: string = message.fromMe ? message.to : message.from;
 
         // Setting: Show messages in the termianal
         if (whatsappSettings.showMessagesInTheTerminal) { print_message(message, from); }
 
         /* Commands */ 
+
+        // Ignorar todos los mensajes que no sean texto
+        if (message.type !== MessageTypes.TEXT) { return; }
         
         // Setting: Ignore commands not coming from admin
         if (whatsappSettings.adminOnly && !message.fromMe) { return; }
