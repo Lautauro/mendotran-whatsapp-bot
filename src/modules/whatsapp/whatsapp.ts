@@ -91,7 +91,7 @@ client.on('ready', () => {
     const startTime = Date.now();
     const commandPath: string = '../commands';
     let exec_command  = require(`${commandPath}/commands.js`).exec_command;
-    require('../commands/commands_list.js');
+    require(`${commandPath}/commands_list.js`);
     
     if (!whatsappSettings.showMessagesInTheTerminal) { bot_log('Hidden messages.\n'); }
 
@@ -105,11 +105,9 @@ client.on('ready', () => {
                 exec_command = require(`${commandPath}/commands.js`).exec_command; 
                 require(`${commandPath}/commands_list.js`);
             } catch(error) {
-                console.error('Error while clearing caches:', error);
+                console.error('Error while clearing cache:', error);
             }
         }, commandsSettings.hotSwappingTimer);
-    } else {
-        require(`${commandPath}/commands_list.js`);
     }
 
     // Save timestamp of last command
