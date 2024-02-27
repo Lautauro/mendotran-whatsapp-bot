@@ -26,17 +26,13 @@ export const COMMAND_ERROR_MESSAGES = Object.freeze({
 
         if (commandObj.parameters) {
             for (let i = args.length; i < commandObj.parameters.length; i++ ) {
-                if (commandObj.parameters[i].isOptional === true) {
-                    commandArgs += `[ *${commandObj.parameters[i].info?.name}* ]`;
-                } else {
-                    commandArgs += `{ *${commandObj.parameters[i].info?.name}* }`;
-                }
+                commandArgs += `\`${commandObj.parameters[i].info?.name}\``;
                 if (i !== commandObj.parameters.length -1) { commandArgs += ' '; }
             }
         }
 
         return `Faltan argumentos en el comando.\n\n` +
-                `_${commandPrefix}${alias}_ ${commandArgs}`
+                `${commandPrefix}${alias} ${commandArgs}`
     },
     MISSING_QUOTE: 'Este comando necesita citar un mensaje para ser ejecutado.',
     INVALID_ARGUMENT: (commandObj: Command, arg: any, param: Parameter) => {
@@ -56,7 +52,7 @@ export const COMMAND_ERROR_MESSAGES = Object.freeze({
         return  `El argumento "*${arg}*" es invalido.\n\n`+
                 `El parámetro "*${param.info?.name}*" ha de ser de tipo *${tipo}*.\n\n` +
                 `Para más información ejecute: ` +
-                `*${commandPrefix}${commandPrefix.length > 0 ? 'ayuda' : 'Ayuda' } ${commandObj.alias[0]}*`;
+                `*${commandPrefix}${commandPrefix.length > 0 ? 'ayuda' : 'Ayuda' }* \`${commandObj.alias[0]}\``;
     }
 });
 
