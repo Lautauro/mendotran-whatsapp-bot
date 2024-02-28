@@ -4,5 +4,5 @@
     "hotSwappingEnabled": true,
     "hotSwappingTimer": 2000,
     "clearCommandsHistoryEvery": 1800000,
-    "cooldownTime": 3000
+    "initialCoolDown": 1500
 }
