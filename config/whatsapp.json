@@ -1,7 +1,7 @@
 {
     "botName": "Mendotran-BOT",
     "adminOnly": false,
-    "showMessagesInTheTerminal": true,
+    "showMessagesInTheTerminal": false,
     "showPhoneNumber": false,
     "showContactName": false,
     "showUserName": true,
