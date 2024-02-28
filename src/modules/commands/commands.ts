@@ -1,27 +1,18 @@
-import { Command, CommandData, CommandOptions, CommandResponseOptions, CommandReturn, Parameter, ParameterInfo } from "../../ts/interfaces/commands.js";
+import { Command, CommandData, CommandResponseOptions, CommandReturn, Parameter, ParameterInfo } from "../../ts/interfaces/commands.js";
 import { CommandCallback, ParameterType } from "../../ts/types/commands.js";
 import { CommandResponse, CommandResponseType } from "../../ts/enums/commands.js";
 import { read_response } from "../whatsapp/read_response.js";
 import { Message, MessageContent } from "whatsapp-web.js";
 import { bot_log, bot_log_warn, bot_log_error } from "../../utils/bot_log.js";
 import { whatsappSettings, commandsSettings } from "../../index.js";
+import { capitalized_case } from "../../utils/capitalized_case.js";
 
 const commandPrefix = commandsSettings.commandPrefix ?? '';
-const commandDefaultOptions: CommandOptions = Object.freeze({
-    adminOnly: false,
-    needQuotedMessage: false,
-});
-
-const parameterDefaultInfo: ParameterInfo = Object.freeze({
-    name: 'UNDEFINED',
-    description: '',
-    example: 'UNDEFINED',
-});
 
 export const COMMAND_ERROR_MESSAGES = Object.freeze({
     MISSING_ARGUMENT: (commandObj: Command, args: any[]) => {
         let commandArgs = `${args.length > 0 ? `_${args.join(' ')}_ ` : ''}`;
-        let alias: string = commandPrefix > 0 ? commandObj.alias[0] : commandObj.alias[0].charAt(0).toUpperCase() + commandObj.alias[0].slice(1);
+        let alias: string = commandPrefix > 0 ? commandObj.alias[0] : capitalized_case(commandObj.alias[0]);
 
         if (commandObj.parameters) {
             for (let i = args.length; i < commandObj.parameters.length; i++ ) {
@@ -110,10 +101,14 @@ export const createCommand = (alias: string[], data?: CommandData) => {
         parameters: null,
         hasOptionalValues: false,
         options: {
-            ...commandDefaultOptions,
+            adminOnly: false,
+            needQuotedMessage: false,
             ...data?.options,
         },
-        info: data?.info,
+        info: {
+            name: capitalized_case(alias[0]),
+            ...data?.info,
+        },
         callback: () => {},
     }
 
@@ -144,7 +139,8 @@ const addParameter = (command: Command) => (type: ParameterType | ParameterType[
         defaultValue,
         isOptional,
         info: {
-            ...parameterDefaultInfo,
+            name: type[0],
+            example: defaultValue ? String(defaultValue) : 'UNDEFINED',
             ...info,
         },
     });
@@ -322,8 +318,10 @@ function command_log(commandName: string, commandArgs: any[], message: Message):
         `> Args:`, commandArgs, '\n');
 }
 
-export function command_example(command: Command): string | null {   
-    if (command.info && command.info.name.length) {
+export function command_example(command: Command): string | null {
+    if (command.info && command.info.name.length > 0) {
+        if (!command.parameters && command.info.description === undefined) { return null; }
+
         let text = `🤖 *${command.info.name}* 🤖`;
         if (command.info.description?.length) { text += `\n\n${command.info.description}`; }
 
@@ -331,7 +329,7 @@ export function command_example(command: Command): string | null {
             let alias = command.alias[0];
             
             if (commandPrefix.length === 0) {
-                alias = command.alias[0].charAt(0).toUpperCase() + command.alias[0].slice(1);
+                alias = capitalized_case(command.alias[0]);
             }
             
             text += `\n\n✍️ *Command Syntax* ✍️\n\n`;
