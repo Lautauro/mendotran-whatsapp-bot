@@ -1,8 +1,8 @@
 import { LocalAuth, Client, MessageTypes, Message, MessageId, MessageSendOptions, MessageContent } from 'whatsapp-web.js';
-import { command_exists } from '../commands/commands'
+import { commandExists } from '../commands/commands.js'
 import * as qrcode from 'qrcode-terminal';
-import { get_time_string } from '../../utils/get_time_string.js';
-import { bot_log, bot_log_error } from '../../utils/bot_log';
+import { getTimeString } from '../../utils/getTimeString.js';
+import { botLog, botLogError } from '../../utils/botLog.js';
 import { whatsappSettings, commandsSettings, packageInfo } from "../../index.js";
 
 const client = new Client({
@@ -35,15 +35,15 @@ client.on('qr', (qr: string) => {
 });
 
 client.on('authenticated', () => {
-    bot_log('Authenticated\n');
+    botLog('Authenticated\n');
 });
 
 client.on('auth_failure', (msg) => {
-    bot_log_error('Authentication failure\n', msg);
+    botLogError('Authentication failure\n', msg);
 });
 
 client.on('disconnected', (reason) => {
-    bot_log_error('Client was logged out. Reason:', reason);
+    botLogError('Client was logged out. Reason:', reason);
 });
 
 client.on('loading_screen', (percent: number) => {
@@ -83,24 +83,24 @@ client.on('loading_screen', (percent: number) => {
 
 client.on('ready', () => {
     console.clear();
-    bot_log('The client is ready.\n');
+    botLog('The client is ready.\n');
 
     const startTime = Date.now();
     const commandPath: string = '../commands';
-    let exec_command  = require(`${commandPath}/commands.js`).exec_command;
-    require(`${commandPath}/commands_list.js`);
+    let commandExecution  = require(`${commandPath}/commands.js`).commandExecution;
+    require(`${commandPath}/commandsList.js`);
     
-    if (!whatsappSettings.showMessagesInTheTerminal) { bot_log('Hidden messages.\n'); }
+    if (!whatsappSettings.showMessagesInTheTerminal) { botLog('Hidden messages.\n'); }
 
     // Hot-Swap
     if (commandsSettings.hotSwappingEnabled) {
         setInterval(() => {
             try {
                 delete require.cache[require.resolve(`${commandPath}/commands.js`)];
-                delete require.cache[require.resolve(`${commandPath}/commands_list.js`)];
+                delete require.cache[require.resolve(`${commandPath}/commandsList.js`)];
 
-                exec_command = require(`${commandPath}/commands.js`).exec_command; 
-                require(`${commandPath}/commands_list.js`);
+                commandExecution = require(`${commandPath}/commands.js`).commandExecution; 
+                require(`${commandPath}/commandsList.js`);
             } catch(error) {
                 console.error('Error while clearing cache:', error);
             }
@@ -111,7 +111,7 @@ client.on('ready', () => {
     const lastMessage: Map<string, number[]> = new Map();
 
     // Auto-clear history
-    setInterval(() => { clear_commands_history(); }, commandsSettings.clearCommandsHistoryEvery);
+    setInterval(() => { clearCommandsHistory(); }, commandsSettings.clearCommandsHistoryEvery);
 
     // Show edited messages in the termianal
     if (whatsappSettings.showMessagesInTheTerminal) {
@@ -119,7 +119,7 @@ client.on('ready', () => {
             // Ignore previous messages
             if (message.timestamp * 1000 < startTime) { return; }
             const from: string = message.fromMe ? message.to : message.from;
-            print_message(message, from, true);
+            printMessage(message, from, true);
         });
     }
 
@@ -133,11 +133,11 @@ client.on('ready', () => {
         const from: string = message.fromMe ? message.to : message.from;
 
         // Setting: Show messages in the termianal
-        if (whatsappSettings.showMessagesInTheTerminal) { print_message(message, from); }
+        if (whatsappSettings.showMessagesInTheTerminal) { printMessage(message, from); }
 
         /* Commands */ 
         
-        if (exec_command === undefined) { return; }
+        if (commandExecution === undefined) { return; }
         
         // Setting: Ignore commands not coming from admin
         if (whatsappSettings.adminOnly && !message.fromMe) { return; }
@@ -145,34 +145,34 @@ client.on('ready', () => {
         if (message.body.indexOf(commandsSettings.commandPrefix) === 0 && typeof message.body === 'string' && message.type === MessageTypes.TEXT) {
             if (commandsSettings.commandPrefix.length === 0) {
                 const checkCommand: string[] | null = message.body.match(/[a-z]+/i);
-                if (checkCommand && !command_exists(checkCommand[0])) { return; }
+                if (checkCommand && !commandExists(checkCommand[0])) { return; }
             }
             
             // Cooldown
-            if (can_execute(message, from)) {
-                exec_command(message);
-                cooldown_update(from);
+            if (canExecute(message, from)) {
+                commandExecution(message);
+                cooldownUpdate(from);
             }
         }
     });
 
-    function clear_commands_history() {
+    function clearCommandsHistory() {
         if (lastMessage.size === 0) { return; }
         
-        bot_log('Clearing command timestamp history:\n');  
+        botLog('Clearing command timestamp history:\n');  
         const now = Date.now();
         for (let [user, timestampList] of lastMessage) {
             if (now - timestampList[timestampList.length - 1] >= commandsSettings.cooldownTime * cooldownMultiplier[3]) {
                 lastMessage.delete(user);
-                bot_log(user, '=>', timestampList);
+                botLog(user, '=>', timestampList);
             }
         }
-        bot_log('Command timestamp history cleared.');
+        botLog('Command timestamp history cleared.');
     }
 
     const cooldownMultiplier = [ 1.4, 2, 2.5, 3];
 
-    function can_execute(message: Message, from: string): boolean {
+    function canExecute(message: Message, from: string): boolean {
         if (message.fromMe === true) { return true; }
 
         // Cooldown check
@@ -201,7 +201,7 @@ client.on('ready', () => {
         return false;
     }
 
-    function cooldown_update(from: string) {
+    function cooldownUpdate(from: string) {
         if (lastMessage.has(from)) {
             const timestampList = lastMessage.get(from);
             if (timestampList !== undefined) {
@@ -216,12 +216,12 @@ client.on('ready', () => {
 
 // Functions
 
-async function print_message(message: Message, from: string, edited?: boolean): Promise<void> {
+async function printMessage(message: Message, from: string, edited?: boolean): Promise<void> {
     let terminalText: string = '';
 
     // Timestamp: Time the message was sent
     if (whatsappSettings.showTimestamp === true) { 
-        terminalText += `[${get_time_string(message.timestamp * 1000, true, true, true)}] `;
+        terminalText += `[${getTimeString(message.timestamp * 1000, true, true, true)}] `;
     }
 
     // Show contact name if it is booked
@@ -312,7 +312,7 @@ async function print_message(message: Message, from: string, edited?: boolean): 
     console.log(`${terminalText}${message.body}`);
 }
 
-export async function send_message(content: MessageContent, messageId: MessageId, options?: MessageSendOptions | undefined): Promise<Message> {
+export async function sendMessage(content: MessageContent, messageId: MessageId, options?: MessageSendOptions | undefined): Promise<Message> {
     if (!client) {
         throw new Error('The Whatsapp Web client has not been initialised.');
     } else {
@@ -320,4 +320,4 @@ export async function send_message(content: MessageContent, messageId: MessageId
     }
 }
 
-export function start_whatsappweb_client(): void { client.initialize(); }
+export function startWhatsAppWebClient(): void { client.initialize(); }

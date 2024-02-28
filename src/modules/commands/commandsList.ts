@@ -1,4 +1,4 @@
-import { createCommand, send_response } from "./commands.js";
+import { createCommand, sendResponse } from "./commands.js";
 
 /**
  * Basic commands
@@ -11,7 +11,7 @@ createCommand(['ping'], {
     }
     })
     .setCallback((args, message) => {
-        send_response('Pong!', message, {
+        sendResponse('Pong!', message, {
             reaction: '🏓',
         })
     })
@@ -24,7 +24,7 @@ createCommand(['pong'], {
     }
     })
     .setCallback(function (args, message) {
-        send_response('Ping!', message, {
+        sendResponse('Ping!', message, {
             reaction: '🏓',
         })
     })

@@ -1,4 +1,4 @@
-export function get_time_string(unixTime: number, hours?: boolean, minutes?: boolean, seconds?: boolean, miliseconds?: boolean): string {
+export function getTimeString(unixTime: number, hours?: boolean, minutes?: boolean, seconds?: boolean, miliseconds?: boolean): string {
     const date: Date = new Date(unixTime);
     const timeValues: number[] = [];
     let string: string = '';
