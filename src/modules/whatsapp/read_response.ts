@@ -5,8 +5,7 @@ import { reply_message } from "./reply_message.js";
 import { send_message } from "./whatsapp.js";
 import { react_to_message } from "./react_to_message.js";
 import { bot_log, bot_log_error } from '../../utils/bot_log';
-
-const commandsSettings = require('../../../config/commands.json');
+import { commandsSettings } from "../../index.js";
 
 export async function read_response(response: CommandReturn, message: Message): Promise<Message | void> {
     if (response.code === CommandResponse.OK) {

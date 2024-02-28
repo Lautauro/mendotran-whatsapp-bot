@@ -3,10 +3,7 @@ import { command_exists } from '../commands/commands'
 import * as qrcode from 'qrcode-terminal';
 import { get_time_string } from '../../utils/get_time_string.js';
 import { bot_log, bot_log_error } from '../../utils/bot_log';
-
-const whatsappSettings = require('../../../config/whatsapp.json');
-const commandsSettings = require('../../../config/commands.json');
-const packageInfo = require('../../../package.json');
+import { whatsappSettings, commandsSettings, packageInfo } from "../../index.js";
 
 const client = new Client({
     authStrategy: new LocalAuth({ 

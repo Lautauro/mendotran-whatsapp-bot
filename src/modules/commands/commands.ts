@@ -4,10 +4,9 @@ import { CommandResponse, CommandResponseType } from "../../ts/enums/commands.js
 import { read_response } from "../whatsapp/read_response.js";
 import { Message, MessageContent } from "whatsapp-web.js";
 import { bot_log, bot_log_warn, bot_log_error } from "../../utils/bot_log.js";
+import { whatsappSettings, commandsSettings } from "../../index.js";
 
-const commandPrefix = require('../../../config/commands.json').commandPrefix ?? '';
-const whatsappSettings = require('../../../config/whatsapp.json');
-
+const commandPrefix = commandsSettings.commandPrefix ?? '';
 const commandDefaultOptions: CommandOptions = Object.freeze({
     adminOnly: false,
     needQuotedMessage: false,
@@ -248,16 +247,16 @@ export function command_exists(commandName: string): boolean {
 }
 
 export async function exec_command(message : Message): Promise<void> {
+    // Check if string is empty
+    if (!message.body || message.body.length === 0) { return; }
+    
+    // Separate arguments and command
+    const commandArgs: string[] = message.body.match(/"([^"]*)"|'([^']*)'|[^ ]+/gim) ?? [];
+    const commandName: string = commandArgs.shift()?.slice(commandPrefix.length) ?? '';
+    const commandObj = search_command(commandName);
+    if (!commandObj) { return; }
+    
     try {
-        // Check if string is empty
-        if (!message.body || message.body.length === 0) { return; }
-
-        // Separate arguments and command
-        const commandArgs: string[] = message.body.match(/"([^"]*)"|'([^']*)'|[^ ]+/gim) ?? [];
-        const commandName: string = commandArgs.shift()?.slice(commandPrefix.length) ?? '';
-        const commandObj = search_command(commandName);
-        if (!commandObj) { return; }
-        
         // Verify that the user has access to the command
         if (!commandObj.options.adminOnly || (message.fromMe && commandObj.options.adminOnly)) {
             command_log(commandObj.alias[0], commandArgs, message);
@@ -384,7 +383,7 @@ export async function send_response(content: MessageContent | null, message: Mes
     // Avoid commands that send other commands, as this can generate an infinite loop of sending messages.
     if (content && typeof content === 'string' && content.indexOf(commandPrefix) === 0) {
         const strHead: string = content.split(" ")[0].slice(commandPrefix.length);
-        if (search_command(strHead)) {
+        if (command_exists(strHead)) {
             throw new Error(`The response to a command cannot contain another command at the beginning, as this can create an infinite loop.\n\n`+
                             `\tResponse: "\x1b[41m${commandPrefix}${strHead}\x1b[0m${content.slice(commandPrefix.length + strHead.length)}"\n`);
         }
