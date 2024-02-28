@@ -7,5 +7,5 @@
     "showUserName": true,
     "showTimestamp": true,
     "wwebjsCache": "./.session_cache",
-    "ignoreMedia": false
+    "ignoreNonTextMessages": false
 }

@@ -131,7 +131,7 @@ client.on('ready', () => {
         if (message.isStatus || (message.timestamp * 1000 < startTime)) { return; }
 
         // Setting: Ignore "media" messages
-        if (whatsappSettings.ignoreMedia && message.hasMedia) { return; }
+        if (whatsappSettings.ignoreNonTextMessages === true && message.type !== MessageTypes.TEXT) { return; }
 
         const from: string = message.fromMe ? message.to : message.from;
 
