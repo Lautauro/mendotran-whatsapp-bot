@@ -6,6 +6,7 @@ import { Message, MessageContent } from "whatsapp-web.js";
 import { botLog, botLogWarn, botLogError } from "../../utils/botLog.js";
 import { whatsappSettings, commandsSettings } from "../../index.js";
 import { capitalizedCase } from "../../utils/capitalizedCase.js";
+import { COOLDOWN_MULTIPLIER, MESSAGES_HISTORY, USERS_EXECUTING_COMMANDS } from "./cooldown.js";
 
 const commandPrefix = commandsSettings.commandPrefix ?? '';
 
@@ -251,12 +252,43 @@ export async function commandExecution(message : Message): Promise<void> {
     const commandName: string = commandArgs.shift()?.slice(commandPrefix.length) ?? '';
     const commandObj = searchCommand(commandName);
     if (!commandObj) { return; }
+
+    const from = message.fromMe ? message.to : message.from;
+
+    // Cool-down system
+    if (MESSAGES_HISTORY.has(message.from)) {
+        const userHistory = MESSAGES_HISTORY.get(message.from);
+        if (userHistory !== undefined) {
+            if (userHistory.length >= COOLDOWN_MULTIPLIER.length) {
+                userHistory.splice(0, 1);
+            }
+
+            const now = Date.now();
+            userHistory.push(now);
+
+            const COOLDOWN = commandsSettings.initialCoolDown * COOLDOWN_MULTIPLIER[userHistory.length - 1];
+            const timeElapsed = now - userHistory[userHistory.length - 2];
+
+            if (timeElapsed < COOLDOWN) { return; }
+            if (timeElapsed > (COOLDOWN + commandsSettings.initialCoolDown)) {
+                userHistory.splice(0, userHistory.length - 1);
+            }
+        }
+    } else {
+        if (message.fromMe === false) {
+            MESSAGES_HISTORY.set(message.from, [ Date.now() ]);
+        }
+    }
+
+    if (USERS_EXECUTING_COMMANDS.has(message.from)) { return; };
     
     try {
         // Verify that the user has access to the command
         if (!commandObj.options.adminOnly || (message.fromMe && commandObj.options.adminOnly)) {
-            commandLog(commandObj.alias[0], commandArgs, message);
+            USERS_EXECUTING_COMMANDS.add(from);
+
             await sendResponse(null, message, { reaction: '⏳' });
+            commandLog(commandObj.alias[0], commandArgs, message);
             
             // Commands that require a message to be quoted
             if (commandObj.options.needQuotedMessage === true && !message.hasQuotedMsg) {
@@ -264,7 +296,8 @@ export async function commandExecution(message : Message): Promise<void> {
             }
             // Commands without parameters
             if (!commandObj.parameters) {     
-                commandObj.callback(commandArgs, message);
+                await commandObj.callback(commandArgs, message);
+                USERS_EXECUTING_COMMANDS.delete(from);
                 return;
             } else {
                 // Commands with parameters
@@ -282,7 +315,8 @@ export async function commandExecution(message : Message): Promise<void> {
 
                 if ([...commandArgs, ...optionalValues].length >= paramLength) {
                     if (verifyArgs(commandArgs, commandObj)) {
-                        commandObj.callback([...commandArgs, ...optionalValues], message);
+                        await commandObj.callback([...commandArgs, ...optionalValues], message);
+                        USERS_EXECUTING_COMMANDS.delete(from);
                         return;
                     }
                 } else {
@@ -291,6 +325,7 @@ export async function commandExecution(message : Message): Promise<void> {
             }
         }
     } catch(error) {
+        if (USERS_EXECUTING_COMMANDS.has(from)) { USERS_EXECUTING_COMMANDS.delete(from); }
         if (error instanceof CommandError) {
             sendErrorResponse(error.message, message, { ...error.options });
         } else {
