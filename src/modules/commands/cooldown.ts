@@ -1,4 +1,4 @@
-import { commandsSettings } from "../..";
+import { commandsSettings } from "../../index.js";
 import { botLog } from "../../utils/botLog";
 
 export const COOLDOWN_MULTIPLIER = [ 1, 1.2, 1.4, 2, 3];
