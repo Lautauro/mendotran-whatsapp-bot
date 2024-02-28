@@ -107,12 +107,6 @@ client.on('ready', () => {
         }, commandsSettings.hotSwappingTimer);
     }
 
-    // Save timestamp of last command
-    const lastMessage: Map<string, number[]> = new Map();
-
-    // Auto-clear history
-    setInterval(() => { clearCommandsHistory(); }, commandsSettings.clearCommandsHistoryEvery);
-
     // Show edited messages in the termianal
     if (whatsappSettings.showMessagesInTheTerminal) {
         client.on('message_edit', async (message: Message) => {
@@ -142,76 +136,10 @@ client.on('ready', () => {
         // Setting: Ignore commands not coming from admin
         if (whatsappSettings.adminOnly && !message.fromMe) { return; }
 
-        if (message.body.indexOf(commandsSettings.commandPrefix) === 0 && typeof message.body === 'string' && message.type === MessageTypes.TEXT) {
-            if (commandsSettings.commandPrefix.length === 0) {
-                const checkCommand: string[] | null = message.body.match(/[a-z]+/i);
-                if (checkCommand && !commandExists(checkCommand[0])) { return; }
-            }
-            
-            // Cooldown
-            if (canExecute(message, from)) {
-                commandExecution(message);
-                cooldownUpdate(from);
-            }
+        if (message.body.indexOf(commandsSettings.commandPrefix) === 0 && typeof message.body === 'string' && message.type === MessageTypes.TEXT) {          
+            commandExecution(message);
         }
     });
-
-    function clearCommandsHistory() {
-        if (lastMessage.size === 0) { return; }
-        
-        botLog('Clearing command timestamp history:\n');  
-        const now = Date.now();
-        for (let [user, timestampList] of lastMessage) {
-            if (now - timestampList[timestampList.length - 1] >= commandsSettings.cooldownTime * cooldownMultiplier[3]) {
-                lastMessage.delete(user);
-                botLog(user, '=>', timestampList);
-            }
-        }
-        botLog('Command timestamp history cleared.');
-    }
-
-    const cooldownMultiplier = [ 1.4, 2, 2.5, 3];
-
-    function canExecute(message: Message, from: string): boolean {
-        if (message.fromMe === true) { return true; }
-
-        // Cooldown check
-        if (lastMessage.has(from)) {
-            const timestampList = lastMessage.get(from);
-
-            if (timestampList === undefined) { return false; }
-
-            const now = Date.now();
-            const timeElapsed = now - timestampList[timestampList.length - 1];
-            
-            if (timeElapsed >= commandsSettings.cooldownTime) {
-                const actualCooldown = commandsSettings.cooldownTime * cooldownMultiplier[timestampList.length - 1];
-                const nextCooldown = actualCooldown + commandsSettings.cooldownTime;
-
-                if (timeElapsed >= nextCooldown) {
-                    timestampList.splice(0, timestampList.length);
-                    return true;
-                } else if (timeElapsed >= actualCooldown) {
-                    return true;
-                }
-            }
-        } else {
-            return true;
-        }
-        return false;
-    }
-
-    function cooldownUpdate(from: string) {
-        if (lastMessage.has(from)) {
-            const timestampList = lastMessage.get(from);
-            if (timestampList !== undefined) {
-                if (timestampList.length >= cooldownMultiplier.length) { timestampList.splice(0, 1); }
-                timestampList.push(Date.now());
-            }
-        } else {
-            lastMessage.set(from, [ Date.now() ]);
-        }
-    }
 });
 
 // Functions
