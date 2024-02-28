@@ -10,7 +10,7 @@ const mendotranSettings = require('../config/mendotran.json');
 
 if (!fs.existsSync(`./json/${mendotranSettings.dataFile}`) || process.argv[2] == 'refresh') {
     botLog('Generando base de datos de Mendotran.');
-    require('./modules/mendotran/generate_database.js').get_mendotran_database()
+    require('./modules/mendotran/generateDatabase.js').getMendotranDatabase()
         .then(() => {
             startWhatsAppWebClient();
         });

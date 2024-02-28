@@ -1,7 +1,7 @@
 import { ScheduledArrival, Position, MetroStopInfo, MendotranData, StopInfo } from '../../ts/interfaces/mendotran.d.js';
-import { fetch_json_mendotran } from '../../utils/fetch_json_mendotran.js';
-import { get_time_string } from '../../utils/get_time_string.js';
-import { bot_log_error } from '../../utils/bot_log.js';
+import { fetchJsonMendotran } from '../../utils/fetchJsonMendotran.js';
+import { getTimeString } from '../../utils/getTimeString.js';
+import { botLogError } from '../../utils/botLog.js';
 import { MetroData } from '../../ts/types/mendotran.js';
 
 const mendotranSettings = require('../../../config/mendotran.json');
@@ -21,7 +21,7 @@ const emoji_time: readonly string[][] = [
     ['🕚','🕦'], // 11 - 23
 ];
 
-function time_to_emoji(unixTime: number): string {
+function timeToEmoji(unixTime: number): string {
     const time: Date = new Date(unixTime);
     const minutes: number = time.getMinutes();
     const hours: number = time.getHours() % 12;
@@ -33,7 +33,7 @@ function time_to_emoji(unixTime: number): string {
 const mendotranData: MendotranData = require(`../../../json/${mendotranSettings.dataFile}`);
 const mendotranMetroData: MetroData = require(`../../../json/metrotranvia.json`);
 
-function sort_by_arrival_time(arrivals: ScheduledArrival[]): ScheduledArrival[] {
+function sortByArrivalTime(arrivals: ScheduledArrival[]): ScheduledArrival[] {
     if (arrivals.length === 1) {
         arrivals[0].arrivalTime = arrivals[0].predicted ? arrivals[0].predictedArrivalTime : arrivals[0].scheduledArrivalTime;
     } else {
@@ -47,7 +47,7 @@ function sort_by_arrival_time(arrivals: ScheduledArrival[]): ScheduledArrival[] 
     return arrivals;
 }
 
-function bus_arrivals_string(arrivals: ScheduledArrival[]): string {
+function busArrivalsString(arrivals: ScheduledArrival[]): string {
     let text = '';
     for (let i = 0; i < arrivals.length; i++) {
         // No repetir nombres de colectivos
@@ -58,7 +58,7 @@ function bus_arrivals_string(arrivals: ScheduledArrival[]): string {
             if (mendotranData.buses[arrivals[i].routeShortName]) {
                 busColor = mendotranData.buses[arrivals[i].routeShortName].color;
             } else {
-                bot_log_error(`No se ha podido cargar el color del micro ${arrivals[i].routeShortName}.`);
+                botLogError(`No se ha podido cargar el color del micro ${arrivals[i].routeShortName}.`);
                 busColor = '🔲';
             }
 
@@ -70,7 +70,7 @@ function bus_arrivals_string(arrivals: ScheduledArrival[]): string {
         }
 
         // Hora de llegada
-        text += `> ${time_to_emoji(arrivals[i].arrivalTime)} ${get_time_string(arrivals[i].arrivalTime, true, true)} hs`;
+        text += `> ${timeToEmoji(arrivals[i].arrivalTime)} ${getTimeString(arrivals[i].arrivalTime, true, true)} hs`;
         
         const minutesLeft = Math.floor((arrivals[i].arrivalTime - Date.now()) / 60000);
         
@@ -123,7 +123,7 @@ function bus_arrivals_string(arrivals: ScheduledArrival[]): string {
     return text;
 }
 
-export async function get_stop_arrivals(stopNumber: any, filter?: string) {
+export async function getStopArrivals(stopNumber: any, filter?: string) {
     return new Promise<string>(async (resolve, reject) => {
         if (mendotranData) {
             let stop = stopNumber;
@@ -143,7 +143,7 @@ export async function get_stop_arrivals(stopNumber: any, filter?: string) {
                 return reject(`El micro *${filter}* no pasa por la parada *${stop}*`);
             }
     
-            fetch_json_mendotran(`${mendotranSettings.api}/arrivals-and-departures-for-stop/${mendotranData.stops[stop].id}.json`)
+            fetchJsonMendotran(`${mendotranSettings.api}/arrivals-and-departures-for-stop/${mendotranData.stops[stop].id}.json`)
                 .then((json) => {
                     let arrivals: ScheduledArrival[] = json.data?.entry?.arrivalsAndDepartures;     
     
@@ -162,11 +162,11 @@ export async function get_stop_arrivals(stopNumber: any, filter?: string) {
                     }
 
                     // Ordenar micros segun horario
-                    sort_by_arrival_time(arrivals);
+                    sortByArrivalTime(arrivals);
     
                     // String
                     let text = `🚦 *${stop}* 🚦\n\n`
-                             + bus_arrivals_string(arrivals)
+                             + busArrivalsString(arrivals)
                              + `\n\n📍 *${mendotranData.stops[stop].address}* 📍`;
 
                     return resolve(text);
@@ -175,7 +175,7 @@ export async function get_stop_arrivals(stopNumber: any, filter?: string) {
                     if (typeof error === 'string') {
                         return reject(error);
                     } else if (error instanceof Error) {
-                        return reject(handle_errors(error));
+                        return reject(handleErrors(error));
                     }
                 })
         } else {
@@ -184,31 +184,31 @@ export async function get_stop_arrivals(stopNumber: any, filter?: string) {
     });
 }
 
-function calculate_distance(x1: number, y1: number, x2: number, y2: number): number {
+function calculateDistance(x1: number, y1: number, x2: number, y2: number): number {
     return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
 }
 
-export async function get_arrivals_by_location(position: Position, filter?: string) {
+export async function getArrivalsByLocation(position: Position, filter?: string) {
     return new Promise<string>(async (resolve, reject) => {
         if (mendotranData) {
-            fetch_json_mendotran(`${mendotranSettings.api}/stops-for-location.json?platform=web&v=&lat=${position.lat}&lon=${position.lon}&latSpan=0.006&lonSpan=0.01&version=1.0`)
+            fetchJsonMendotran(`${mendotranSettings.api}/stops-for-location.json?platform=web&v=&lat=${position.lat}&lon=${position.lon}&latSpan=0.006&lonSpan=0.01&version=1.0`)
                 .then((json) => {
                     if (!json.data?.list || json.data.list.length === 0) {
                         return reject('No se han encontrado paradas de Mendotran cercanas a la ubicación.\n\n🧭 ❓');
                     }
         
                     const stopsAround: StopInfo[] = json.data?.list.sort((a: StopInfo, b: StopInfo) => {
-                        if (!a.distance) { a.distance = calculate_distance(position.lat, position.lon, a.lat, a.lon); }
-                        if (!b.distance) { b.distance = calculate_distance(position.lat, position.lon, b.lat, b.lon); }
+                        if (!a.distance) { a.distance = calculateDistance(position.lat, position.lon, a.lat, a.lon); }
+                        if (!b.distance) { b.distance = calculateDistance(position.lat, position.lon, b.lat, b.lon); }
                         return a.distance - b.distance;
                     });
-                    return resolve(get_stop_arrivals(stopsAround[0].code, filter));
+                    return resolve(getStopArrivals(stopsAround[0].code, filter));
                 })
                 .catch((error) => {
                     if (typeof error === 'string') {
                         return reject(error);
                     } else if (error instanceof Error) {
-                        return reject(handle_errors(error));
+                        return reject(handleErrors(error));
                     }
                 });
         } else {
@@ -218,15 +218,15 @@ export async function get_arrivals_by_location(position: Position, filter?: stri
 }
 
 // Metrotranvía
-export async function get_metro_arrivals(stopName: string): Promise<string> {
+export async function getMetroArrivals(stopName: string): Promise<string> {
     return new Promise<string>(async(resolve, reject) => {
-        search_metro_stop(stopName)
+        searchMetroStop(stopName)
             .then(async (stop: MetroStopInfo) => {           
-                const metro100Json = await fetch_json_mendotran(`${mendotranSettings.api}/arrivals-and-departures-for-stop/${mendotranData.stops[stop["100"]].id}.json`);
-                const metro101Json = await fetch_json_mendotran(`${mendotranSettings.api}/arrivals-and-departures-for-stop/${mendotranData.stops[stop["101"]].id}.json`);
+                const metro100Json = await fetchJsonMendotran(`${mendotranSettings.api}/arrivals-and-departures-for-stop/${mendotranData.stops[stop["100"]].id}.json`);
+                const metro101Json = await fetchJsonMendotran(`${mendotranSettings.api}/arrivals-and-departures-for-stop/${mendotranData.stops[stop["101"]].id}.json`);
                 
-                let metro100Arrivals = sort_by_arrival_time(metro100Json.data?.entry?.arrivalsAndDepartures);
-                let metro101Arrivals = sort_by_arrival_time(metro101Json.data?.entry?.arrivalsAndDepartures);
+                let metro100Arrivals = sortByArrivalTime(metro100Json.data?.entry?.arrivalsAndDepartures);
+                let metro101Arrivals = sortByArrivalTime(metro101Json.data?.entry?.arrivalsAndDepartures);
 
                 // Limitar número de llegadas que se muestran
                 const arrivalsLimit = 2;
@@ -237,10 +237,10 @@ export async function get_metro_arrivals(stopName: string): Promise<string> {
 
                 if (metro100Arrivals.length > 0 || metro101Arrivals.length > 0) {
                     let text = `🚦 *Estación ${Array.isArray(stop.name) ? stop.name.join(' / ') : stop.name}* 🚦\n\n`
-                            + (metro100Arrivals.length > 0 ? bus_arrivals_string(metro100Arrivals) : `🚋 *Sin llegadas para andén ${stop.direction[0]}* 🏃‍♀️`)
+                            + (metro100Arrivals.length > 0 ? busArrivalsString(metro100Arrivals) : `🚋 *Sin llegadas para andén ${stop.direction[0]}* 🏃‍♀️`)
                             + (metro100Restantes > 0 ? `\n\n> 🚏 *${metro100Restantes} más en camino*` : '')
                             + '\n\n'
-                            + (metro101Arrivals.length > 0 ? bus_arrivals_string(metro101Arrivals) : `🚋 *Sin llegadas para andén ${stop.direction[1]}* 🏃‍♀️`)
+                            + (metro101Arrivals.length > 0 ? busArrivalsString(metro101Arrivals) : `🚋 *Sin llegadas para andén ${stop.direction[1]}* 🏃‍♀️`)
                             + (metro101Restantes > 0 ? `\n\n> 🚏 *${metro101Restantes} más en camino*` : '')
                             + `\n\n📍 *${mendotranData.stops[stop['100']].address}* 📍`;
                     return resolve(text);
@@ -252,13 +252,13 @@ export async function get_metro_arrivals(stopName: string): Promise<string> {
                 if (typeof error === 'string') {
                     return reject(error);
                 } else if (error instanceof Error) {
-                    return reject(handle_errors(error));
+                    return reject(handleErrors(error));
                 }
             });
     });
 }
 
-async function search_metro_stop(name: string): Promise<MetroStopInfo> {
+async function searchMetroStop(name: string): Promise<MetroStopInfo> {
     return new Promise<MetroStopInfo>(async (resolve, reject) => {
         if (mendotranMetroData && mendotranData) {
             name =  name.replace(/á/gi, 'a') // Ignorar tildes
@@ -267,7 +267,7 @@ async function search_metro_stop(name: string): Promise<MetroStopInfo> {
                         .replace(/ó/gi, 'o')
                         .replace(/ú/gi, 'u');
 
-            const stop = search_name(mendotranMetroData, 'name', new RegExp(name, 'i'));
+            const stop = searchName(mendotranMetroData, 'name', new RegExp(name, 'i'));
             if (stop) { return resolve(stop); }
 
             return reject(`No se ha encontrado la estación *"${name}"*.`);
@@ -277,13 +277,13 @@ async function search_metro_stop(name: string): Promise<MetroStopInfo> {
     });
 }
 
-function search_name(array: any[], key: string | null, regExp: RegExp) {
+function searchName(array: any[], key: string | null, regExp: RegExp) {
     for (let value of array) {
         let search;
         if (key) {
             if (value[key]) {
                 if (Array.isArray(value[key])) {
-                    if (search_name(value[key], null, regExp)) { return value; }
+                    if (searchName(value[key], null, regExp)) { return value; }
                     continue;
                 }
                 search = value[key];
@@ -296,7 +296,7 @@ function search_name(array: any[], key: string | null, regExp: RegExp) {
     return undefined;
 }
 
-function handle_errors(error: Error): string {
+function handleErrors(error: Error): string {
     console.error('\n', error, '\n');
     if (error.name === 'TimeoutError') {
         return 'La petición tardó demasiado en responder. Vuelva a intentarlo.\n\n🐌 🦥';

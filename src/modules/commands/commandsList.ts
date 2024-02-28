@@ -1,5 +1,5 @@
 import { COMMAND_ERROR_MESSAGES, createCommand, sendErrorResponse, sendResponse } from "./commands.js";
-import { get_arrivals_by_location, get_metro_arrivals, get_stop_arrivals } from "../mendotran/mendotran.js";
+import { getArrivalsByLocation, getMetroArrivals, getStopArrivals } from "../mendotran/mendotran.js";
 import { Message } from "whatsapp-web.js";
 
 /**
@@ -23,20 +23,20 @@ createCommand(['ping'], {
  * Mendotran
  */
 
-function arrivals_location(message: Message, quote: Message, filter?: string) {
+async function arrivals_location(message: Message, quote: Message, filter?: string) {
     if (quote.location) {
-        get_arrivals_by_location({ lat: +quote.location.latitude, lon: +quote.location.longitude}, filter)
-            .then((arrivals) => {
-                sendResponse(arrivals, message, { 
+        getArrivalsByLocation({ lat: +quote.location.latitude, lon: +quote.location.longitude}, filter)
+            .then(async (arrivals) => {
+                await sendResponse(arrivals, message, { 
                     reaction: '🚌',
                     messageOptions: { linkPreview: false },
                 });
             })
-            .catch((error) => {
-                sendErrorResponse(error, message);
+            .catch(async (error) => {
+                await sendErrorResponse(error, message);
             });
     } else {
-        sendErrorResponse('Para usar este comando debe citar a un mensaje con una ubicación', message);
+        await sendErrorResponse('Para usar este comando debe citar a un mensaje con una ubicación', message);
     }
 }
 
@@ -63,24 +63,25 @@ createCommand(['micro', 'm'], {
     .setCallback(async function (args, message) {
         if (message.hasQuotedMsg) {
             message.getQuotedMessage()
-                .then((quote) => {
-                    arrivals_location(message, quote, args[0]);
+                .then(async (quote) => {
+                    await arrivals_location(message, quote, args[0]);
                 });
             return;
         } else {
             if (args[1] === null) {
                 // @ts-ignore
-                return sendErrorResponse(COMMAND_ERROR_MESSAGES.MISSING_ARGUMENT(this, [args[0]]), message);
+                await sendErrorResponse(COMMAND_ERROR_MESSAGES.MISSING_ARGUMENT(this, [args[0]]), message);
+                return;
             } else {
-                get_stop_arrivals(args[1], args[0])
-                    .then((arrivals) => {
-                        sendResponse(arrivals, message, {
+                await getStopArrivals(args[1], args[0])
+                    .then(async (arrivals) => {
+                        await sendResponse(arrivals, message, {
                             reaction: '🚌',
                             messageOptions: { linkPreview: false },
                         });
                     })
-                    .catch((error) => {
-                        sendErrorResponse(error, message);
+                    .catch(async (error) => {
+                        await sendErrorResponse(error, message);
                     });
             }
         }
@@ -102,27 +103,28 @@ createCommand(['parada', 'p'], {
     }, null)
     .setCallback(async function (args, message) {
         if (message.hasQuotedMsg) {
-            message.getQuotedMessage().then((quote) => {
-                arrivals_location(message, quote);
+            message.getQuotedMessage().then(async (quote) => {
+                await arrivals_location(message, quote);
                 return;
             })
         } else {
             if (args[0]) {
-                get_stop_arrivals(args[0])
-                    .then((arrivals) => {
-                        sendResponse(arrivals, message, { 
+                await getStopArrivals(args[0])
+                    .then(async (arrivals) => {
+                        await sendResponse(arrivals, message, { 
                             reaction: '🚌',
                             messageOptions: {
                                 linkPreview: false,
                             },
                         });
                     })
-                    .catch((error) => {
-                        sendErrorResponse(error, message);
+                    .catch(async (error) => {
+                        await sendErrorResponse(error, message);
                     });
             } else {
                 // @ts-ignore
-                return sendErrorResponse(COMMAND_ERROR_MESSAGES.MISSING_ARGUMENT(this, []), message);
+                await sendErrorResponse(COMMAND_ERROR_MESSAGES.MISSING_ARGUMENT(this, []), message);
+                return;
             }
         }
     })
@@ -139,14 +141,14 @@ createCommand(['metro', 'metrotranvia', 'metrotranvía', 'estacion', 'estación'
         example: 'Piedra buena'
     })
     .setCallback(async (args, message) => {
-        get_metro_arrivals(args.join(' '))
-            .then((arrivals)=>{
-                sendResponse(arrivals, message, { 
+        await getMetroArrivals(args.join(' '))
+            .then(async (arrivals)=>{
+                await sendResponse(arrivals, message, { 
                     reaction: '🚋',
                 });
             })
-            .catch((error) => {
-                sendErrorResponse(error, message);
+            .catch(async (error) => {
+                await sendErrorResponse(error, message);
             })
     })
 .closeCommand();
