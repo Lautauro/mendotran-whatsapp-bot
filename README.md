@@ -55,11 +55,11 @@ Scan the QR code.
 Start playing!
 
 > [!NOTE]
-> You can change the command prefix **"."** and other configurations in **/src/config/**.
+> You can change the command prefix **"."** and other configurations in **/config/commands.json**.
 
 ## Create command
 
-Go to **/src/modules/commands/** and open **commands_list.ts**.
+Go to **/src/modules/commands/** and open **commandsList.ts**.
 
 
 To create a command you need to use the **createCommand** function.
@@ -105,10 +105,10 @@ createCommand(['alias'])
     .setCallback((args, message) => {
         if (args[0] === 'Hi') {
             // Send "Hello!"
-            send_response('Hello!', message);
+            sendResponse('Hello!', message);
         } else {
             // Send "Bye!"
-            send_response('Bye!', message);
+            sendResponse('Bye!', message);
         }
     })
 .closeCommand(); // Add command to list
@@ -192,7 +192,7 @@ createCommand(['foo'])
 Send a message to a chat.
 
 ```js
-send_response(MessageContent, MessageObj, options?)
+sendResponse(MessageContent, MessageObj, options?)
 ```
 
 For **MessageObj** info see: https://docs.wwebjs.dev/Message.html
@@ -233,7 +233,7 @@ createCommand(['ping', 'pingpong'], {
         }
     })
     .setCallback((args, message) => {
-        send_response('Pong!', message, { reaction: '🏓', });
+        sendResponse('Pong!', message, { reaction: '🏓', });
     })
 .closeCommand();
 ```
@@ -267,7 +267,7 @@ createCommand(['repeat'], {
             msgToSend += '\n' + args[0];
         }
 
-        send_response(msgToSend, message, { reply: true }); // Send as reply
+        sendResponse(msgToSend, message, { reply: true }); // Send as reply
     })
 .closeCommand()
 ```
@@ -291,7 +291,7 @@ createCommand(['quote', 'cite'], {
             .then((quotedMessage) => {
                 const msgToSend = `*" ${quotedMessage.body} "*\n\n` +
                                   `- _${quotedMessage._data.notifyName}_`;
-                send_response(msgToSend, message);
+                sendResponse(msgToSend, message);
             });
     })
 .closeCommand();    
@@ -299,7 +299,7 @@ createCommand(['quote', 'cite'], {
 
 ## Hot-swap
 
-The bot has a **command hot-swap mode**. It consists of a system that allows the developer to test the commands contained in **"/src/modules/commands_list.ts"** without having to completely restart the server, by simply recompiling the project. This is enabled by the **"hotSwappingEnabled"** configuration variable in **/src/config/commands.json**.
+The bot has a **command hot-swap mode**. It consists of a system that allows the developer to test the commands contained in **"/src/modules/commandsList.ts"** without having to completely restart the server, by simply recompiling the project. This is enabled by the **"hotSwappingEnabled"** configuration variable in **/config/commands.json**.
 
 > [!WARNING]
 > It is not recommended to enable this mode for non-development environments.
