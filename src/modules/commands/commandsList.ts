@@ -1,4 +1,4 @@
-import { COMMAND_ERROR_MESSAGES, createCommand, send_error_response, send_response } from "./commands.js";
+import { COMMAND_ERROR_MESSAGES, createCommand, sendErrorResponse, sendResponse } from "./commands.js";
 import { get_arrivals_by_location, get_metro_arrivals, get_stop_arrivals } from "../mendotran/mendotran.js";
 import { Message } from "whatsapp-web.js";
 
@@ -12,10 +12,10 @@ createCommand(['ping'], {
         description: 'Ping-pong! 🏓',
     }
     })
-    .setCallback((args, message) => {
-        send_response('Pong!', message, {
+    .setCallback(async (args, message) => {
+        await sendResponse('Pong!', message, {
             reaction: '🏓',
-        })
+        });
     })
 .closeCommand();
 
@@ -27,16 +27,16 @@ function arrivals_location(message: Message, quote: Message, filter?: string) {
     if (quote.location) {
         get_arrivals_by_location({ lat: +quote.location.latitude, lon: +quote.location.longitude}, filter)
             .then((arrivals) => {
-                send_response(arrivals, message, { 
+                sendResponse(arrivals, message, { 
                     reaction: '🚌',
                     messageOptions: { linkPreview: false },
                 });
             })
             .catch((error) => {
-                send_error_response(error, message);
+                sendErrorResponse(error, message);
             });
     } else {
-        send_error_response('Para usar este comando debe citar a un mensaje con una ubicación', message);
+        sendErrorResponse('Para usar este comando debe citar a un mensaje con una ubicación', message);
     }
 }
 
@@ -70,17 +70,17 @@ createCommand(['micro', 'm'], {
         } else {
             if (args[1] === null) {
                 // @ts-ignore
-                return send_error_response(COMMAND_ERROR_MESSAGES.MISSING_ARGUMENT(this, [args[0]]), message);
+                return sendErrorResponse(COMMAND_ERROR_MESSAGES.MISSING_ARGUMENT(this, [args[0]]), message);
             } else {
                 get_stop_arrivals(args[1], args[0])
                     .then((arrivals) => {
-                        send_response(arrivals, message, {
+                        sendResponse(arrivals, message, {
                             reaction: '🚌',
                             messageOptions: { linkPreview: false },
                         });
                     })
                     .catch((error) => {
-                        send_error_response(error, message);
+                        sendErrorResponse(error, message);
                     });
             }
         }
@@ -110,7 +110,7 @@ createCommand(['parada', 'p'], {
             if (args[0]) {
                 get_stop_arrivals(args[0])
                     .then((arrivals) => {
-                        send_response(arrivals, message, { 
+                        sendResponse(arrivals, message, { 
                             reaction: '🚌',
                             messageOptions: {
                                 linkPreview: false,
@@ -118,11 +118,11 @@ createCommand(['parada', 'p'], {
                         });
                     })
                     .catch((error) => {
-                        send_error_response(error, message);
+                        sendErrorResponse(error, message);
                     });
             } else {
                 // @ts-ignore
-                return send_error_response(COMMAND_ERROR_MESSAGES.MISSING_ARGUMENT(this, []), message);
+                return sendErrorResponse(COMMAND_ERROR_MESSAGES.MISSING_ARGUMENT(this, []), message);
             }
         }
     })
@@ -141,12 +141,12 @@ createCommand(['metro', 'metrotranvia', 'metrotranvía', 'estacion', 'estación'
     .setCallback(async (args, message) => {
         get_metro_arrivals(args.join(' '))
             .then((arrivals)=>{
-                send_response(arrivals, message, { 
+                sendResponse(arrivals, message, { 
                     reaction: '🚋',
                 });
             })
             .catch((error) => {
-                send_error_response(error, message);
+                sendErrorResponse(error, message);
             })
     })
 .closeCommand();

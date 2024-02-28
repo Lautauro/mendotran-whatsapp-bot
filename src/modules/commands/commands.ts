@@ -1,28 +1,19 @@
-import { Command, CommandData, CommandOptions, CommandResponseOptions, CommandReturn, Parameter, ParameterInfo } from "../../ts/interfaces/commands.js";
+import { Command, CommandData, CommandResponseOptions, CommandReturn, Parameter, ParameterInfo } from "../../ts/interfaces/commands.js";
 import { CommandCallback, ParameterType } from "../../ts/types/commands.js";
 import { CommandResponse, CommandResponseType } from "../../ts/enums/commands.js";
-import { read_response } from "../whatsapp/read_response.js";
+import { readResponse } from "../whatsapp/readResponse.js";
 import { Message, MessageContent } from "whatsapp-web.js";
-import { bot_log, bot_log_warn, bot_log_error } from "../../utils/bot_log.js";
+import { botLog, botLogWarn, botLogError } from "../../utils/botLog.js";
+import { whatsappSettings, commandsSettings } from "../../index.js";
+import { capitalizedCase } from "../../utils/capitalizedCase.js";
+import { COOLDOWN_MULTIPLIER, MESSAGES_HISTORY, USERS_EXECUTING_COMMANDS } from "./cooldown.js";
 
-const commandPrefix = require('../../../config/commands.json').commandPrefix ?? '';
-const whatsappSettings = require('../../../config/whatsapp.json');
-
-const commandDefaultOptions: CommandOptions = Object.freeze({
-    adminOnly: false,
-    needQuotedMessage: false,
-});
-
-const parameterDefaultInfo: ParameterInfo = Object.freeze({
-    name: 'UNDEFINED',
-    description: '',
-    example: 'UNDEFINED',
-});
+const commandPrefix = commandsSettings.commandPrefix ?? '';
 
 export const COMMAND_ERROR_MESSAGES = Object.freeze({
     MISSING_ARGUMENT: (commandObj: Command, args: any[]) => {
         let commandArgs = `${args.length > 0 ? `_${args.join(' ')}_ ` : ''}`;
-        let alias: string = commandPrefix > 0 ? commandObj.alias[0] : commandObj.alias[0].charAt(0).toUpperCase() + commandObj.alias[0].slice(1);
+        let alias: string = commandPrefix > 0 ? commandObj.alias[0] : capitalizedCase(commandObj.alias[0]);
 
         if (commandObj.parameters) {
             for (let i = args.length; i < commandObj.parameters.length; i++ ) {
@@ -85,12 +76,12 @@ class CommandsManager {
             if (this.alias.has(command.alias[i])) {
                 collisions++;
                 filterCommandAlias.splice(i, 1);
-                bot_log_warn(`WARNING: "${command.alias[i]}" alias is being used by another command.\n`);
+                botLogWarn(`WARNING: "${command.alias[i]}" alias is being used by another command.\n`);
             }
         }
 
         if (collisions === command.alias.length) {
-            bot_log_error(`ERROR: The command could not be added to the list, aliases [ ${command.alias.join(', ')} ] are being used by other command(s).\n`);
+            botLogError(`ERROR: The command could not be added to the list, aliases [ ${command.alias.join(', ')} ] are being used by other command(s).\n`);
             return;
         }
 
@@ -120,10 +111,14 @@ export const createCommand = (alias: string[], data?: CommandData) => {
         parameters: null,
         hasOptionalValues: false,
         options: {
-            ...commandDefaultOptions,
+            adminOnly: false,
+            needQuotedMessage: false,
             ...data?.options,
         },
-        info: data?.info,
+        info: {
+            name: capitalizedCase(alias[0]),
+            ...data?.info,
+        },
         callback: () => {},
     }
 
@@ -138,7 +133,7 @@ const addParameter = (command: Command) => (type: ParameterType | ParameterType[
     if (!Array.isArray(command.parameters)) { command.parameters = [] };
     if (typeof type === 'string') { type = [ type ]; }
 
-    if ((defaultValue !== null && defaultValue !== undefined) && !type.some((paramType) => { return argument_type(defaultValue) === paramType; })) {
+    if ((defaultValue !== null && defaultValue !== undefined) && !type.some((paramType) => { return argumentType(defaultValue) === paramType; })) {
         throw new Error(`The dafault value "${defaultValue}" is of type "${typeof defaultValue}" and doesn't match any of the types: [${type.join(', ')}]\n`);
     }
 
@@ -154,7 +149,8 @@ const addParameter = (command: Command) => (type: ParameterType | ParameterType[
         defaultValue,
         isOptional,
         info: {
-            ...parameterDefaultInfo,
+            name: type[0],
+            example: defaultValue ? String(defaultValue) : 'UNDEFINED',
             ...info,
         },
     });
@@ -175,7 +171,7 @@ const closeCommand = (command: Command) => () => {
     return command;
 }
 
-function argument_type(arg: any): ParameterType | null {
+function argumentType(arg: any): ParameterType | null {
     if (typeof arg === 'string') {
         // Boolean
         if (arg.match(/^si$|^no$|^true$|^false$/i)) {
@@ -195,7 +191,7 @@ function argument_type(arg: any): ParameterType | null {
     return null;
 }
 
-function verify_args(args: any[], command: Command): boolean {
+function verifyArgs(args: any[], command: Command): boolean {
     if (!command.parameters) { return false; }
 
     // Ignore excess arguments, to avoid errors when checkin
@@ -211,7 +207,7 @@ function verify_args(args: any[], command: Command): boolean {
                 match = true;
                 break;
             }
-            if (parameter.type[typeIndex] === 'string' || argument_type(args[argIndex]) === parameter.type[typeIndex]) {
+            if (parameter.type[typeIndex] === 'string' || argumentType(args[argIndex]) === parameter.type[typeIndex]) {
                 match = true;
                 switch (parameter.type[typeIndex]) {
                     case 'string':
@@ -242,7 +238,7 @@ function verify_args(args: any[], command: Command): boolean {
     return true;
 }
 
-export function search_command(commandName: string): Command | null {
+export function searchCommand(commandName: string): Command | null {
     // Check that it's not an empty string
     if (typeof commandName === 'string' && commandName.length) {        
         const search = commandsManager.alias.get(commandName.toLowerCase());
@@ -252,41 +248,72 @@ export function search_command(commandName: string): Command | null {
     return null;
 }
 
-export function command_exists(commandName: string): boolean {
+export function commandExists(commandName: string): boolean {
     return commandsManager.alias.has(commandName.toLocaleLowerCase());
 }
 
-export async function exec_command(message : Message): Promise<void> {
+export async function commandExecution(message : Message): Promise<void> {
+    // Check if string is empty
+    if (!message.body || message.body.length === 0) { return; }
+
+    // Verificar si se está utilizando el viejo prefijo
+    let oldPrefix = false;
+    if (message.body.indexOf('.') === 0) {
+        message.body = message.body.slice(1);
+        oldPrefix = true;
+    }
+    
+    // Separate arguments and command
+    const commandArgs: string[] = message.body.match(/"([^"]*)"|'([^']*)'|[^ ]+/gim) ?? [];
+    const commandName: string = commandArgs.shift()?.slice(commandPrefix.length) ?? '';
+    const commandObj = searchCommand(commandName);
+    if (!commandObj) { return; }
+
+    // Notificar sobre el uso obsoleto del prefijo
+    if (oldPrefix === true) {
+        setTimeout(() => {
+            sendResponse('*¡Ojo al piojo!* 🤓☝️\n\n' +
+                          'Ya no es necesario escribir "*.*" (punto) al comienzo de un comando. *Los mensajes con este prefijo serán ignorados en futuras versiones.*',
+                        message, { reply: true });
+        }, 6000);
+    }
+
+    const from = message.fromMe ? message.to : message.from;
+
+    // Cool-down system
+    if (MESSAGES_HISTORY.has(message.from)) {
+        const userHistory = MESSAGES_HISTORY.get(message.from);
+        if (userHistory !== undefined) {
+            if (userHistory.length >= COOLDOWN_MULTIPLIER.length) {
+                userHistory.splice(0, 1);
+            }
+
+            const now = Date.now();
+            userHistory.push(now);
+
+            const COOLDOWN = commandsSettings.initialCoolDown * COOLDOWN_MULTIPLIER[userHistory.length - 1];
+            const timeElapsed = now - userHistory[userHistory.length - 2];
+
+            if (timeElapsed < COOLDOWN) { return; }
+            if (timeElapsed > (COOLDOWN + commandsSettings.initialCoolDown)) {
+                userHistory.splice(0, userHistory.length - 1);
+            }
+        }
+    } else {
+        if (message.fromMe === false) {
+            MESSAGES_HISTORY.set(message.from, [ Date.now() ]);
+        }
+    }
+
+    if (USERS_EXECUTING_COMMANDS.has(message.from)) { return; };
+    
     try {
-        // Verificar si se está utilizando el viejo prefijo
-        let oldPrefix = false;
-        if (message.body.indexOf('.') === 0) {
-            message.body = message.body.slice(1);
-            oldPrefix = true;
-        }
-
-        // Check if string is empty
-        if (!message.body || message.body.length === 0) { return; }
-
-        // Separate arguments and command
-        const commandArgs: string[] = message.body.match(/"([^"]*)"|'([^']*)'|[^ ]+/gim) ?? [];
-        const commandName: string = commandArgs.shift()?.slice(commandPrefix.length) ?? '';
-        const commandObj = search_command(commandName);
-        if (!commandObj) { return; }
-
-        // Notificar sobre el uso obsoleto del prefijo
-        if (oldPrefix === true) {
-            setTimeout(() => {
-                send_response('*¡Ojo al piojo!* 🤓☝️\n\n' +
-                              'Ya no es necesario escribir "*.*" (punto) al comienzo de un comando. *Los mensajes con este prefijo serán ignorados en futuras versiones.*',
-                            message, { reply: true });
-            }, 6000);
-        }
-        
         // Verify that the user has access to the command
         if (!commandObj.options.adminOnly || (message.fromMe && commandObj.options.adminOnly)) {
-            command_log(commandObj.alias[0], commandArgs, message);
-            await send_response(null, message, { reaction: '⏳' });
+            USERS_EXECUTING_COMMANDS.add(from);
+
+            await sendResponse(null, message, { reaction: '⏳' });
+            commandLog(commandObj.alias[0], commandArgs, message);
             
             // Commands that require a message to be quoted
             if (commandObj.options.needQuotedMessage === true && !message.hasQuotedMsg) {
@@ -294,7 +321,8 @@ export async function exec_command(message : Message): Promise<void> {
             }
             // Commands without parameters
             if (!commandObj.parameters) {     
-                commandObj.callback(commandArgs, message);
+                await commandObj.callback(commandArgs, message);
+                USERS_EXECUTING_COMMANDS.delete(from);
                 return;
             } else {
                 // Commands with parameters
@@ -311,8 +339,9 @@ export async function exec_command(message : Message): Promise<void> {
                 }
 
                 if ([...commandArgs, ...optionalValues].length >= paramLength) {
-                    if (verify_args(commandArgs, commandObj)) {
-                        commandObj.callback([...commandArgs, ...optionalValues], message);
+                    if (verifyArgs(commandArgs, commandObj)) {
+                        await commandObj.callback([...commandArgs, ...optionalValues], message);
+                        USERS_EXECUTING_COMMANDS.delete(from);
                         return;
                     }
                 } else {
@@ -321,8 +350,9 @@ export async function exec_command(message : Message): Promise<void> {
             }
         }
     } catch(error) {
+        if (USERS_EXECUTING_COMMANDS.has(from)) { USERS_EXECUTING_COMMANDS.delete(from); }
         if (error instanceof CommandError) {
-            send_error_response(error.message, message, { ...error.options });
+            sendErrorResponse(error.message, message, { ...error.options });
         } else {
             console.error(error);
         }
@@ -330,7 +360,7 @@ export async function exec_command(message : Message): Promise<void> {
     return;
 }
 
-function command_log(commandName: string, commandArgs: any[], message: Message): void {
+function commandLog(commandName: string, commandArgs: any[], message: Message): void {
     let from = 'OCULTO';
     if (message.fromMe) {
         from = whatsappSettings.botName;
@@ -342,14 +372,16 @@ function command_log(commandName: string, commandArgs: any[], message: Message):
     }
     
     console.log();
-    bot_log(`Executing command...\n\n`,
+    botLog(`Executing command...\n\n`,
         `> Command: "${commandName}"\n`,
         `> From:`, from, '\n',
         `> Args:`, commandArgs, '\n');
 }
 
-export function command_example(command: Command): string | null {   
-    if (command.info && command.info.name.length) {
+export function commandExample(command: Command): string | null {
+    if (command.info && command.info.name.length > 0) {
+        if (!command.parameters && command.info.description === undefined) { return null; }
+
         let text = `🤖 *${command.info.name}* 🤖`;
         if (command.info.description?.length) { text += `\n\n${command.info.description}`; }
 
@@ -357,7 +389,7 @@ export function command_example(command: Command): string | null {
             let alias = command.alias[0];
             
             if (commandPrefix.length === 0) {
-                alias = command.alias[0].charAt(0).toUpperCase() + command.alias[0].slice(1);
+                alias = capitalizedCase(command.alias[0]);
             }
             
             text += `\n\n✍️ *Sintaxis del comando* ✍️\n\n`;
@@ -405,11 +437,11 @@ export function command_example(command: Command): string | null {
 }
 
 // Send response
-export async function send_response(content: MessageContent | null, message: Message, options?: CommandResponseOptions | undefined): Promise<Message | void> {
+export async function sendResponse(content: MessageContent | null, message: Message, options?: CommandResponseOptions | undefined): Promise<Message | void> {
     // Avoid commands that send other commands, as this can generate an infinite loop of sending messages.
     if (content && typeof content === 'string' && content.indexOf(commandPrefix) === 0) {
         const strHead: string = content.split(" ")[0].slice(commandPrefix.length);
-        if (search_command(strHead)) {
+        if (commandExists(strHead)) {
             throw new Error(`The response to a command cannot contain another command at the beginning, as this can create an infinite loop.\n\n`+
                             `\tResponse: "\x1b[41m${commandPrefix}${strHead}\x1b[0m${content.slice(commandPrefix.length + strHead.length)}"\n`);
         }
@@ -423,11 +455,11 @@ export async function send_response(content: MessageContent | null, message: Mes
             options: options?.messageOptions,
         }
     }
-    return await read_response(response, message);
+    return await readResponse(response, message);
 }
 
-export async function send_error_response(content: MessageContent | null, message: Message, options?: CommandResponseOptions | undefined): Promise<Message | void> {
-    return await send_response(content, message, { ...options, asError: true });
+export async function sendErrorResponse(content: MessageContent | null, message: Message, options?: CommandResponseOptions | undefined): Promise<Message | void> {
+    return await sendResponse(content, message, { ...options, asError: true });
 }
 
 // Help command
@@ -438,21 +470,21 @@ createCommand(['ayuda', 'help', '?'], {
     }})
     .setCallback(function(args, message) {
         if (args.length > 0 && args[0]) {
-            const command = search_command(args[0]);
+            const command = searchCommand(args[0]);
             if (command) {
-                const example = command_example(command);
+                const example = commandExample(command);
                 if (example) {
-                    send_response(example, message, { reaction: '📖' });
+                    sendResponse(example, message, { reaction: '👍' });
                     return;
                 } else {
-                    send_error_response(`No exite información sobre el comando "*${args[0]}*".`, message);
+                    sendErrorResponse(`No exite información sobre el comando *${args[0]}*.`, message);
                 }
             } else {
-                send_error_response(`El comando "*${args[0]}*" no existe.`, message);
+                sendErrorResponse(`El comando *${args[0]}* no existe.`, message);
             }
         } else {
             // @ts-ignore
-            send_response(command_example(this), message, { reaction: '👍' });
+            sendResponse(commandExample(this), message, { reaction: '👍' });
         }
     })
     .addParameter('string', { name: 'Nombre del comando', example: 'parada', }, null)

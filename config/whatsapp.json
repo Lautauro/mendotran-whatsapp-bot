@@ -6,5 +6,6 @@
     "showContactName": false,
     "showUserName": true,
     "showTimestamp": true,
-    "wwebjsCache": "./.session_cache"
+    "wwebjsCache": "./.session_cache",
+    "ignoreNonTextMessages": true
 }
