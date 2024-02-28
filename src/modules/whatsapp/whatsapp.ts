@@ -140,10 +140,10 @@ client.on('ready', () => {
 
         /* Commands */ 
         
+        if (exec_command === undefined) { return; }
+        
         // Setting: Ignore commands not coming from admin
         if (whatsappSettings.adminOnly && !message.fromMe) { return; }
-        
-        if (exec_command === undefined) { return; }
 
         if (message.body.indexOf(commandsSettings.commandPrefix) === 0 && typeof message.body === 'string' && message.type === MessageTypes.TEXT) {
             if (commandsSettings.commandPrefix.length === 0) {
