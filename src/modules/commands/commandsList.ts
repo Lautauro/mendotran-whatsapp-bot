@@ -10,10 +10,10 @@ createCommand(['ping'], {
         description: 'Ping-pong! 🏓',
     }
     })
-    .setCallback((args, message) => {
-        sendResponse('Pong!', message, {
+    .setCallback(async (args, message) => {
+        await sendResponse('Pong!', message, {
             reaction: '🏓',
-        })
+        });
     })
 .closeCommand();
 
@@ -23,9 +23,9 @@ createCommand(['pong'], {
         description: 'Ping-pong! 🏓',
     }
     })
-    .setCallback(function (args, message) {
-        sendResponse('Ping!', message, {
+    .setCallback(async (args, message) => {
+        await sendResponse('Ping!', message, {
             reaction: '🏓',
-        })
+        });
     })
 .closeCommand();
