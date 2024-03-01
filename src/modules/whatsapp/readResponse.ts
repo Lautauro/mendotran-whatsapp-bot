@@ -9,21 +9,26 @@ import { commandsSettings } from "../../index.js";
 
 export async function readResponse(response: CommandReturn, message: Message): Promise<Message | void> {
     if (response.code === CommandResponse.OK) {
-        if (typeof response.data.reaction === 'string' && response.data.reaction.length) {
-            await reactToMessage(response.data.reaction, message);
+        let _return = null;
+
+        if (response.type !== CommandResponseType.REACT_TO_MESSAGE && response.data.reaction) {
+            reactToMessage(response.data.reaction, message);
         }
 
         if (response.data.content) {
             switch (response.type) {
                 case CommandResponseType.REPLY_MESSAGE:
-                    return await replyMessage(response.data.content, message.id, { sendSeen: commandsSettings.sendSeen, ...response.data.options});
+                    _return = await replyMessage(response.data.content, message.id, { sendSeen: commandsSettings.sendSeen, ...response.data.options});
                 case CommandResponseType.SEND_MESSAGE:
-                    return await sendMessage(response.data.content, message.id, { sendSeen: commandsSettings.sendSeen, ...response.data.options});
+                    _return = await sendMessage(response.data.content, message.id, { sendSeen: commandsSettings.sendSeen, ...response.data.options});
+                case CommandResponseType.REACT_TO_MESSAGE:
+                    _return = await reactToMessage(response.data.reaction ?? '', message);
             }
         }
-        botLog('Command response: OK\n', response);
+        botLog('OK RESPONSE:', response);
+        if (_return) { return _return; }
     } else if (response.code === CommandResponse.ERROR && typeof response.data.content === 'string') {
-        botLogError('Command response: ERROR\n', response);
+        botLogError('ERROR RESPONSE:', response);
         await reactToMessage(response.data.reaction ?? '🚫', message);
         return await sendMessage(`🚫 *ERROR* 🚫\n\n${response.data.content}`, message.id, { sendSeen: commandsSettings.sendSeen, ...response.data.options});
     }

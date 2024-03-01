@@ -421,9 +421,22 @@ export async function sendResponse(content: MessageContent | null, message: Mess
                             `\tResponse: "\x1b[41m${commandPrefix}${strHead}\x1b[0m${content.slice(commandPrefix.length + strHead.length)}"\n`);
         }
     }
+
+    let type = CommandResponseType.UNKNOWN;
+
+    if (content) {
+        if (options && options.reply) {
+            type = CommandResponseType.REPLY_MESSAGE;
+        } else {
+            type = CommandResponseType.SEND_MESSAGE;
+        }
+    } else if (options && options.reaction) {
+        type = CommandResponseType.REACT_TO_MESSAGE;
+    }
+
     const response: CommandReturn = {
         code: options?.asError ? CommandResponse.ERROR : CommandResponse.OK,
-        type: options?.reply ? CommandResponseType.REPLY_MESSAGE : CommandResponseType.SEND_MESSAGE,
+        type,
         data: {
             content: content,
             reaction: options?.reaction,
