@@ -1,5 +1,4 @@
 import { LocalAuth, Client, MessageTypes, Message, MessageId, MessageSendOptions, MessageContent } from 'whatsapp-web.js';
-import { commandExists } from '../commands/commands.js'
 import * as qrcode from 'qrcode-terminal';
 import { getTimeString } from '../../utils/getTimeString.js';
 import { botLog, botLogError } from '../../utils/botLog.js';
@@ -123,6 +122,10 @@ client.on('ready', () => {
 
         // Setting: Ignore "media" messages
         if (whatsappSettings.ignoreNonTextMessages === true && message.type !== MessageTypes.TEXT) { return; }
+
+        if (message.type === MessageTypes.E2E_NOTIFICATION || message.type === MessageTypes.NOTIFICATION_TEMPLATE ||
+            message.type === MessageTypes.NOTIFICATION || message.type === MessageTypes.GROUP_NOTIFICATION ||
+            message.type === MessageTypes.UNKNOWN) { return; }
 
         const from: string = message.fromMe ? message.to : message.from;
 
