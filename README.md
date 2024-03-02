@@ -171,7 +171,8 @@ createCommand(['foo'])
         description: 'Parameter 1 description',
         example: 'Lorem ipsum dolor',
     })
-    // You should always put optional parameters at the end, such as the following. Otherwise it may cause problems.
+    // You should always put optional parameters at the end, such as the following.
+    // Otherwise it may cause problems.
     .addParameter('number', {
         name: 'Optional Argument',
         description: 'Parameter 2 description',
@@ -254,7 +255,6 @@ createCommand(['repeat'], {
         description: 'Text to repeat.',
         example: 'Hello x5',
     })
-    // You should always put optional parameters at the end, such as the following. Otherwise it may cause problems.
     .addParameter('number', {
         name: 'Times', 
         description: 'Number of times repeated.', 
@@ -267,9 +267,9 @@ createCommand(['repeat'], {
             msgToSend += '\n' + args[0];
         }
 
-        sendResponse(msgToSend, message, { reply: true }); // Send as reply
+        sendResponse(msgToSend, message, { reply: true, reaction: '🗣️' });
     })
-.closeCommand()
+.closeCommand();
 ```
 
 <div align="center">
@@ -290,11 +290,11 @@ createCommand(['quote', 'cite'], {
         message.getQuotedMessage()
             .then((quotedMessage) => {
                 const msgToSend = `*" ${quotedMessage.body} "*\n\n` +
-                                  `- _${quotedMessage._data.notifyName}_`;
-                sendResponse(msgToSend, message);
+                                  `-  _${quotedMessage._data.notifyName}_`;
+                sendResponse(msgToSend, message, { reaction: '💭' });
             });
     })
-.closeCommand();    
+.closeCommand();
 ```
 
 ## Hot-swap
