@@ -18,22 +18,24 @@ export const COMMAND_ERROR_MESSAGES = Object.freeze({
         if (commandObj.parameters) {
             for (let i = args.length; i < commandObj.parameters.length; i++ ) {
                 if (commandObj.parameters[i].isOptional === true) {
-                    commandArgs += `[ *${commandObj.parameters[i].info?.name}* ]`;
+                    commandArgs += `\`[ *${commandObj.parameters[i].info?.name}* ]\``;
                 } else {
-                    commandArgs += `{ *${commandObj.parameters[i].info?.name}* }`;
+                    commandArgs += `\`{ *${commandObj.parameters[i].info?.name}* }\``;
                 }
                 if (i !== commandObj.parameters.length -1) { commandArgs += ' '; }
             }
         }
 
-        return `Arguments missing in the command.\n\n` +
-                `_${commandPrefix}${alias}_ ${commandArgs}`
+        return `Arguments missing in the command.\n` +
+                `${commandPrefix}*${alias}* ${commandArgs}\n\n` +
+                `For more info use:\n` +
+                `*${commandPrefix}${commandPrefix.length > 0 ? 'help' : 'Help' } ${commandObj.alias[0]}*`;
     },
     MISSING_QUOTE: 'This command requires quoting a message to be executed.',
     INVALID_ARGUMENT: (commandObj: Command, arg: any, param: Parameter) => {
-        return `Invalid argument "*${arg}*".\n\n`+
-                `The parameter "*${param.info?.name}*" must be *${param.type}*.\n\n` +
-                `For more info use: ` +
+        return `Invalid argument "*${arg}*". `+
+                `The parameter "*${param.info?.name.toLocaleLowerCase()}*" must be *${param.type}*.\n\n` +
+                `For more info use:\n` +
                 `*${commandPrefix}${commandPrefix.length > 0 ? 'help' : 'Help' } ${commandObj.alias[0]}*`;
     }
 });
@@ -169,7 +171,7 @@ function argumentType(arg: any): ParameterType | null {
             return 'boolean';
         }
         // Number
-        if (arg.match(/^[0-9]+$/)){
+        if (arg.match(/^[0-9]+$|^-+[0-9]+$/)){
             return 'number';
         }
         // String
@@ -207,8 +209,11 @@ function verifyArgs(args: any[], command: Command): boolean {
                         }
                         break;
                     case 'number':
-                        // TODO: Negative numbers
-                        args[argIndex] = +args[argIndex];
+                        if (args[argIndex].charAt(0) === '-') {
+                            args[argIndex] = (+args[argIndex].slice(1)) * -1;
+                        } else {
+                            args[argIndex] = +args[argIndex];
+                        }
                         break;
                     case 'boolean':
                         if (args[argIndex].match(/^si$|^true$/)) {
