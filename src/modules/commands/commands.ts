@@ -22,8 +22,10 @@ export const COMMAND_ERROR_MESSAGES = Object.freeze({
             }
         }
 
-        return `Faltan argumentos en el comando.\n\n` +
-                `${commandPrefix}${alias} ${commandArgs}`
+        return `Faltan argumentos en el comando:\n` +
+                `*${alias}* ${commandArgs}\n\n` +
+                `Para más información ejecute:\n` +
+                `*Ayuda* \`${commandObj.alias[0]}\``;
     },
     MISSING_QUOTE: 'Este comando necesita citar un mensaje para ser ejecutado.',
     INVALID_ARGUMENT: (commandObj: Command, arg: any, param: Parameter) => {
@@ -40,10 +42,10 @@ export const COMMAND_ERROR_MESSAGES = Object.freeze({
                 break;
         }
         
-        return  `El argumento "*${arg}*" es invalido.\n\n`+
-                `El parámetro "*${param.info?.name}*" ha de ser de tipo *${tipo}*.\n\n` +
-                `Para más información ejecute: ` +
-                `*${commandPrefix}${commandPrefix.length > 0 ? 'ayuda' : 'Ayuda' }* \`${commandObj.alias[0]}\``;
+        return  `El argumento "*${arg}*" es invalido. `+
+                `El parámetro "*${param.info?.name.toLocaleLowerCase()}*" ha de ser de tipo *${tipo}*.\n\n` +
+                `Para más información ejecute:\n` +
+                `*Ayuda* \`${commandObj.alias[0]}\``;
     }
 });
 
