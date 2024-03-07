@@ -31,9 +31,6 @@ async function arrivals_location(message: Message, quote: Message, filter?: stri
                     reaction: '🚌',
                     messageOptions: { linkPreview: false },
                 });
-            })
-            .catch(async (error) => {
-                await sendErrorResponse(error, message);
             });
     } else {
         await sendErrorResponse('Para usar este comando debe citar a un mensaje con una ubicación', message);
@@ -52,13 +49,13 @@ createCommand(['micro', 'm'], {
     .addParameter('number', {
         name: 'Línea',
         description: 'La línea de colectivo de la cual desea saber sus horarios.',
-        example: '330',
+        example: '608',
     })
     .addParameter('string', {
         name: 'Nº de parada',
         description: 'El número de parada del colectivo.',
         note: 'No es estríctamente necesaria la "M".',
-        example: 'M1056',
+        example: 'M1028',
     }, null)
     .setCallback(async function (args, message) {
         if (message.hasQuotedMsg) {
@@ -79,9 +76,6 @@ createCommand(['micro', 'm'], {
                             reaction: '🚌',
                             messageOptions: { linkPreview: false },
                         });
-                    })
-                    .catch(async (error) => {
-                        await sendErrorResponse(error, message);
                     });
             }
         }
@@ -99,7 +93,7 @@ createCommand(['parada', 'p'], {
     .addParameter('string', {
         name: 'Nº de parada',
         description: 'El número de parada de la cual desea saber sus horarios.',
-        example: 'M1056',
+        example: 'M1012',
     }, null)
     .setCallback(async function (args, message) {
         if (message.hasQuotedMsg) {
@@ -117,9 +111,6 @@ createCommand(['parada', 'p'], {
                                 linkPreview: false,
                             },
                         });
-                    })
-                    .catch(async (error) => {
-                        await sendErrorResponse(error, message);
                     });
             } else {
                 // @ts-ignore
@@ -146,9 +137,6 @@ createCommand(['metro', 'metrotranvia', 'metrotranvía', 'estacion', 'estación'
                 await sendResponse(arrivals, message, { 
                     reaction: '🚋',
                 });
-            })
-            .catch(async (error) => {
-                await sendErrorResponse(error, message);
-            })
+            });
     })
 .closeCommand();

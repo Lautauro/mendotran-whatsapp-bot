@@ -3,22 +3,22 @@ import { fetchJsonMendotran } from '../../utils/fetchJsonMendotran.js';
 import { getTimeString } from '../../utils/getTimeString.js';
 import { botLogError } from '../../utils/botLog.js';
 import { MetroData } from '../../ts/types/mendotran.js';
-
-const mendotranSettings = require('../../../config/mendotran.json');
+import { mendotranSettings } from '../../index.js';
+import { CommandError } from '../commands/commands.js';
 
 const emoji_time: readonly string[][] = [
-    ['🕛','🕧'], // 00 - 12
-    ['🕐','🕜'], // 01 - 13
-    ['🕑','🕝'], // 02 - 14
-    ['🕒','🕞'], // 03 - 15
-    ['🕓','🕟'], // 04 - 16
-    ['🕔','🕠'], // 05 - 17
-    ['🕕','🕡'], // 06 - 18
-    ['🕖','🕢'], // 07 - 19
-    ['🕗','🕣'], // 08 - 20
-    ['🕘','🕤'], // 09 - 21
-    ['🕙','🕥'], // 10 - 22
-    ['🕚','🕦'], // 11 - 23
+    ['🕛', '🕧'], // 00 - 12
+    ['🕐', '🕜'], // 01 - 13
+    ['🕑', '🕝'], // 02 - 14
+    ['🕒', '🕞'], // 03 - 15
+    ['🕓', '🕟'], // 04 - 16
+    ['🕔', '🕠'], // 05 - 17
+    ['🕕', '🕡'], // 06 - 18
+    ['🕖', '🕢'], // 07 - 19
+    ['🕗', '🕣'], // 08 - 20
+    ['🕘', '🕤'], // 09 - 21
+    ['🕙', '🕥'], // 10 - 22
+    ['🕚', '🕦'], // 11 - 23
 ];
 
 function timeToEmoji(unixTime: number): string {
@@ -132,15 +132,24 @@ export async function getStopArrivals(stopNumber: any, filter?: string) {
             if (stop.charAt(0) !== 'M') { stop = 'M' + stop; }
 
             if (!stop.match(/\bM\d+\b/)) {
-                return reject(`"*${stopNumber}*" no es una parada. El formato ha de ser *M + Número de parada* o simplemente el número de la misma.\n\nPor ejemplo: *M1234*`);
+                return reject(
+                    new CommandError(
+                        `"*${stopNumber}*" no es una parada. El formato ha de ser *M + Número de parada* ` +
+                        `o simplemente el número de la misma.\n\nPor ejemplo: *M1234*`
+                    )
+                );
             }
     
             if (!mendotranData.stops || (mendotranData.stops && !mendotranData.stops[stop])) {
-                return reject(`No existe la parada *${stop}*`);
+                return reject(
+                    new CommandError(`No existe la parada *${stop}*`)
+                );
             }
 
             if (filter && !mendotranData.stops[stop].busList.includes(filter)) {
-                return reject(`El micro *${filter}* no pasa por la parada *${stop}*`);
+                return reject(
+                    new CommandError(`El micro *${filter}* no pasa por la parada *${stop}*`)
+                );
             }
     
             fetchJsonMendotran(`${mendotranSettings.api}/arrivals-and-departures-for-stop/${mendotranData.stops[stop].id}.json`)
@@ -148,7 +157,9 @@ export async function getStopArrivals(stopNumber: any, filter?: string) {
                     let arrivals: ScheduledArrival[] = json.data?.entry?.arrivalsAndDepartures;     
     
                     if (!arrivals.length || !arrivals) {
-                        return reject(`🚎 Sin llegadas para la parada *${stop}* 🏃‍♀️`);
+                        return reject(
+                            new CommandError(`🚎 Sin llegadas para la parada *${stop}* 🏃‍♀️`)
+                        );
                     }
     
                     // Filtrar micros
@@ -157,7 +168,9 @@ export async function getStopArrivals(stopNumber: any, filter?: string) {
                             return bus.routeShortName === filter;
                         });
                         if (!arrivals.length) {
-                            return reject(`🚎 Sin llegadas para *${filter}* en la parada *${stop}* 🏃‍♀️`);
+                            return reject(
+                                new CommandError(`🚎 Sin llegadas para *${filter}* en la parada *${stop}* 🏃‍♀️`)
+                            );
                         }
                     }
 
@@ -172,14 +185,12 @@ export async function getStopArrivals(stopNumber: any, filter?: string) {
                     return resolve(text);
                 })
                 .catch((error) => {
-                    if (typeof error === 'string') {
-                        return reject(error);
-                    } else if (error instanceof Error) {
-                        return reject(handleErrors(error));
-                    }
+                    return reject(handleErrors(error));
                 })
         } else {
-            return reject('No se ha podido cargar la base de datos de Mendotran.');
+            return reject(
+                new CommandError('No se ha podido cargar la base de datos de Mendotran.')
+            );
         }
     });
 }
@@ -194,7 +205,9 @@ export async function getArrivalsByLocation(position: Position, filter?: string)
             fetchJsonMendotran(`${mendotranSettings.api}/stops-for-location.json?platform=web&v=&lat=${position.lat}&lon=${position.lon}&latSpan=0.006&lonSpan=0.01&version=1.0`)
                 .then((json) => {
                     if (!json.data?.list || json.data.list.length === 0) {
-                        return reject('No se han encontrado paradas de Mendotran cercanas a la ubicación.\n\n🧭 ❓');
+                        return reject(
+                            new CommandError('No se han encontrado paradas de Mendotran cercanas a la ubicación.\n\n🧭 ❓')
+                            );
                     }
         
                     const stopsAround: StopInfo[] = json.data?.list.sort((a: StopInfo, b: StopInfo) => {
@@ -205,14 +218,12 @@ export async function getArrivalsByLocation(position: Position, filter?: string)
                     return resolve(getStopArrivals(stopsAround[0].code, filter));
                 })
                 .catch((error) => {
-                    if (typeof error === 'string') {
-                        return reject(error);
-                    } else if (error instanceof Error) {
-                        return reject(handleErrors(error));
-                    }
+                    return reject(handleErrors(error));
                 });
         } else {
-            return reject('No se ha podido cargar la base de datos de Mendotran.');
+            return reject(
+                new CommandError('No se ha podido cargar la base de datos de Mendotran.')
+            );
         }
     });
 }
@@ -245,15 +256,13 @@ export async function getMetroArrivals(stopName: string): Promise<string> {
                             + `\n\n📍 *${mendotranData.stops[stop['100']].address}* 📍`;
                     return resolve(text);
                 } else {
-                    return reject(`🚋 Sin llegadas para esta estación 🏃‍♀️`);
+                    return reject(
+                        new CommandError(`🚋 Sin llegadas para esta estación 🏃‍♀️`)
+                    );
                 }
             })
             .catch((error) => {
-                if (typeof error === 'string') {
-                    return reject(error);
-                } else if (error instanceof Error) {
-                    return reject(handleErrors(error));
-                }
+                return reject(handleErrors(error));
             });
     });
 }
@@ -270,9 +279,13 @@ async function searchMetroStop(name: string): Promise<MetroStopInfo> {
             const stop = searchName(mendotranMetroData, 'name', new RegExp(name, 'i'));
             if (stop) { return resolve(stop); }
 
-            return reject(`No se ha encontrado la estación *"${name}"*.`);
+            return reject(
+                new CommandError(`No se ha encontrado la estación *"${name}"*.`)
+            );
         } else {
-            return reject('No se ha podido cargar la base de datos de Mendotran.');
+            return reject(
+                new CommandError('No se ha podido cargar la base de datos de Mendotran.')
+            );
         }
     });
 }
@@ -296,11 +309,22 @@ function searchName(array: any[], key: string | null, regExp: RegExp) {
     return undefined;
 }
 
-function handleErrors(error: Error): string {
-    console.error('\n', error, '\n');
-    if (error.name === 'TimeoutError') {
-        return 'La petición tardó demasiado en responder. Vuelva a intentarlo.\n\n🐌 🦥';
-    } else {
-        return `Ha ocurrido un error al procesar la petición, "*${error.name}*". Vuelva a intentarlo.`;
+function handleErrors(error: Error | CommandError): string | CommandError {
+    if (error instanceof CommandError) {
+        return error;
     }
+
+    console.error('\n', error, '\n');
+    if (error instanceof Error) {
+        if (error.name === 'TimeoutError') {
+            return new CommandError(
+                'La petición tardó demasiado en responder. Vuelva a intentarlo.\n\n🐌 🦥'
+            );
+        } else {
+            return new CommandError(
+                `Ha ocurrido un error al procesar la petición, "*${error.name}*". Vuelva a intentarlo.`
+            );
+        }
+    }
+    return new CommandError('Ha ocurrido un error desconocido. Vuelva a intentarlo.\n\n😅');
 }
