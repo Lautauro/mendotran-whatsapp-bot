@@ -325,6 +325,7 @@ export async function commandExecution(message : Message): Promise<void> {
             if (!commandObj.parameters) {     
                 await commandObj.callback(commandArgs, message);
                 USERS_EXECUTING_COMMANDS.delete(from);
+                botLog(`El comando "${commandObj.alias[0]}" finalizó su ejecución.\n`);
                 return;
             } else {
                 // Commands with parameters
@@ -344,6 +345,7 @@ export async function commandExecution(message : Message): Promise<void> {
                     if (verifyArgs(commandArgs, commandObj)) {
                         await commandObj.callback([...commandArgs, ...optionalValues], message);
                         USERS_EXECUTING_COMMANDS.delete(from);
+                        botLog(`El comando "${commandObj.alias[0]}" finalizó su ejecución.\n`);
                         return;
                     }
                 } else {
@@ -354,7 +356,8 @@ export async function commandExecution(message : Message): Promise<void> {
     } catch(error) {
         if (USERS_EXECUTING_COMMANDS.has(from)) { USERS_EXECUTING_COMMANDS.delete(from); }
         if (error instanceof CommandError) {
-            sendErrorResponse(error.message, message, { ...error.options });
+            await sendErrorResponse(error.message, message, { ...error.options });
+            botLogError(`El comando "${commandObj.alias[0]}" finalizó su ejecución.\n`);
         } else {
             console.error(error);
         }
