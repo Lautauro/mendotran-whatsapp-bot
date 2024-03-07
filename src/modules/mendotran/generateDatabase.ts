@@ -1,8 +1,7 @@
 import fs from 'node:fs';
 import { fetchJsonMendotran } from '../../utils/fetchJsonMendotran.js';
 import { BusInfo, StopInfo } from '../../ts/interfaces/mendotran.d.js';
-
-const mendotranSettings = require('../../../config/mendotran.json');
+import { mendotranSettings } from '../../index.js';
 
 const metro_emoji = '🚉';
 const bus_color_list: string[] = [
