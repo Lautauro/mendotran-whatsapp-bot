@@ -50,21 +50,26 @@ function sortByArrivalTime(arrivals: ScheduledArrival[]): ScheduledArrival[] {
 function busArrivalsString(arrivals: ScheduledArrival[]): string {
     let text = '';
     for (let i = 0; i < arrivals.length; i++) {
+        // Corregir detalles de los letreros del colectivo
+        arrivals[i].tripHeadsign = arrivals[i].tripHeadsign
+            .trim()
+            .replaceAll(/  +/g, ' ')                // Borrar doble espacios
+            .replaceAll(/–/g, '-')
+            .replaceAll(/ +- +|- +|-- +|-/g, ', ')  // Remplazar guiones por comas
+            .toUpperCase();
+        
         // No repetir nombres de colectivos
-        arrivals[i].tripHeadsign = arrivals[i].tripHeadsign.trim();
-
         if (arrivals[i].tripHeadsign !== arrivals[i - 1]?.tripHeadsign) {
-            let busColor = '';
+            let busColor = '🔲';
             if (mendotranData.buses[arrivals[i].routeShortName]) {
                 busColor = mendotranData.buses[arrivals[i].routeShortName].color;
             } else {
-                botLogError(`No se ha podido cargar el color del micro ${arrivals[i].routeShortName}.`);
-                busColor = '🔲';
+                botLogError(`No se ha podido cargar el color del micro "${arrivals[i].routeShortName}".`);
             }
 
-            if (text.length) { text += '\n\n'; }
+            if (text.length > 0) { text += '\n\n'; }
 
-            text += `${busColor} *${arrivals[i].routeShortName} ${arrivals[i].tripHeadsign}* ${busColor}\n\n`;
+            text += `${busColor} *${arrivals[i].routeShortName} - ${arrivals[i].tripHeadsign}* ${busColor}\n\n`;
         } else {
             text += '\n\n';
         }
@@ -178,7 +183,7 @@ export async function getStopArrivals(stopNumber: any, filter?: string) {
                     sortByArrivalTime(arrivals);
     
                     // String
-                    let text = `🚦 *${stop}* 🚦\n\n`
+                    let text = `🚦 *${stop}${filter ? ' - ' + filter : ''}* 🚦\n\n`
                              + busArrivalsString(arrivals)
                              + `\n\n📍 *${mendotranData.stops[stop].address}* 📍`;
 
@@ -270,11 +275,11 @@ export async function getMetroArrivals(stopName: string): Promise<string> {
 async function searchMetroStop(name: string): Promise<MetroStopInfo> {
     return new Promise<MetroStopInfo>(async (resolve, reject) => {
         if (mendotranMetroData && mendotranData) {
-            name =  name.replace(/á/gi, 'a') // Ignorar tildes
-                        .replace(/é/gi, 'e')
-                        .replace(/í/gi, 'i')
-                        .replace(/ó/gi, 'o')
-                        .replace(/ú/gi, 'u');
+            name =  name.replaceAll(/á/gi, 'a') // Ignorar tildes
+                        .replaceAll(/é/gi, 'e')
+                        .replaceAll(/í/gi, 'i')
+                        .replaceAll(/ó/gi, 'o')
+                        .replaceAll(/ú/gi, 'u');
 
             const stop = searchName(mendotranMetroData, 'name', new RegExp(name, 'i'));
             if (stop) { return resolve(stop); }
