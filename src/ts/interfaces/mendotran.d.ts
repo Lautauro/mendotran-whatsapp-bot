@@ -37,7 +37,12 @@ export interface MetroStopInfo {
 
 export interface ScheduledArrival {
     arrivalEnabled: boolean;
-    arrivalTime: number;  // No en la API oficial
+    
+    /**
+     * NO EN LA API OFICIAL
+     */
+
+    arrivalTime: number;
     blockTripSequence: number;
     color: string;
     departureEnabled: boolean;
@@ -54,6 +59,11 @@ export interface ScheduledArrival {
     predictedOccupancy: string;
     routeId: RouteId;
     routeLongName: string;
+
+    /**
+     * Número de linea
+     */
+
     routeShortName: `${number}`;
     scheduledArrivalInterval: number | null;
     scheduledArrivalTime: number;
@@ -64,6 +74,11 @@ export interface ScheduledArrival {
     status: 'default' | string;
     stopId: StopId;
     stopSequence: number;
+
+    /**
+     * Cartel del colectivo
+     */
+
     tripHeadsign: string;
     tripId: number;
     tripStatus: {
