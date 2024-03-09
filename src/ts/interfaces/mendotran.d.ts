@@ -39,7 +39,10 @@ export interface ScheduledArrival {
     arrivalEnabled: boolean;
     
     /**
-     * NO EN LA API OFICIAL
+     * Indica la hora de llegada del colectivo
+     * independientemente de si es o no planificada.
+     * 
+     * * NO EN LA API OFICIAL
      */
 
     arrivalTime: number;
