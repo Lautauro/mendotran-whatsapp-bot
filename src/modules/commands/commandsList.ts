@@ -23,9 +23,9 @@ createCommand(['ping'], {
  * Mendotran
  */
 
-async function arrivals_location(message: Message, quote: Message, filter?: string) {
+async function arrivalsByLocation(message: Message, quote: Message, filter?: string) {
     if (quote.location) {
-        getArrivalsByLocation({ lat: +quote.location.latitude, lon: +quote.location.longitude}, filter)
+        await getArrivalsByLocation({ lat: +quote.location.latitude, lon: +quote.location.longitude}, filter)
             .then(async (arrivals) => {
                 await sendResponse(arrivals, message, { 
                     reaction: '🚌',
@@ -59,9 +59,10 @@ createCommand(['micro', 'm'], {
     }, null)
     .setCallback(async function (args, message) {
         if (message.hasQuotedMsg) {
-            message.getQuotedMessage()
+            await message.getQuotedMessage()
                 .then(async (quote) => {
-                    await arrivals_location(message, quote, args[0]);
+                    await arrivalsByLocation(message, quote, args[0]);
+                    return;
                 });
             return;
         } else {
@@ -97,8 +98,8 @@ createCommand(['parada', 'p'], {
     }, null)
     .setCallback(async function (args, message) {
         if (message.hasQuotedMsg) {
-            message.getQuotedMessage().then(async (quote) => {
-                await arrivals_location(message, quote);
+            await message.getQuotedMessage().then(async (quote) => {
+                await arrivalsByLocation(message, quote);
                 return;
             })
         } else {
