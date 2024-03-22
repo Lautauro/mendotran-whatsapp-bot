@@ -12,8 +12,8 @@ const commandPrefix = commandsSettings.commandPrefix ?? '';
 
 export const COMMAND_ERROR_MESSAGES = Object.freeze({
     MISSING_ARGUMENT: (commandObj: Command, args: any[]) => {
+        const alias: string = commandPrefix.length > 0 ? commandObj.alias[0] : capitalizedCase(commandObj.alias[0]);
         let commandArgs = `${args.length > 0 ? `_${args.join(' ')}_ ` : ''}`;
-        let alias: string = commandPrefix.length > 0 ? commandObj.alias[0] : capitalizedCase(commandObj.alias[0]);
 
         if (commandObj.parameters) {
             for (let i = args.length; i < commandObj.parameters.length; i++ ) {
@@ -22,7 +22,7 @@ export const COMMAND_ERROR_MESSAGES = Object.freeze({
                 } else {
                     commandArgs += `\`${commandObj.parameters[i].info?.name}\``;
                 }
-                if (i !== commandObj.parameters.length -1) { commandArgs += ' '; }
+                if (i !== commandObj.parameters.length - 1) { commandArgs += ' '; }
             }
         }
 
@@ -304,6 +304,7 @@ export async function commandExecution(message : Message): Promise<void> {
             if (!commandObj.parameters) {     
                 await commandObj.callback(commandArgs, message);
                 USERS_EXECUTING_COMMANDS.delete(from);
+                botLog(`The "${commandObj.alias[0]}" command has finished its execution.\n`);
                 return;
             } else {
                 // Commands with parameters
@@ -323,6 +324,7 @@ export async function commandExecution(message : Message): Promise<void> {
                     if (verifyArgs(commandArgs, commandObj)) {
                         await commandObj.callback([...commandArgs, ...optionalValues], message);
                         USERS_EXECUTING_COMMANDS.delete(from);
+                        botLog(`The "${commandObj.alias[0]}" command has finished its execution.\n`);
                         return;
                     }
                 } else {
@@ -333,7 +335,8 @@ export async function commandExecution(message : Message): Promise<void> {
     } catch(error) {
         if (USERS_EXECUTING_COMMANDS.has(from)) { USERS_EXECUTING_COMMANDS.delete(from); }
         if (error instanceof CommandError) {
-            sendErrorResponse(error.message, message, { ...error.options });
+            await sendErrorResponse(error.message, message, { ...error.options });
+            botLog(`The "${commandObj.alias[0]}" command has finished its execution.\n`);
         } else {
             console.error(error);
         }
@@ -455,7 +458,7 @@ export async function sendResponse(content: MessageContent | null, message: Mess
     }
     return await readResponse(response, message);
 }
-
+    
 export async function sendErrorResponse(content: MessageContent | null, message: Message, options?: CommandResponseOptions | undefined): Promise<Message | void> {
     return await sendResponse(content, message, { ...options, asError: true });
 }
