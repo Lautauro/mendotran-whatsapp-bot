@@ -6,7 +6,7 @@ import { Message, MessageContent } from "whatsapp-web.js";
 import { botLog, botLogWarn, botLogError } from "../../utils/botLog.js";
 import { whatsappSettings, commandsSettings } from "../../index.js";
 import { capitalizedCase } from "../../utils/capitalizedCase.js";
-import { COOLDOWN_MULTIPLIER, MESSAGES_HISTORY, USERS_EXECUTING_COMMANDS } from "./cooldown.js";
+import { USERS_EXECUTING_COMMANDS, checkUserCoolDown } from "./cooldown.js";
 
 const commandPrefix = commandsSettings.commandPrefix ?? '';
 
@@ -260,35 +260,11 @@ export async function commandExecution(message : Message): Promise<void> {
     if (!commandObj) { return; }
 
     const from = message.fromMe ? message.to : message.from;
-
-    // Cool-down system
-    if (MESSAGES_HISTORY.has(message.from)) {
-        const userHistory = MESSAGES_HISTORY.get(message.from);
-        if (userHistory !== undefined) {
-            if (userHistory.length >= COOLDOWN_MULTIPLIER.length) {
-                userHistory.splice(0, 1);
-            }
-
-            const now = Date.now();
-            userHistory.push(now);
-
-            const COOLDOWN = commandsSettings.initialCoolDown * COOLDOWN_MULTIPLIER[userHistory.length - 1];
-            const timeElapsed = now - userHistory[userHistory.length - 2];
-
-            if (timeElapsed < COOLDOWN) { return; }
-            if (timeElapsed > (COOLDOWN + commandsSettings.initialCoolDown)) {
-                userHistory.splice(0, userHistory.length - 1);
-            }
-        }
-    } else {
-        if (message.fromMe === false) {
-            MESSAGES_HISTORY.set(message.from, [ Date.now() ]);
-        }
-    }
-
-    if (USERS_EXECUTING_COMMANDS.has(message.from)) { return; };
     
     try {
+        // Cool-down system
+        if (!checkUserCoolDown(message)) { return; }
+
         // Verify that the user has access to the command
         if (!commandObj.options.adminOnly || (message.fromMe && commandObj.options.adminOnly)) {
             USERS_EXECUTING_COMMANDS.add(from);
