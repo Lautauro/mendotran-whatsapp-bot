@@ -13,14 +13,14 @@ const commandPrefix = commandsSettings.commandPrefix ?? '';
 export const COMMAND_ERROR_MESSAGES = Object.freeze({
     MISSING_ARGUMENT: (commandObj: Command, args: any[]) => {
         let commandArgs = `${args.length > 0 ? `_${args.join(' ')}_ ` : ''}`;
-        let alias: string = commandPrefix > 0 ? commandObj.alias[0] : capitalizedCase(commandObj.alias[0]);
+        let alias: string = commandPrefix.length > 0 ? commandObj.alias[0] : capitalizedCase(commandObj.alias[0]);
 
         if (commandObj.parameters) {
             for (let i = args.length; i < commandObj.parameters.length; i++ ) {
                 if (commandObj.parameters[i].isOptional === true) {
-                    commandArgs += `\`[ *${commandObj.parameters[i].info?.name}* ]\``;
+                    commandArgs += `\`[${commandObj.parameters[i].info?.name}]\``;
                 } else {
-                    commandArgs += `\`{ *${commandObj.parameters[i].info?.name}* }\``;
+                    commandArgs += `\`${commandObj.parameters[i].info?.name}\``;
                 }
                 if (i !== commandObj.parameters.length -1) { commandArgs += ' '; }
             }
@@ -28,15 +28,16 @@ export const COMMAND_ERROR_MESSAGES = Object.freeze({
 
         return `Arguments missing in the command.\n` +
                 `${commandPrefix}*${alias}* ${commandArgs}\n\n` +
+                (commandObj.hasOptionalValues ? `The square brackets indicate optional values.\n\n` : '') +
                 `For more info use:\n` +
-                `*${commandPrefix}${commandPrefix.length > 0 ? 'help' : 'Help' } ${commandObj.alias[0]}*`;
+                `*${commandPrefix}${commandPrefix.length > 0 ? 'help' : 'Help' }* \`${commandObj.alias[0]}\``;
     },
     MISSING_QUOTE: 'This command requires quoting a message to be executed.',
     INVALID_ARGUMENT: (commandObj: Command, arg: any, param: Parameter) => {
         return `Invalid argument "*${arg}*". `+
                 `The parameter "*${param.info?.name.toLocaleLowerCase()}*" must be *${param.type}*.\n\n` +
                 `For more info use:\n` +
-                `*${commandPrefix}${commandPrefix.length > 0 ? 'help' : 'Help' } ${commandObj.alias[0]}*`;
+                `*${commandPrefix}${commandPrefix.length > 0 ? 'help' : 'Help' }* \`${commandObj.alias[0]}\``;
     }
 });
 
@@ -381,9 +382,9 @@ export function commandExample(command: Command): string | null {
             command.parameters.forEach((parameter) => {
                 if (parameter.info && parameter.info.name) {
                     if (parameter.isOptional === true) {
-                        text += ` [ *${parameter.info.name}* ]`;
+                        text += ` \`[${parameter.info.name}]\``;
                     } else {
-                        text += ` { *${parameter.info.name}* }`;
+                        text += ` \`${parameter.info.name}\``;
                     }
 
                     if (parameter.type.indexOf('string') != -1) {
@@ -397,12 +398,16 @@ export function commandExample(command: Command): string | null {
                     }
 
                     if (parameter.info.description) {
-                        parameterDescription += `\n\n*${parameter.info.name}*: ${parameter.info.description}`;
+                        parameterDescription += `\n*${parameter.info.name}*: ${parameter.info.description}`;
                     }
                 }
             })
 
-            text += example + (parameterDescription.length ? '\n\n📄 *Parameters* 📄' + parameterDescription : '');
+            if (command.hasOptionalValues) {
+                text += `\n\nThe square brackets indicate optional values.`;
+            }
+
+            text += example + (parameterDescription.length ? '\n\n📄 *Parameters* 📄\n' + parameterDescription : '');
         }
 
         if (command.alias.length > 1) {
