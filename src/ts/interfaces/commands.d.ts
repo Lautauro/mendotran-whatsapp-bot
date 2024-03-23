@@ -5,7 +5,6 @@ import { CommandResponse, CommandResponseType } from "../enums/commands";
 export interface ParameterInfo {
     name: string;
     description?: string;
-    note?: string;
     example: string;
 }
 

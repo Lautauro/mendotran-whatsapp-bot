@@ -1,3 +1,4 @@
+import { Message } from "whatsapp-web.js";
 import { commandsSettings } from "../../index.js";
 import { botLog } from "../../utils/botLog";
 
@@ -27,3 +28,35 @@ setInterval(() => {
         botLog('MESSAGES_HISTORY: Nothing to clean.');
     }
 }, commandsSettings.clearCommandsHistoryEvery);
+
+export function checkUserCoolDown(message: Message): boolean {
+    if (message.fromMe === true) { return true; }
+
+    const from = message.from;
+    
+    if (MESSAGES_HISTORY.has(from)) {
+        const userHistory = MESSAGES_HISTORY.get(from);
+        if (userHistory !== undefined) {
+            if (userHistory.length >= COOLDOWN_MULTIPLIER.length) {
+                userHistory.splice(0, 1);
+            }
+
+            const now = Date.now();
+            userHistory.push(now);
+
+            const COOLDOWN = commandsSettings.initialCoolDown * COOLDOWN_MULTIPLIER[userHistory.length - 1];
+            const timeElapsed = now - userHistory[userHistory.length - 2];
+
+            if (timeElapsed < COOLDOWN) { return false; }
+            if (timeElapsed > (COOLDOWN + commandsSettings.initialCoolDown)) {
+                userHistory.splice(0, userHistory.length - 1);
+            }
+        }
+    } else {
+        MESSAGES_HISTORY.set(from, [ Date.now() ]);
+    }
+
+    if (USERS_EXECUTING_COMMANDS.has(from)) { return false; };
+
+    return true;
+}
