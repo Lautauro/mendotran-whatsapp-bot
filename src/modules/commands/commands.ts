@@ -12,13 +12,13 @@ const commandPrefix = commandsSettings.commandPrefix ?? '';
 
 export const COMMAND_ERROR_MESSAGES = Object.freeze({
     MISSING_ARGUMENT: (commandObj: Command, args: any[]) => {
+        const alias: string = capitalizedCase(commandObj.alias[0]);
         let commandArgs = `${args.length > 0 ? `_${args.join(' ')}_ ` : ''}`;
-        let alias: string = commandPrefix > 0 ? commandObj.alias[0] : capitalizedCase(commandObj.alias[0]);
 
         if (commandObj.parameters) {
             for (let i = args.length; i < commandObj.parameters.length; i++ ) {
                 commandArgs += `\`${commandObj.parameters[i].info?.name}\``;
-                if (i !== commandObj.parameters.length -1) { commandArgs += ' '; }
+                if (i !== commandObj.parameters.length - 1) { commandArgs += ' '; }
             }
         }
 
@@ -257,28 +257,12 @@ export function commandExists(commandName: string): boolean {
 export async function commandExecution(message : Message): Promise<void> {
     // Check if string is empty
     if (!message.body || message.body.length === 0) { return; }
-
-    // Verificar si se está utilizando el viejo prefijo
-    let oldPrefix = false;
-    if (message.body.indexOf('.') === 0) {
-        message.body = message.body.slice(1);
-        oldPrefix = true;
-    }
     
     // Separate arguments and command
     const commandArgs: string[] = message.body.match(/"([^"]*)"|'([^']*)'|[^ ]+/gim) ?? [];
     const commandName: string = commandArgs.shift()?.slice(commandPrefix.length) ?? '';
     const commandObj = searchCommand(commandName);
     if (!commandObj) { return; }
-
-    // Notificar sobre el uso obsoleto del prefijo
-    if (oldPrefix === true) {
-        setTimeout(() => {
-            sendResponse('*¡Ojo al piojo!* 🤓☝️\n\n' +
-                          'Ya no es necesario escribir "*.*" (punto) al comienzo de un comando. *Los mensajes con este prefijo serán ignorados en futuras versiones.*',
-                        message, { reply: true });
-        }, 6000);
-    }
 
     const from = message.fromMe ? message.to : message.from;
 
