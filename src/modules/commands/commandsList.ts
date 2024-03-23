@@ -53,8 +53,7 @@ createCommand(['micro', 'm'], {
     })
     .addParameter('string', {
         name: 'Nº de parada',
-        description: 'El número de parada del colectivo.',
-        note: 'No es estríctamente necesaria la "M".',
+        description: 'El número de parada del colectivo. No es estrictamente necesaria la letra "M" al comienzo.',
         example: 'M1028',
     }, null)
     .setCallback(async function (args, message) {
@@ -93,7 +92,7 @@ createCommand(['parada', 'p'], {
     }})
     .addParameter('string', {
         name: 'Nº de parada',
-        description: 'El número de parada de la cual desea saber sus horarios.',
+        description: 'El número de parada de la cual desea saber sus horarios. No es estríctamente necesaria la letra "M" al comienzo.',
         example: 'M1012',
     }, null)
     .setCallback(async function (args, message) {
