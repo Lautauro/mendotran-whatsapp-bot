@@ -35,7 +35,7 @@ export async function readResponse(response: CommandReturn, message: Message): P
 
     } else if (response.code === CommandResponse.ERROR && typeof response.data.content === 'string') {
         botLogError('ERROR RESPONSE:', response);
-        await reactToMessage(response.data.reaction ?? '🚫', message);
+        await reactToMessage(response.data.reaction ?? '😵', message);
         
         return await sendMessage(`⚠️ *Ha ocurrido un error* ⚠️\n\n${response.data.content}`, message.id, { sendSeen: commandsSettings.sendSeen, ...response.data.options});
     }
