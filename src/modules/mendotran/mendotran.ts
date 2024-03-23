@@ -253,29 +253,29 @@ export async function getMetroArrivals(stopName: string): Promise<string> {
         });
 }
 
-async function searchMetroStop(name: string): Promise<MetroStopInfo> {
+async function searchMetroStop(stopName: string): Promise<MetroStopInfo> {
     if (mendotranMetroData && mendotranData) {
-        name =  name.replaceAll(/á/gi, 'a') // Ignorar tildes
+        stopName =  stopName.replaceAll(/á/gi, 'a') // Ignorar tildes
                     .replaceAll(/é/gi, 'e')
                     .replaceAll(/í/gi, 'i')
                     .replaceAll(/ó/gi, 'o')
                     .replaceAll(/ú/gi, 'u');
 
-        const stop = searchName(mendotranMetroData, 'name', new RegExp(name, 'i'));
+        const stop = searchMetroByName(mendotranMetroData, 'name', new RegExp(stopName, 'i'));
         if (stop) { return stop; }
-        throw new CommandError(`No se ha encontrado la estación *"${name}"*.`);
+        throw new CommandError(`No se ha encontrado la estación *"${stopName}"*.`);
     } else {
         throw new CommandError('No se ha podido cargar la base de datos de Mendotran.');
     }
 }
 
-function searchName(array: any[], key: string | null, regExp: RegExp) {
-    for (let value of array) {
+function searchMetroByName(metroDataArray: any[], key: string | null, regExp: RegExp) {
+    for (let value of metroDataArray) {
         let search;
         if (key) {
             if (value[key]) {
                 if (Array.isArray(value[key])) {
-                    if (searchName(value[key], null, regExp)) { return value; }
+                    if (searchMetroByName(value[key], null, regExp)) { return value; }
                     continue;
                 }
                 search = value[key];
