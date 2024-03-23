@@ -29,20 +29,20 @@ client.on('qr', (qr: string) => {
     console.clear();
     console.log("███████████████████████████████████████████████████████\n");
     qrcode.generate(qr, { small: true });
-    console.log("Scan the QR to log in\n");
+    console.log("Escanee el QR para iniciar sesión en WhatsApp Web\n");
     console.log("███████████████████████████████████████████████████████\n");
 });
 
 client.on('authenticated', () => {
-    botLog('Authenticated\n');
+    botLog('Autenticado\n');
 });
 
 client.on('auth_failure', (msg) => {
-    botLogError('Authentication failure\n', msg);
+    botLogError('Fallo de autenticación\n', msg);
 });
 
 client.on('disconnected', (reason) => {
-    botLogError('Client was logged out. Reason:', reason);
+    botLogError('Se ha cerrado la sesión del cliente. Motivo:', reason);
 });
 
 client.on('loading_screen', (percent: number) => {
@@ -75,21 +75,21 @@ client.on('loading_screen', (percent: number) => {
         '                ###                  #####\n'                  +
         '                #######################\n'                     +
         '               ########   ##########\n\n'                      +
-        `                     Version: ${packageInfo.version}\n`
+        `                     Versión: ${packageInfo.version}\n`
     );
     console.log(` ${loading_bar} [ ${percent} % ]\n`);
 });
 
 client.on('ready', () => {
     console.clear();
-    botLog('The client is ready.\n');
+    botLog('El cliente ha iniciado.\n');
 
     const startTime = Date.now();
     const commandPath: string = '../commands';
     let commandExecution  = require(`${commandPath}/commands.js`).commandExecution;
     require(`${commandPath}/commandsList.js`);
     
-    if (!whatsappSettings.showMessagesInTheTerminal) { botLog('Hidden messages.\n'); }
+    if (!whatsappSettings.showMessagesInTheTerminal) { botLog('Mensajes ocultados.\n'); }
 
     // Hot-Swap
     if (commandsSettings.hotSwappingEnabled) {
@@ -102,7 +102,7 @@ client.on('ready', () => {
                 commandExecution = require(`${commandPath}/commands.js`).commandExecution; 
                 require(`${commandPath}/commandsList.js`);
             } catch(error) {
-                console.error('Error while clearing cache:', error);
+                console.error('Error al limpier la memoria caché:', error);
             }
         }, commandsSettings.hotSwappingTimer);
     }
@@ -157,7 +157,7 @@ async function printMessage(message: Message, from: string, edited?: boolean): P
     }
 
     // Show contact name if it is booked
-    let userName: string = 'UNKNOWN';
+    let userName: string = 'DESCONOCIDO';
 
     if (message.fromMe === true) {
         userName = whatsappSettings.botName;
@@ -167,7 +167,7 @@ async function printMessage(message: Message, from: string, edited?: boolean): P
             userName = (contact.name === undefined) ? contact.pushname : contact.name;
         } else if (whatsappSettings.showUserName) {
             // @ts-ignore            
-            userName = message.rawData.notifyName ?? 'UNDEFINED';
+            userName = message.rawData.notifyName ?? 'INDEFINIDO';
         } else {
             userName = 'OCULTO';
         }
@@ -204,7 +204,7 @@ async function printMessage(message: Message, from: string, edited?: boolean): P
                 // @ts-ignore
                 if (message.location.description.length) {
                     // @ts-ignore
-                    messageMedia = `📍 Location: ${(message.location.description).split('\n').join('. ')} 📍\n`;
+                    messageMedia = `📍 Ubicación: ${(message.location.description).split('\n').join('. ')} 📍\n`;
                 } else {
                     messageMedia = '📍 Ubicación 📍';
                 }
@@ -215,10 +215,10 @@ async function printMessage(message: Message, from: string, edited?: boolean): P
                 break;
             case MessageTypes.CONTACT_CARD:
                 message.body = '';
-                messageMedia = '📒 Contact card 📒';
+                messageMedia = '📒 Contacto 📒';
                 break;
             case MessageTypes.POLL_CREATION:
-                messageMedia = '📊 Poll 📊';
+                messageMedia = '📊 Encuesta 📊';
                 message.body = `\n"${message.body}":`;
                 for (let i = 0; i < message.pollOptions.length; i++) {
                     // @ts-ignore
@@ -246,7 +246,7 @@ async function printMessage(message: Message, from: string, edited?: boolean): P
 
 export async function sendMessage(content: MessageContent, messageId: MessageId, options?: MessageSendOptions | undefined): Promise<Message> {
     if (!client) {
-        throw new Error('The Whatsapp Web client has not been initialised.');
+        throw new Error('El cliente de WhatsApp Web no ha sido inicializado.');
     } else {
         return await client.sendMessage(messageId.remote, content, options);
     }
