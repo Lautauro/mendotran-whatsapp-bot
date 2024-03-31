@@ -6,7 +6,7 @@ import { MetroData } from '../../ts/types/mendotran.js';
 import { mendotranSettings } from '../../index.js';
 import { CommandError } from '../commands/commands.js';
 
-const emoji_time: readonly string[][] = [
+const EMOJI_TIME: readonly string[][] = [
     ['🕛', '🕧'], // 00 - 12
     ['🕐', '🕜'], // 01 - 13
     ['🕑', '🕝'], // 02 - 14
@@ -21,17 +21,17 @@ const emoji_time: readonly string[][] = [
     ['🕚', '🕦'], // 11 - 23
 ];
 
+// Base de datos de Mendotran  
+const MENDOTRAN_DATABASE: MendotranData = require(`../../../json/${mendotranSettings.dataFile}`);
+const MENDOTRAN_METRO_DATABASE: MetroData = require(`../../../json/metrotranvia.json`);
+
 function timeToEmoji(unixTime: number): string {
     const time: Date = new Date(unixTime);
     const minutes: number = time.getMinutes();
     const hours: number = time.getHours() % 12;
     
-    return (emoji_time[hours][Math.round(minutes / 60)]);
+    return (EMOJI_TIME[hours][Math.round(minutes / 60)]);
 }
-
-// Mendotran
-const mendotranData: MendotranData = require(`../../../json/${mendotranSettings.dataFile}`);
-const mendotranMetroData: MetroData = require(`../../../json/metrotranvia.json`);
 
 function sortByArrivalTime(arrivals: ScheduledArrival[]): ScheduledArrival[] {
     if (arrivals.length === 1) {
@@ -61,8 +61,8 @@ function busArrivalsString(arrivals: ScheduledArrival[]): string {
         // No repetir nombres de colectivos
         if (arrivals[i].tripHeadsign !== arrivals[i - 1]?.tripHeadsign) {
             let busColor = '🔲';
-            if (mendotranData.buses[arrivals[i].routeShortName]) {
-                busColor = mendotranData.buses[arrivals[i].routeShortName].color;
+            if (MENDOTRAN_DATABASE.buses[arrivals[i].routeShortName]) {
+                busColor = MENDOTRAN_DATABASE.buses[arrivals[i].routeShortName].color;
             } else {
                 botLogError(`No se ha podido cargar el color del micro "${arrivals[i].routeShortName}".`);
             }
@@ -129,7 +129,7 @@ function busArrivalsString(arrivals: ScheduledArrival[]): string {
 }
 
 export async function getStopArrivals(stopNumber: any, filter?: string): Promise<string> {
-    if (!mendotranData) {
+    if (!MENDOTRAN_DATABASE) {
         throw new CommandError('No se ha podido cargar la base de datos de Mendotran.');
     }
 
@@ -142,16 +142,16 @@ export async function getStopArrivals(stopNumber: any, filter?: string): Promise
             );
     }
         
-    if (!mendotranData.stops || (mendotranData.stops && !mendotranData.stops[stop])) {
+    if (!MENDOTRAN_DATABASE.stops || (MENDOTRAN_DATABASE.stops && !MENDOTRAN_DATABASE.stops[stop])) {
         throw new CommandError(`No existe la parada *${stop}*`);
     }
     
     if (filter) { filter = filter.toString(); }
-    if (filter && !mendotranData.stops[stop].busList.includes(filter)) {
+    if (filter && !MENDOTRAN_DATABASE.stops[stop].busList.includes(filter)) {
         throw new CommandError(`El micro *${filter}* no pasa por la parada *${stop}*`);
     }
 
-    return await fetchJsonMendotran(`${mendotranSettings.api}/arrivals-and-departures-for-stop/${mendotranData.stops[stop].id}.json`)
+    return await fetchJsonMendotran(`${mendotranSettings.api}/arrivals-and-departures-for-stop/${MENDOTRAN_DATABASE.stops[stop].id}.json`)
         .then((json) => {
             let arrivals: ScheduledArrival[] = json.data?.entry?.arrivalsAndDepartures;     
 
@@ -174,7 +174,7 @@ export async function getStopArrivals(stopNumber: any, filter?: string): Promise
             // String
             let text = `🚦 *${stop}${filter ? ' - Línea ' + filter : ''}* 🚦\n\n`
                         + busArrivalsString(arrivals)
-                        + `\n\n📍 *${mendotranData.stops[stop].address}* 📍`;
+                        + `\n\n📍 *${MENDOTRAN_DATABASE.stops[stop].address}* 📍`;
 
             return text;
         })
@@ -188,7 +188,7 @@ function calculateDistance(x1: number, y1: number, x2: number, y2: number): numb
 }
 
 export async function getArrivalsByLocation(position: Position, filter?: string): Promise<string> {
-    if (!mendotranData) {
+    if (!MENDOTRAN_DATABASE) {
         throw new CommandError('No se ha podido cargar la base de datos de Mendotran.');
     }
     
@@ -218,11 +218,11 @@ export async function getMetroArrivals(stopName: string): Promise<string> {
     return await searchMetroStop(stopName)
         .then(async (stop: MetroStopInfo) => {           
             const metro100Json = await fetchJsonMendotran(
-                `${mendotranSettings.api}/arrivals-and-departures-for-stop/${mendotranData.stops[stop["100"]].id}.json`
+                `${mendotranSettings.api}/arrivals-and-departures-for-stop/${MENDOTRAN_DATABASE.stops[stop["100"]].id}.json`
             );
 
             const metro101Json = await fetchJsonMendotran(
-                `${mendotranSettings.api}/arrivals-and-departures-for-stop/${mendotranData.stops[stop["101"]].id}.json`
+                `${mendotranSettings.api}/arrivals-and-departures-for-stop/${MENDOTRAN_DATABASE.stops[stop["101"]].id}.json`
             );
             
             let metro100Arrivals = sortByArrivalTime(metro100Json.data?.entry?.arrivalsAndDepartures);
@@ -242,7 +242,7 @@ export async function getMetroArrivals(stopName: string): Promise<string> {
                         + '\n\n'
                         + (metro101Arrivals.length > 0 ? busArrivalsString(metro101Arrivals) : `🚋 *Sin llegadas para andén ${stop.direction[1]}* 🏃‍♀️`)
                         + (metro101Restantes > 0 ? `\n\n> 🚏 *${metro101Restantes} más en camino*` : '')
-                        + `\n\n📍 *${mendotranData.stops[stop['100']].address}* 📍`;
+                        + `\n\n📍 *${MENDOTRAN_DATABASE.stops[stop['100']].address}* 📍`;
                 return text;
             } else {
                 throw new CommandError(`🚋 Sin llegadas para la estación 🏃‍♀️`);
@@ -254,14 +254,14 @@ export async function getMetroArrivals(stopName: string): Promise<string> {
 }
 
 async function searchMetroStop(stopName: string): Promise<MetroStopInfo> {
-    if (mendotranMetroData && mendotranData) {
+    if (MENDOTRAN_METRO_DATABASE && MENDOTRAN_DATABASE) {
         stopName =  stopName.replaceAll(/á/gi, 'a') // Ignorar tildes
                     .replaceAll(/é/gi, 'e')
                     .replaceAll(/í/gi, 'i')
                     .replaceAll(/ó/gi, 'o')
                     .replaceAll(/ú/gi, 'u');
 
-        const stop = searchMetroByName(mendotranMetroData, 'name', new RegExp(stopName, 'i'));
+        const stop = searchMetroByName(MENDOTRAN_METRO_DATABASE, 'name', new RegExp(stopName, 'i'));
         if (stop) { return stop; }
         throw new CommandError(`No se ha encontrado la estación *"${stopName}"*.`);
     } else {
