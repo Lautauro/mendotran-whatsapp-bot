@@ -2,7 +2,7 @@ import { ScheduledArrival, Position, MetroStopInfo, MendotranData, StopInfo } fr
 import { fetchJsonMendotran } from '../../utils/fetchJsonMendotran.js';
 import { getTimeString } from '../../utils/getTimeString.js';
 import { botLogError } from '../../utils/botLog.js';
-import { MetroData } from '../../ts/types/mendotran.js';
+import { MetroData, StopCode } from '../../ts/types/mendotran.js';
 import { mendotranSettings } from '../../index.js';
 import { CommandError } from '../commands/commands.js';
 
@@ -25,6 +25,11 @@ const EMOJI_TIME: readonly string[][] = [
 const MENDOTRAN_DATABASE: MendotranData = require(`../../../json/${mendotranSettings.dataFile}`);
 const MENDOTRAN_METRO_DATABASE: MetroData = require(`../../../json/metrotranvia.json`);
 
+/**
+ * Transforma la hora epoch en un emoji de reloj que indica aproximadamente el mismo horario.
+ * @param unixTime 
+ * @returns {string}
+ */
 function timeToEmoji(unixTime: number): string {
     const time: Date = new Date(unixTime);
     const minutes: number = time.getMinutes();
@@ -33,6 +38,11 @@ function timeToEmoji(unixTime: number): string {
     return (EMOJI_TIME[hours][Math.round(minutes / 60)]);
 }
 
+/**
+ * Ordenar la lista de llegadas de colectivos según su proximidad.
+ * @param arrivals 
+ * @returns {ScheduledArrival[]}
+ */
 function sortByArrivalTime(arrivals: ScheduledArrival[]): ScheduledArrival[] {
     if (arrivals.length === 1) {
         arrivals[0].arrivalTime = arrivals[0].predicted ? arrivals[0].predictedArrivalTime : arrivals[0].scheduledArrivalTime;
@@ -47,6 +57,13 @@ function sortByArrivalTime(arrivals: ScheduledArrival[]): ScheduledArrival[] {
     return arrivals;
 }
 
+/**
+ * La función recibe el objeto con la información de las llegadas
+ * y formatea las mismas en una cadena de texto que luego será
+ * enviada al usuario.
+ * @param arrivals 
+ * @returns {string}
+ */
 function busArrivalsString(arrivals: ScheduledArrival[]): string {
     let text = '';
     for (let i = 0; i < arrivals.length; i++) {
@@ -128,12 +145,20 @@ function busArrivalsString(arrivals: ScheduledArrival[]): string {
     return text;
 }
 
-export async function getStopArrivals(stopNumber: any, filter?: string): Promise<string> {
+/**
+ * Busca los horarios de una parada de colectivos, opcionalmente los filtra,
+ * y devuelve una cadena de texto con los horariso ordenados por proximidad.
+ * @param stopNumber 
+ * @param filter Opcional: Indica una linea de colectivo para ser filtrada.
+ * @returns {Promise<string>}
+ */
+export async function getStopArrivals(stopNumber: string, filter?: string): Promise<string> {
     if (!MENDOTRAN_DATABASE) {
         throw new CommandError('No se ha podido cargar la base de datos de Mendotran.');
     }
 
-    const stop = stopNumber.match(/\bM\d+\b/i) ? stopNumber.toUpperCase() : 'M' + stopNumber;
+    // @ts-ignore
+    const stop: StopCode = stopNumber.match(/\bM\d+\b/i) ? stopNumber.toUpperCase() : 'M' + stopNumber;
 
     if (stop.lastIndexOf('M') !== 0) {
         throw new CommandError(
@@ -183,10 +208,26 @@ export async function getStopArrivals(stopNumber: any, filter?: string): Promise
         });
 }
 
+/**
+ * Calcular distancia entre un punto (x1, y1) y (x2, y2).
+ * @param x1 
+ * @param y1 
+ * @param x2 
+ * @param y2 
+ * @returns {number} Distancia
+ */
 function calculateDistance(x1: number, y1: number, x2: number, y2: number): number {
     return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
 }
 
+/**
+ * Busca la parada más cercana a una ubicación geográfica, opcionalmente filtra
+ * los horarios de un colectivo particular. Devuelve una cadena de texto con
+ * los horariso ordenados por proximidad.
+ * @param position 
+ * @param filter 
+ * @returns {Promise<string> }
+ */
 export async function getArrivalsByLocation(position: Position, filter?: string): Promise<string> {
     if (!MENDOTRAN_DATABASE) {
         throw new CommandError('No se ha podido cargar la base de datos de Mendotran.');
@@ -214,6 +255,12 @@ export async function getArrivalsByLocation(position: Position, filter?: string)
 }
 
 // Metrotranvía
+/**
+ * Buscar los horarios de una estación de metro. Devuelve una cadena de texto con
+ * los horariso ordenados por proximidad.
+ * @param stopName Nombre de la estación
+ * @returns {Promise<string>}
+ */
 export async function getMetroArrivals(stopName: string): Promise<string> {
     return await searchMetroStop(stopName)
         .then(async (stop: MetroStopInfo) => {           
@@ -253,6 +300,13 @@ export async function getMetroArrivals(stopName: string): Promise<string> {
         });
 }
 
+/**
+ * Busca información de una estación de metrotranvía en la base de datos. Esta función
+ * iterará sobre cada posible nombre de estación ya que hay paradas con hasta 2 formas
+ * de ser llamadas. Por ejemplo: "Pedro Molina / UTN".
+ * @param stopName 
+ * @returns {Promise<MetroStopInfo>}
+ */
 async function searchMetroStop(stopName: string): Promise<MetroStopInfo> {
     if (MENDOTRAN_METRO_DATABASE && MENDOTRAN_DATABASE) {
         stopName =  stopName.replaceAll(/á/gi, 'a') // Ignorar tildes
@@ -261,31 +315,24 @@ async function searchMetroStop(stopName: string): Promise<MetroStopInfo> {
                     .replaceAll(/ó/gi, 'o')
                     .replaceAll(/ú/gi, 'u');
 
-        const stop = searchMetroByName(MENDOTRAN_METRO_DATABASE, 'name', new RegExp(stopName, 'i'));
-        if (stop) { return stop; }
+        for (let key of MENDOTRAN_METRO_DATABASE) {
+            if (key.name) {
+                if (Array.isArray(key.name)) {
+                    if (key.name.some((stationName) => stationName.search(new RegExp(stopName, 'i')) >= 0)) {
+                        return key;
+                    } 
+                } else {
+                    if (key.name.search(new RegExp(stopName, 'i')) >= 0) {
+                        return key;
+                    }
+                }
+            }
+        }
+
         throw new CommandError(`No se ha encontrado la estación *"${stopName}"*.`);
     } else {
         throw new CommandError('No se ha podido cargar la base de datos de Mendotran.');
     }
-}
-
-function searchMetroByName(metroDataArray: any[], key: string | null, regExp: RegExp) {
-    for (let value of metroDataArray) {
-        let search;
-        if (key) {
-            if (value[key]) {
-                if (Array.isArray(value[key])) {
-                    if (searchMetroByName(value[key], null, regExp)) { return value; }
-                    continue;
-                }
-                search = value[key];
-            }
-        } else {
-            search = value;
-        }
-        if (search && typeof search === 'string' && search.search(regExp) >= 0) { return value; }
-    }
-    return undefined;
 }
 
 function handleErrors(error: Error | CommandError): string | CommandError {
