@@ -197,7 +197,7 @@ export async function getStopArrivals(stopNumber: string, filter?: string): Prom
             sortByArrivalTime(arrivals);
 
             // String
-            let text = `🚦 *${stop}${filter ? ' - Línea ' + filter : ''}* 🚦\n\n`
+            let text = `🚦 *Parada ${stop}${filter ? ' - Línea ' + filter : ''}* 🚦\n\n`
                         + busArrivalsString(arrivals)
                         + `\n\n📍 *${MENDOTRAN_DATABASE.stops[stop].address}* 📍`;
 
