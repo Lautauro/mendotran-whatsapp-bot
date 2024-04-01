@@ -272,27 +272,28 @@ export async function getMetroArrivals(stopName: string): Promise<string> {
                 `${mendotranSettings.api}/arrivals-and-departures-for-stop/${MENDOTRAN_DATABASE.stops[stop["101"]].id}.json`
             );
             
-            let metro100Arrivals = sortByArrivalTime(metro100Json.data?.entry?.arrivalsAndDepartures);
-            let metro101Arrivals = sortByArrivalTime(metro101Json.data?.entry?.arrivalsAndDepartures);
+            const metro100Arrivals = sortByArrivalTime(metro100Json.data?.entry?.arrivalsAndDepartures);
+            const metro101Arrivals = sortByArrivalTime(metro101Json.data?.entry?.arrivalsAndDepartures);
 
             // Limitar número de llegadas que se muestran
             const arrivalsLimit = 2;
             const metro100Restantes = metro100Arrivals.length - arrivalsLimit;
             const metro101Restantes = metro101Arrivals.length - arrivalsLimit;
-            metro100Arrivals = metro100Arrivals.slice(0, arrivalsLimit);
-            metro101Arrivals = metro101Arrivals.slice(0, arrivalsLimit);
+
+            metro100Arrivals.splice(arrivalsLimit);
+            metro101Arrivals.splice(arrivalsLimit);
 
             if (metro100Arrivals.length > 0 || metro101Arrivals.length > 0) {
                 let text = `🚦 *Estación ${Array.isArray(stop.name) ? stop.name.join(' / ') : stop.name}* 🚦\n\n`
-                        + (metro100Arrivals.length > 0 ? busArrivalsString(metro100Arrivals) : `🚋 *Sin llegadas para andén ${stop.direction[0]}* 🏃‍♀️`)
+                        + (metro100Arrivals.length > 0 ? busArrivalsString(metro100Arrivals) : `🚋 *Sin llegadas para el andén ${stop.direction[0]}* 🏃‍♀️`)
                         + (metro100Restantes > 0 ? `\n\n> 🚏 *${metro100Restantes} más en camino*` : '')
                         + '\n\n'
-                        + (metro101Arrivals.length > 0 ? busArrivalsString(metro101Arrivals) : `🚋 *Sin llegadas para andén ${stop.direction[1]}* 🏃‍♀️`)
+                        + (metro101Arrivals.length > 0 ? busArrivalsString(metro101Arrivals) : `🚋 *Sin llegadas para el andén ${stop.direction[1]}* 🏃‍♀️`)
                         + (metro101Restantes > 0 ? `\n\n> 🚏 *${metro101Restantes} más en camino*` : '')
                         + `\n\n📍 *${MENDOTRAN_DATABASE.stops[stop['100']].address}* 📍`;
                 return text;
             } else {
-                throw new CommandError(`🚋 Sin llegadas para la estación 🏃‍♀️`);
+                return `🚋 Sin llegadas para la estación 🏃‍♀️`;
             }
         })
         .catch((error) => {
