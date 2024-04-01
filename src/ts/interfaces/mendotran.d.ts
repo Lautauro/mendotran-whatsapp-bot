@@ -42,10 +42,11 @@ export interface ScheduledArrival {
      * Indica la hora de llegada del colectivo
      * independientemente de si es o no planificada.
      * 
-     * * NO EN LA API OFICIAL
+     * NO EN LA API OFICIAL
      */
 
     arrivalTime: number;
+
     blockTripSequence: number;
     color: string;
     departureEnabled: boolean;
@@ -68,6 +69,7 @@ export interface ScheduledArrival {
      */
 
     routeShortName: `${number}`;
+
     scheduledArrivalInterval: number | null;
     scheduledArrivalTime: number;
     scheduledDepartureInterval: number | null;
@@ -83,6 +85,7 @@ export interface ScheduledArrival {
      */
 
     tripHeadsign: string;
+
     tripId: number;
     tripStatus: {
         position: Position,
