@@ -445,30 +445,30 @@ createCommand(['help', '?'], {
         name: 'Help',
         description: 'Get info about a command.',
     }})
-    .setCallback(function(args, message) {
+    .setCallback(async function(args, message) {
         if (args.length > 0 && args[0]) {
             const command = searchCommand(args[0]);
             if (command) {
                 const example = commandExample(command);
                 if (example) {
-                    sendResponse(example, message, { 
+                    await sendResponse(example, message, { 
                         reaction: '👍',
                         messageOptions: { linkPreview: false },
                     });
-                    return;
                 } else {
-                    sendErrorResponse(`There is no information for the command *${args[0]}*.`, message);
+                    await sendErrorResponse(`There is no information for the command *${args[0]}*.`, message);
                 }
             } else {
-                sendErrorResponse(`The command *${args[0]}* doesn't exist.`, message);
+                await sendErrorResponse(`The command *${args[0]}* doesn't exist.`, message);
             }
         } else {
             // @ts-ignore
-            sendResponse(commandExample(this), message, {
+            await sendResponse(commandExample(this), message, {
                 reaction: '👍',
                 messageOptions: { linkPreview: false },
             });
         }
+        return;
     })
     .addParameter('string', { name: 'Command name', example: 'ping', }, null)
 .closeCommand();
