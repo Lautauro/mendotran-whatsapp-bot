@@ -36,7 +36,11 @@ export const EMOJI_TIME: readonly string[][] = [
  */
 export function getBusColor(linea: string): BusColor {
     if (+linea >= 100 && +linea < 1000) {
-        return BUS_COLOR_LIST[+String(+linea).charAt(0)];
+        if (linea == '100' || linea == '101') {
+            return METRO_EMOJI;
+        } else {
+            return BUS_COLOR_LIST[+String(+linea).charAt(0)];
+        }
     } else {
         return BUS_COLOR_LIST[0];
     }
