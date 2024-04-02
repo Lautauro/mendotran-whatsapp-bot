@@ -16,3 +16,7 @@ export function botLogError(...content: any[]): void {
 export function botLogWarn(...content: any[]): void {
     console.warn('\x1b[43m%s\x1b[0m', messageBase(), ...content);
 }
+
+export function botLogOk(...content: any[]): void {
+    console.log('\x1b[42m%s\x1b[0m', messageBase(), ...content);
+}
