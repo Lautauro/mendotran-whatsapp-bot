@@ -43,8 +43,8 @@ createCommand(['micro', 'm', '🚍'], {
         name: 'Mendotran - Micro',
         description: 'Obtener los horarios de un colectivo en una parada.\n\n' +
         '*Opcionalmente puede buscar los horarios de un micro enviando su ubicación.* ' +
-        'Primero debe enviar su ubicación actual y luego citarla con el comando:\n\n' +
-        '*Micro { Línea }*',
+        'Primero debe enviar la ubicación y luego citar el mensaje con el comando:\n\n' +
+        '*Micro* `Línea`',
     }})
     .addParameter('number', {
         name: 'Línea',
@@ -88,11 +88,12 @@ createCommand(['parada', 'p', '🚏'], {
         name: 'Mendotran - Parada',
         description: 'Obtener los horarios de una parada de colectivos.\n\n' +
         '*Opcionalmente puede buscar los horarios de una parada enviando su ubicación.* ' +
-        'Primero debe enviar la ubicación y luego citar el mensaje con el comando: `Parada`',
+        'Primero debe enviar la ubicación y luego citar el mensaje con el comando:\n\n*Parada*',
     }})
     .addParameter('string', {
         name: 'Nº de parada',
-        description: 'El número de parada de la cual desea saber sus horarios. No es estríctamente necesaria la letra "M" al comienzo.',
+        description: 'El número de parada de la cual desea saber sus horarios. ' +
+            'No es estríctamente necesaria la letra "M" al comienzo.',
         example: 'M1012',
     }, null)
     .setCallback(async function (args, message) {
@@ -129,7 +130,7 @@ createCommand(['paradas', '📍'], {
     info: {
         name: 'Mendotran - Paradas cercanas',
         description: 'Permite buscar las paradas más cercanas a una ubicación. ' +
-        'Primero debe enviar la ubicación y luego citar el mensaje con el comando: `Parada`',
+        'Primero debe enviar la ubicación y luego citar el mensaje con el comando:\n\n*Paradas*',
     }})
     .setCallback(async (args, message) => {
         await message.getQuotedMessage().then(async (quote) => {
