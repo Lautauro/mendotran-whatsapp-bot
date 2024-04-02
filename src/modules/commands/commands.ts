@@ -3,7 +3,7 @@ import { CommandCallback, ParameterType } from "../../ts/types/commands.js";
 import { CommandResponse, CommandResponseType } from "../../ts/enums/commands.js";
 import { readResponse } from "../whatsapp/readResponse.js";
 import { Message, MessageContent } from "whatsapp-web.js";
-import { botLog, botLogWarn, botLogError } from "../../utils/botLog.js";
+import { botLog, botLogWarn, botLogError, botLogOk } from "../../utils/botLog.js";
 import { whatsappSettings, commandsSettings } from "../../index.js";
 import { capitalizedCase } from "../../utils/capitalizedCase.js";
 import { USERS_EXECUTING_COMMANDS, checkUserCoolDown } from "./cooldown.js";
@@ -288,7 +288,7 @@ export async function commandExecution(message : Message): Promise<void> {
             if (!commandObj.parameters) {     
                 await commandObj.callback(commandArgs, message);
                 USERS_EXECUTING_COMMANDS.delete(from);
-                botLog(`El comando "${commandObj.alias[0]}" finalizó su ejecución.\n`);
+                botLogOk(`El comando "${commandObj.alias[0]}" finalizó su ejecución.\n`);
                 return;
             } else {
                 // Commands with parameters
@@ -308,7 +308,7 @@ export async function commandExecution(message : Message): Promise<void> {
                     if (verifyArgs(commandArgs, commandObj)) {
                         await commandObj.callback([...commandArgs, ...optionalValues], message);
                         USERS_EXECUTING_COMMANDS.delete(from);
-                        botLog(`El comando "${commandObj.alias[0]}" finalizó su ejecución.\n`);
+                        botLogOk(`El comando "${commandObj.alias[0]}" finalizó su ejecución.\n`);
                         return;
                     }
                 } else {
