@@ -2,24 +2,10 @@ import { ScheduledArrival, Position, MetroStopInfo, MendotranData, StopInfo } fr
 import { fetchJsonMendotran } from '../../utils/fetchJsonMendotran.js';
 import { getTimeString } from '../../utils/getTimeString.js';
 import { botLogError } from '../../utils/botLog.js';
-import { MetroData, StopCode } from '../../ts/types/mendotran.js';
+import { BusColor, MetroData, StopCode } from '../../ts/types/mendotran.js';
 import { mendotranSettings } from '../../index.js';
 import { CommandError } from '../commands/commands.js';
-
-const EMOJI_TIME: readonly string[][] = [
-    ['🕛', '🕧'], // 00 - 12
-    ['🕐', '🕜'], // 01 - 13
-    ['🕑', '🕝'], // 02 - 14
-    ['🕒', '🕞'], // 03 - 15
-    ['🕓', '🕟'], // 04 - 16
-    ['🕔', '🕠'], // 05 - 17
-    ['🕕', '🕡'], // 06 - 18
-    ['🕖', '🕢'], // 07 - 19
-    ['🕗', '🕣'], // 08 - 20
-    ['🕘', '🕤'], // 09 - 21
-    ['🕙', '🕥'], // 10 - 22
-    ['🕚', '🕦'], // 11 - 23
-];
+import { BUS_COLOR_LIST, EMOJI_TIME, getBusColor } from './emojis.js';
 
 // Base de datos de Mendotran  
 const MENDOTRAN_DATABASE: MendotranData = require(`../../../json/${mendotranSettings.dataFile}`);
@@ -27,8 +13,8 @@ const MENDOTRAN_METRO_DATABASE: MetroData = require(`../../../json/metrotranvia.
 
 /**
  * Transforma la hora epoch en un emoji de reloj que indica aproximadamente el mismo horario.
- * @param unixTime 
- * @returns {string}
+ * @param {number} unixTime - Hora epoch.
+ * @returns {string} Emoji: 🕛 🕐 🕑 🕒 🕓 🕔 🕕 🕖 🕗 🕘 🕙 🕚.
  */
 function timeToEmoji(unixTime: number): string {
     const time: Date = new Date(unixTime);
@@ -40,8 +26,8 @@ function timeToEmoji(unixTime: number): string {
 
 /**
  * Ordenar la lista de llegadas de colectivos según su proximidad.
- * @param arrivals 
- * @returns {ScheduledArrival[]}
+ * @param {ScheduledArrival[]} arrivals - Objeto de llegadas.
+ * @returns {ScheduledArrival[]} Lista ordenada
  */
 function sortByArrivalTime(arrivals: ScheduledArrival[]): ScheduledArrival[] {
     if (arrivals.length === 1) {
@@ -61,13 +47,13 @@ function sortByArrivalTime(arrivals: ScheduledArrival[]): ScheduledArrival[] {
  * La función recibe el objeto con la información de las llegadas
  * y formatea las mismas en una cadena de texto que luego será
  * enviada al usuario.
- * @param arrivals 
- * @returns {string}
+ * @param {ScheduledArrival[]} arrivals - Objeto de llegadas.
+ * @returns {string} Cadena de texto con los horarios ordenados por proximidad.
  */
 function busArrivalsString(arrivals: ScheduledArrival[]): string {
-    let text = '';
+    let text: string = '';
     for (let i = 0; i < arrivals.length; i++) {
-        // Corregir detalles de los letreros del colectivo
+        // Corregir detalles en el letrero del colectivo
         arrivals[i].tripHeadsign = arrivals[i].tripHeadsign
             .trim()
             .replaceAll(/  +/g, ' ')                // Borrar doble espacios
@@ -77,7 +63,7 @@ function busArrivalsString(arrivals: ScheduledArrival[]): string {
         
         // No repetir nombres de colectivos
         if (arrivals[i].tripHeadsign !== arrivals[i - 1]?.tripHeadsign) {
-            let busColor = '🔲';
+            let busColor: BusColor = BUS_COLOR_LIST[0];
             if (MENDOTRAN_DATABASE.buses[arrivals[i].routeShortName]) {
                 busColor = MENDOTRAN_DATABASE.buses[arrivals[i].routeShortName].color;
             } else {
@@ -146,11 +132,10 @@ function busArrivalsString(arrivals: ScheduledArrival[]): string {
 }
 
 /**
- * Busca los horarios de una parada de colectivos, opcionalmente los filtra,
- * y devuelve una cadena de texto con los horariso ordenados por proximidad.
- * @param stopNumber 
- * @param filter Opcional: Indica una linea de colectivo para ser filtrada.
- * @returns {Promise<string>}
+ * Busca los horarios de una parada de colectivos, opcionalmente los filtra.
+ * @param {string} stopNumber - Número de la parada.
+ * @param {string} filter - Opcional: Indica una linea de colectivo para ser filtrada.
+ * @returns {Promise<string>} Cadena de texto con los horarios ordenados por proximidad.
  */
 export async function getStopArrivals(stopNumber: string, filter?: string): Promise<string> {
     if (!MENDOTRAN_DATABASE) {
@@ -210,25 +195,22 @@ export async function getStopArrivals(stopNumber: string, filter?: string): Prom
 
 /**
  * Calcular distancia entre un punto (x1, y1) y (x2, y2).
- * @param x1 
- * @param y1 
- * @param x2 
- * @param y2 
- * @returns {number} Distancia
+ * @param x1 - Valor de x1.
+ * @param y1 - Valor de y1.
+ * @param x2 - Valor de x2.
+ * @param y2 - Valor de y2.
+ * @returns {number} Distancia.
  */
 function calculateDistance(x1: number, y1: number, x2: number, y2: number): number {
     return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
 }
 
 /**
- * Busca la parada más cercana a una ubicación geográfica, opcionalmente filtra
- * los horarios de un colectivo particular. Devuelve una cadena de texto con
- * los horariso ordenados por proximidad.
- * @param position 
- * @param filter 
- * @returns {Promise<string> }
+ * Busca la parada más cercana a una ubicación geográfica.
+ * @param {Position} position - Posición geográfica.
+ * @returns {Promise<string>} Lista de paradas ordenadas por proximidad.
  */
-export async function getArrivalsByLocation(position: Position, filter?: string): Promise<string> {
+export async function getStopsNear(position: Position): Promise<StopInfo[]> {
     if (!MENDOTRAN_DATABASE) {
         throw new CommandError('No se ha podido cargar la base de datos de Mendotran.');
     }
@@ -247,19 +229,64 @@ export async function getArrivalsByLocation(position: Position, filter?: string)
                 return a.distance - b.distance;
             });
 
-            return await getStopArrivals(stopsAround[0].code, filter);
+            return stopsAround;
         })
         .catch((error) => {
             throw handleErrors(error);
         });
 }
 
-// Metrotranvía
 /**
- * Buscar los horarios de una estación de metro. Devuelve una cadena de texto con
- * los horariso ordenados por proximidad.
- * @param stopName Nombre de la estación
- * @returns {Promise<string>}
+ * Busca las parada más cercana a una ubicación geográfica.
+ * @param {Position} position - Posición geográfica.
+ * @returns {Promise<string>} Cadena de texto con un listado de colectivos por parada.
+ */
+export async function stopsAroundInfo(position: Position): Promise<string> {
+    const stopsAround: StopInfo[] = await getStopsNear(position);
+    stopsAround.splice(4); // Recortar lista
+    let str: string = `🧭 *Las ${stopsAround.length} paradas más cercanas* 🧭\n\n`;
+
+    for (let i = 0; i < stopsAround.length; i++) {
+        const stopData = MENDOTRAN_DATABASE.stops[stopsAround[i].code];
+        let linea: string = '';
+
+        str +=  `🚏 *${stopsAround[i].code}:* ${stopsAround[i].address} 🚏\n`;
+
+        for (let j = 0; j < stopData.busList.length; j++) {
+            if (linea !== stopData.busList[j].charAt(0)) {
+                str += `\n> ${getBusColor(stopData.busList[j])} `;
+                linea = stopData.busList[j].charAt(0);
+            } 
+
+            str += `*${stopData.busList[j]}*`;
+
+            if (stopData.busList.length > 1 && j !== stopData.busList.length - 1) {
+                if (linea === stopData.busList[j + 1].charAt(0)) {
+                    str += ', ';
+                }
+            }
+        }
+        if (i !== stopsAround.length - 1) { str += `\n\n`; }
+    }
+    return str;
+}
+
+/**
+ * Busca la parada más cercana a una ubicación geográfica, opcionalmente filtra
+ * los horarios de un colectivo particular.
+ * @param {Position} position - Posición geográfica.
+ * @param {string} filter - Linea de colectivo que se desea filtrar.
+ * @returns {Promise<string> } Cadena de texto con los horarios ordenados por proximidad.
+ */
+export async function nearestStopInfo(position: Position, filter?: string): Promise<string> {   
+    const stopsAround: StopInfo[] = await getStopsNear(position);
+    return await getStopArrivals(stopsAround[0].code, filter);
+}
+
+/**
+ * Buscar los horarios de una estación de metro.
+ * @param {string} stopName - Nombre de la estación.
+ * @returns {Promise<string>} Cadena de texto con los horarios del metro-tranvía.
  */
 export async function getMetroArrivals(stopName: string): Promise<string> {
     return await searchMetroStop(stopName)
@@ -302,10 +329,10 @@ export async function getMetroArrivals(stopName: string): Promise<string> {
 }
 
 /**
- * Busca información de una estación de metrotranvía en la base de datos. Esta función
+ * Busca información de una estación de metro-tranvía en la base de datos. Esta función
  * iterará sobre cada posible nombre de estación ya que hay paradas con hasta 2 formas
  * de ser llamadas. Por ejemplo: "Pedro Molina / UTN".
- * @param stopName 
+ * @param {string} stopName - Nombre de la estación.
  * @returns {Promise<MetroStopInfo>}
  */
 async function searchMetroStop(stopName: string): Promise<MetroStopInfo> {
@@ -329,7 +356,6 @@ async function searchMetroStop(stopName: string): Promise<MetroStopInfo> {
                 }
             }
         }
-
         throw new CommandError(`No se ha encontrado la estación *"${stopName}"*.`);
     } else {
         throw new CommandError('No se ha podido cargar la base de datos de Mendotran.');
