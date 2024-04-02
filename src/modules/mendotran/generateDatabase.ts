@@ -3,7 +3,7 @@ import { fetchJsonMendotran } from '../../utils/fetchJsonMendotran.js';
 import { BusInfo, StopInfo } from '../../ts/interfaces/mendotran.d.js';
 import { mendotranSettings } from '../../index.js';
 import { botLog, botLogError, botLogOk } from '../../utils/botLog.js';
-import { BUS_COLOR_LIST, METRO_EMOJI } from './emojis.js';
+import { METRO_EMOJI, getBusColor } from './emojis.js';
 
 async function getBusesInfo(servicio: string | number): Promise<BusInfo[] | null> {
     let busList: BusInfo[] = [];
@@ -12,11 +12,14 @@ async function getBusesInfo(servicio: string | number): Promise<BusInfo[] | null
         .then((json) => {
             if (json.data?.list && json.data.list.length) {
                 json.data.list.forEach((element: any) => {
+                    const linea = element.shortName.match(/\d+/)[0];
+                    const color = (linea == '100' || linea == '101') ? METRO_EMOJI : getBusColor(linea);
+
                     busList.push({
-                        linea: element.shortName.match(/\d+/)[0],
+                        linea,
                         id: element.id,
                         shortName: element.shortName,
-                        color: '',
+                        color,
                     });
                 });
                 return busList; 
@@ -67,14 +70,6 @@ export async function getMendotranDatabase(): Promise<void> {
                 
                 // Ignorar repetidos
                 if (linea && !obj.buses[linea]) {
-                    const busColor = (+linea >= 100 && +linea <= 1000) ? (+String(+linea).charAt(0)) : 0;
-
-                    if (linea == '100' || linea == '101') {
-                        busList[j].color = METRO_EMOJI;
-                    } else {
-                        busList[j].color = BUS_COLOR_LIST[busColor];
-                    }
-
                     // Agregar micro al objeto
                     obj.buses[linea] = busList[j];
 
