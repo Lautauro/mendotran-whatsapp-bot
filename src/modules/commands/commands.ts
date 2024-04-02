@@ -451,7 +451,10 @@ createCommand(['help', '?'], {
             if (command) {
                 const example = commandExample(command);
                 if (example) {
-                    sendResponse(example, message, { reaction: '👍' });
+                    sendResponse(example, message, { 
+                        reaction: '👍',
+                        messageOptions: { linkPreview: false },
+                    });
                     return;
                 } else {
                     sendErrorResponse(`There is no information for the command *${args[0]}*.`, message);
@@ -461,7 +464,10 @@ createCommand(['help', '?'], {
             }
         } else {
             // @ts-ignore
-            sendResponse(commandExample(this), message, { reaction: '👍' });
+            sendResponse(commandExample(this), message, {
+                reaction: '👍',
+                messageOptions: { linkPreview: false },
+            });
         }
     })
     .addParameter('string', { name: 'Command name', example: 'ping', }, null)
