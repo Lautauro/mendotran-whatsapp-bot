@@ -1,5 +1,5 @@
 import { COMMAND_ERROR_MESSAGES, createCommand, sendErrorResponse, sendResponse } from "./commands.js";
-import { getArrivalsByLocation, getMetroArrivals, getStopArrivals } from "../mendotran/mendotran.js";
+import { nearestStopInfo, getMetroArrivals, getStopArrivals, stopsAroundInfo } from "../mendotran/mendotran.js";
 import { Message } from "whatsapp-web.js";
 
 /**
@@ -25,7 +25,7 @@ createCommand(['ping'], {
 
 async function arrivalsByLocation(message: Message, quote: Message, filter?: string) {
     if (quote.location) {
-        await getArrivalsByLocation({ lat: +quote.location.latitude, lon: +quote.location.longitude}, filter)
+        await nearestStopInfo({ lat: +quote.location.latitude, lon: +quote.location.longitude}, filter)
             .then(async (arrivals) => {
                 await sendResponse(arrivals, message, { 
                     reaction: '🚌',
@@ -88,7 +88,7 @@ createCommand(['parada', 'p'], {
         name: 'Mendotran - Parada',
         description: 'Obtener los horarios de una parada de colectivos.\n\n' +
         '*Opcionalmente puede buscar los horarios de una parada enviando su ubicación.* ' +
-        'Primero debe enviar su ubicación actual y luego citarla con el comando: *Parada*',
+        'Primero debe enviar la ubicación y luego citar el mensaje con el comando: `Parada`',
     }})
     .addParameter('string', {
         name: 'Nº de parada',
@@ -120,6 +120,35 @@ createCommand(['parada', 'p'], {
         }
     })
 .closeCommand();
+
+// Paradas cercanas
+createCommand(['paradas'], {
+    options: {
+        needQuotedMessage: true,
+    },
+    info: {
+        name: 'Mendotran - Paradas cercanas',
+        description: 'Permite buscar las paradas más cercanas a una ubicación. ' +
+        'Primero debe enviar la ubicación y luego citar el mensaje con el comando: `Parada`',
+    }})
+    .setCallback(async (args, message) => {
+        await message.getQuotedMessage().then(async (quote) => {
+            if (quote.location) {
+                const position = {
+                    lat: +quote.location.latitude,
+                    lon: +quote.location.longitude,
+                };
+
+                await sendResponse(await stopsAroundInfo(position), message, {
+                    reaction: '📍'
+                });
+                return;
+            } else {
+                await sendErrorResponse('Para usar este comando debe citar a un mensaje con una ubicación', message);
+            }
+        })
+    })
+.closeCommand()
 
 // Metrotranvia
 createCommand(['metro', 'metrotranvia', 'metrotranvía', 'estacion', 'estación'], {
