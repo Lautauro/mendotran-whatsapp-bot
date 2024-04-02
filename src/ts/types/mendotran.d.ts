@@ -7,3 +7,4 @@ export type RouteId = StopId;
 export type VehicleId = `${number}-${number}`;
 export type MetroDirection = 'Norte' | 'Sur' | 'Este' | 'Oeste';
 export type MetroData = MetroStopInfo[];
+export type BusColor = '🔲' | '🟥' | '⬜' | '🟩' | '🟨' | '🟧' | '🟦' | '🟪' | '🟫';
