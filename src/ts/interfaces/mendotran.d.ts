@@ -1,4 +1,4 @@
-import { RouteId, StopId, StopCode, VehicleId, BusId, MetroDirection } from "../types/mendotran.d.ts";
+import { RouteId, StopId, StopCode, VehicleId, BusId, MetroDirection, BusColor } from "../types/mendotran.d.ts";
 
 export interface Position {
     lat: number;
@@ -24,7 +24,7 @@ export interface MendotranBusesData {
         linea: string;
         id: BusId;
         shortName: string;
-        color: string;
+        color: BusColor;
     }
 }
 
@@ -109,12 +109,17 @@ export interface StopInfo {
     name: StopCode;
     routeIds: RouteId[];
     wheelchairBoarding: 'UNKNOWN' | string;
-    distance?: number; // No en la API oficial
+
+    /**
+     * NO EN LA API OFICIAL
+     */
+
+    distance?: number;
 }
 
 export interface BusInfo {
     linea?: string;
     id: string;
     shortName: string;
-    color: string;
+    color: BusColor;
 }
