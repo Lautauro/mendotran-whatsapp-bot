@@ -449,22 +449,21 @@ createCommand(['ayuda', 'help', '?', '❓'], {
         name: 'Ayuda',   
         description: 'Obtener información sobre el uso de un comando.',
     }})
-    .setCallback(function(args, message) {
+    .setCallback(async (args, message) => {
         if (args.length > 0 && args[0]) {
             const command = searchCommand(args[0]);
             if (command) {
                 const example = commandExample(command);
                 if (example) {
-                    sendResponse(example, message, {
+                    await sendResponse(example, message, {
                         reaction: '👍',
                         messageOptions: { linkPreview: false },
                     });
-                    return;
                 } else {
-                    sendErrorResponse(`No exite información sobre el comando *${args[0]}*.`, message);
+                    await sendErrorResponse(`No exite información sobre el comando *${args[0]}*.`, message);
                 }
             } else {
-                sendErrorResponse(`El comando *${args[0]}* no existe.`, message);
+                await sendErrorResponse(`El comando *${args[0]}* no existe.`, message);
             }
         } else {
             const ayuda = '📚 *¿Cómo usar el bot?* 📚\n\n' +
@@ -478,11 +477,12 @@ createCommand(['ayuda', 'help', '?', '❓'], {
                 '🚊 *Metro* `Nombre de la estación`\n\n' +
                 'Si desea saber más información sobre un comando, conocer más usos, utilice:\n' +
                 '❓ *Ayuda* `Nombre del comando`';
-            sendResponse(ayuda, message, {
+            await sendResponse(ayuda, message, {
                 reaction: '👍',
                 messageOptions: { linkPreview: false },
             });
         }
+        return;
     })
     .addParameter('string', { name: 'Nombre del comando', example: 'parada', }, null)
 .closeCommand();
