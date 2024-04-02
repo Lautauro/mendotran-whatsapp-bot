@@ -13,7 +13,7 @@ async function getBusesInfo(servicio: string | number): Promise<BusInfo[] | null
             if (json.data?.list && json.data.list.length) {
                 json.data.list.forEach((element: any) => {
                     const linea = element.shortName.match(/\d+/)[0];
-                    const color = (linea == '100' || linea == '101') ? METRO_EMOJI : getBusColor(linea);
+                    const color = getBusColor(linea);
 
                     busList.push({
                         linea,
