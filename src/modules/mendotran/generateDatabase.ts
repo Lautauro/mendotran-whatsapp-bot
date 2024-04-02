@@ -2,20 +2,8 @@ import fs from 'node:fs';
 import { fetchJsonMendotran } from '../../utils/fetchJsonMendotran.js';
 import { BusInfo, StopInfo } from '../../ts/interfaces/mendotran.d.js';
 import { mendotranSettings } from '../../index.js';
-
-const metro_emoji = '🚉';
-const bus_color_list: string[] = [
-    '🔲', // Sin color definido
-    '🟥', // 100
-    '⬜', // 200
-    '🟩', // 300
-    '🟨', // 400
-    '🟧', // 500
-    '🟦', // 600
-    '🟦', // 700
-    '🟪', // 800
-    '🟫', // 900
-];
+import { botLog, botLogError, botLogOk } from '../../utils/botLog.js';
+import { BUS_COLOR_LIST, METRO_EMOJI } from './emojis.js';
 
 async function getBusesInfo(servicio: string | number): Promise<BusInfo[] | null> {
     let busList: BusInfo[] = [];
@@ -55,6 +43,8 @@ async function getStopsFromBus(busId: string): Promise<StopInfo[] | null> {
 export async function getMendotranDatabase(): Promise<void> {
     const start = Date.now();
 
+    botLog('Generando la base de datos de Mendotran:');
+
     let obj: any = {
         stops: {},
         buses: {},
@@ -63,8 +53,11 @@ export async function getMendotranDatabase(): Promise<void> {
     let nStops = 0; // Número de paradas
     let nBuses = 0; // Número de colectivos
 
+    botLog('Buscando líneas de colectivos');
+
     for (let i = 0; i <= 80; i++) {
-        console.log(`\nIndex: ${i}`);
+        console.log();
+        botLog(`Index: ${i}`);
 
         const busList: BusInfo[] | null = await getBusesInfo(i);
 
@@ -72,14 +65,14 @@ export async function getMendotranDatabase(): Promise<void> {
             for (let j = 0; j < busList.length; j++) {
                 let linea = busList[j].linea ?? null;
                 
-                // Ignorar repetidos.
+                // Ignorar repetidos
                 if (linea && !obj.buses[linea]) {
                     const busColor = (+linea >= 100 && +linea <= 1000) ? (+String(+linea).charAt(0)) : 0;
 
                     if (linea == '100' || linea == '101') {
-                        busList[j].color = metro_emoji;
+                        busList[j].color = METRO_EMOJI;
                     } else {
-                        busList[j].color = bus_color_list[busColor];
+                        busList[j].color = BUS_COLOR_LIST[busColor];
                     }
 
                     // Agregar micro al objeto
@@ -114,11 +107,19 @@ export async function getMendotranDatabase(): Promise<void> {
                 }
             }
         } else {
-            console.log(`\nNo hay resultados para ${i}.\n`);
+            console.log();
+            botLogError(`No hay resultados para ${i}.`);
         }
     }
 
-    console.log(`\nSe han encontrado:\n\t${nBuses} lineas.\n\t${nStops} paradas.\n`);
+    // Ordenar de menor a mayor la lista de colectivos de cada parada
+    botLog('Ordenando lista de colectivos.')
+
+    for (let key in obj.stops) {
+        obj.stops[key].busList = obj.stops[key].busList.sort((a: string, b: string) => (+a) - (+b));
+    }
+
+    botLog(`Se han encontrado:\n\t${nBuses} lineas.\n\t${nStops} paradas.\n`);
 
     // Escribir archivo
     try {
@@ -129,11 +130,11 @@ export async function getMendotranDatabase(): Promise<void> {
         }
 
         fs.writeFileSync(`./json/${mendotranSettings.dataFile}`, JSON.stringify(obj));
-        console.log(`✔  Lista de colectivos escrita exitosamente\n`);
+        botLogOk(`✔  Lista de colectivos escrita exitosamente\n`);
     } catch(error) {
         console.error(`❌  Error al guardar la lista de colectivos\n`);
         console.error(error);
     }
 
-    console.log(`La operación tardó ${(Date.now() - start) / 1000} segundos en ser realizada.`);
+    botLog(`La operación tardó ${(Date.now() - start) / 1000} segundos en ser realizada.`);
 }
