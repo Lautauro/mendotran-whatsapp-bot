@@ -38,7 +38,7 @@ async function arrivalsByLocation(message: Message, quote: Message, filter?: str
 }
 
 // Micro
-createCommand(['micro', 'm'], {
+createCommand(['micro', 'm', '🚍'], {
     info: {
         name: 'Mendotran - Micro',
         description: 'Obtener los horarios de un colectivo en una parada.\n\n' +
@@ -83,7 +83,7 @@ createCommand(['micro', 'm'], {
 .closeCommand();
 
 // Parada 
-createCommand(['parada', 'p'], {
+createCommand(['parada', 'p', '🚏'], {
     info: {
         name: 'Mendotran - Parada',
         description: 'Obtener los horarios de una parada de colectivos.\n\n' +
@@ -122,7 +122,7 @@ createCommand(['parada', 'p'], {
 .closeCommand();
 
 // Paradas cercanas
-createCommand(['paradas'], {
+createCommand(['paradas', '📍'], {
     options: {
         needQuotedMessage: true,
     },
@@ -151,7 +151,7 @@ createCommand(['paradas'], {
 .closeCommand()
 
 // Metrotranvia
-createCommand(['metro', 'metrotranvia', 'metrotranvía', 'estacion', 'estación'], {
+createCommand(['metro', 'metrotranvia', 'metrotranvía', 'estacion', 'estación', '🚊'], {
     info: {
         name: 'Mendotran - Metrotranvía',
         description: 'Obtener los horarios de una estación de metrotranvía.',
