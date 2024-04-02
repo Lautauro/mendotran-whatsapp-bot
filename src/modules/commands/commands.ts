@@ -444,7 +444,7 @@ export async function sendErrorResponse(content: MessageContent | null, message:
 }
 
 // Help command
-createCommand(['ayuda', 'help', '?'], {
+createCommand(['ayuda', 'help', '?', '❓'], {
     info: {
         name: 'Ayuda',   
         description: 'Obtener información sobre el uso de un comando.',
@@ -464,8 +464,18 @@ createCommand(['ayuda', 'help', '?'], {
                 sendErrorResponse(`El comando *${args[0]}* no existe.`, message);
             }
         } else {
-            // @ts-ignore
-            sendResponse(commandExample(this), message, { reaction: '👍' });
+            const ayuda = '📚 *¿Cómo usar el bot?* 📚\n\n' +
+                'Para ejecutar un comando formule un mensaje que comience ' +
+                'con el nombre del comando seguido de los parámetros del mismo ' +
+                'espaciados entre si. Por ejemplo:\n\n' +
+                '> *Micro* `120` `M1040`\n\n' +            
+                '📒 *Lista de comandos* 📒\n\n' +
+                '🚏 *Parada* `N° de parada`\n' +
+                '🚍 *Micro* `Línea` `Nº de parada`\n' +
+                '🚊 *Metro* `Nombre de la estación`\n\n' +
+                'Si desea saber más información sobre un comando, conocer más usos, utilice:\n' +
+                '❓ *Ayuda* `Nombre del comando`';
+            sendResponse(ayuda, message, { reaction: '👍' });
         }
     })
     .addParameter('string', { name: 'Nombre del comando', example: 'parada', }, null)
