@@ -455,7 +455,10 @@ createCommand(['ayuda', 'help', '?', '❓'], {
             if (command) {
                 const example = commandExample(command);
                 if (example) {
-                    sendResponse(example, message, { reaction: '👍' });
+                    sendResponse(example, message, {
+                        reaction: '👍',
+                        messageOptions: { linkPreview: false },
+                    });
                     return;
                 } else {
                     sendErrorResponse(`No exite información sobre el comando *${args[0]}*.`, message);
@@ -475,7 +478,10 @@ createCommand(['ayuda', 'help', '?', '❓'], {
                 '🚊 *Metro* `Nombre de la estación`\n\n' +
                 'Si desea saber más información sobre un comando, conocer más usos, utilice:\n' +
                 '❓ *Ayuda* `Nombre del comando`';
-            sendResponse(ayuda, message, { reaction: '👍' });
+            sendResponse(ayuda, message, {
+                reaction: '👍',
+                messageOptions: { linkPreview: false },
+            });
         }
     })
     .addParameter('string', { name: 'Nombre del comando', example: 'parada', }, null)
