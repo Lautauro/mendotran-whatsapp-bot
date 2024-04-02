@@ -9,10 +9,6 @@ const client = new Client({
             dataPath: `${whatsappSettings.wwebjsCache}/.wwebjs_auth`,
     }),
     restartOnAuthFail: true,
-    webVersionCache: {
-        type: 'local',
-        path: `${whatsappSettings.wwebjsCache}/.wwwebjs_cache`,
-    },
     puppeteer: {
         headless: true,
         args: [
@@ -22,6 +18,11 @@ const client = new Client({
             '--no-first-run',
             '--single-process',
         ],
+    },
+    webVersion: '2.2409.2',
+    webVersionCache: {
+       type: 'remote',
+       remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2409.2.html'
     }
 });
 
