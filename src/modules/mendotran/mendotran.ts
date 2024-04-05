@@ -5,24 +5,11 @@ import { botLogError } from '../../utils/botLog.js';
 import { BusColor, MetroData, StopCode } from '../../ts/types/mendotran.js';
 import { mendotranSettings } from '../../index.js';
 import { CommandError } from '../commands/commands.js';
-import { BUS_COLOR_LIST, EMOJI_TIME, getBusColor } from './emojis.js';
+import { BUS_COLOR_LIST, getBusColor, timeToEmoji } from './emojis.js';
 
 // Base de datos de Mendotran  
 const MENDOTRAN_DATABASE: MendotranData = require(`../../../json/${mendotranSettings.dataFile}`);
 const MENDOTRAN_METRO_DATABASE: MetroData = require(`../../../json/metrotranvia.json`);
-
-/**
- * Transforma la hora epoch en un emoji de reloj que indica aproximadamente el mismo horario.
- * @param {number} unixTime - Hora epoch.
- * @returns {string} Emoji: 🕛 🕐 🕑 🕒 🕓 🕔 🕕 🕖 🕗 🕘 🕙 🕚.
- */
-function timeToEmoji(unixTime: number): string {
-    const time: Date = new Date(unixTime);
-    const minutes: number = time.getMinutes();
-    const hours: number = time.getHours() % 12;
-    
-    return (EMOJI_TIME[hours][Math.round(minutes / 60)]);
-}
 
 /**
  * Ordenar la lista de llegadas de colectivos según su proximidad.

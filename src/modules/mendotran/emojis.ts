@@ -45,3 +45,16 @@ export function getBusColor(linea: string): BusColor {
         return BUS_COLOR_LIST[0];
     }
 }
+
+/**
+ * Transforma la hora epoch en un emoji de reloj que indica aproximadamente el mismo horario.
+ * @param {number} unixTime - Hora epoch.
+ * @returns {string} Emoji: 🕛 🕐 🕑 🕒 🕓 🕔 🕕 🕖 🕗 🕘 🕙 🕚.
+ */
+export function timeToEmoji(unixTime: number): string {
+    const time: Date = new Date(unixTime);
+    const minutes: number = time.getMinutes();
+    const hours: number = time.getHours() % 12;
+    
+    return (EMOJI_TIME[hours][Math.round(minutes / 60)]);
+}
