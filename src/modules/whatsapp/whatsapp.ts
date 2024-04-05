@@ -21,7 +21,7 @@ const client = new Client({
     },
     webVersionCache: {
        type: 'local',
-       path: `${whatsappSettings.wwebjsCache}/.wwwebjs_cache`,
+       path: `${whatsappSettings.wwebjsCache}/.wwebjs_cache`,
     }
 });
 
