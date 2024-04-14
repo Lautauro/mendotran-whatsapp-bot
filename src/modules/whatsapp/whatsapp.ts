@@ -80,70 +80,78 @@ client.on('loading_screen', (percent: number) => {
     console.log(` ${loading_bar} [ ${percent} % ]\n`);
 });
 
+let clientStarted = false;
+function start() {
+    if (clientStarted === false) {
+        clientStarted = true;
+
+        const startTime = Date.now();
+        const commandPath: string = '../commands';
+        let commandExecution  = require(`${commandPath}/commands.js`).commandExecution;
+        require(`${commandPath}/commandsList.js`);
+        
+        if (!whatsappSettings.showMessagesInTheTerminal) { botLog('Mensajes ocultados.\n'); }
+
+        // Hot-Swap
+        if (commandsSettings.hotSwappingEnabled) {
+            setInterval(() => {
+                try {
+                    delete require.cache[require.resolve(`${commandPath}/commands.js`)];
+                    delete require.cache[require.resolve(`${commandPath}/commandsList.js`)];
+                    delete require.cache[require.resolve(`../mendotran/mendotran.js`)];
+
+                    commandExecution = require(`${commandPath}/commands.js`).commandExecution; 
+                    require(`${commandPath}/commandsList.js`);
+                } catch(error) {
+                    console.error('Error al limpier la memoria caché:', error);
+                }
+            }, commandsSettings.hotSwappingTimer);
+        }
+
+        // Show edited messages in the termianal
+        if (whatsappSettings.showMessagesInTheTerminal) {
+            client.on('message_edit', async (message: Message) => {
+                // Ignore previous messages
+                if (message.timestamp * 1000 < startTime) { return; }
+                const from: string = message.fromMe ? message.to : message.from;
+                printMessage(message, from, true);
+            });
+        }
+
+        client.on('message_create', async (message: Message) => {
+            // Ignore status messages and previous messages
+            if (message.isStatus || (message.timestamp * 1000 < startTime)) { return; }
+
+            // Setting: Ignore "media" messages
+            if (whatsappSettings.ignoreNonTextMessages === true && message.type !== MessageTypes.TEXT) { return; }
+
+            if (message.type === MessageTypes.E2E_NOTIFICATION || message.type === MessageTypes.NOTIFICATION_TEMPLATE ||
+                message.type === MessageTypes.NOTIFICATION || message.type === MessageTypes.GROUP_NOTIFICATION ||
+                message.type === MessageTypes.UNKNOWN) { return; }
+
+            const from: string = message.fromMe ? message.to : message.from;
+
+            // Setting: Show messages in the termianal
+            if (whatsappSettings.showMessagesInTheTerminal) { printMessage(message, from); }
+
+            /* Commands */ 
+            
+            if (commandExecution === undefined) { return; }
+            
+            // Setting: Ignore commands not coming from admin
+            if (whatsappSettings.adminOnly && !message.fromMe) { return; }
+
+            if (message.body.indexOf(commandsSettings.commandPrefix) === 0 && typeof message.body === 'string' && message.type === MessageTypes.TEXT) {          
+                commandExecution(message);
+            }
+        });
+    }
+}
+
 client.on('ready', () => {
     console.clear();
     botLog('El cliente ha iniciado.\n');
-
-    const startTime = Date.now();
-    const commandPath: string = '../commands';
-    let commandExecution  = require(`${commandPath}/commands.js`).commandExecution;
-    require(`${commandPath}/commandsList.js`);
-    
-    if (!whatsappSettings.showMessagesInTheTerminal) { botLog('Mensajes ocultados.\n'); }
-
-    // Hot-Swap
-    if (commandsSettings.hotSwappingEnabled) {
-        setInterval(() => {
-            try {
-                delete require.cache[require.resolve(`${commandPath}/commands.js`)];
-                delete require.cache[require.resolve(`${commandPath}/commandsList.js`)];
-                delete require.cache[require.resolve(`../mendotran/mendotran.js`)];
-
-                commandExecution = require(`${commandPath}/commands.js`).commandExecution; 
-                require(`${commandPath}/commandsList.js`);
-            } catch(error) {
-                console.error('Error al limpier la memoria caché:', error);
-            }
-        }, commandsSettings.hotSwappingTimer);
-    }
-
-    // Show edited messages in the termianal
-    if (whatsappSettings.showMessagesInTheTerminal) {
-        client.on('message_edit', async (message: Message) => {
-            // Ignore previous messages
-            if (message.timestamp * 1000 < startTime) { return; }
-            const from: string = message.fromMe ? message.to : message.from;
-            printMessage(message, from, true);
-        });
-    }
-
-    client.on('message_create', async (message: Message) => {
-        // Ignore status messages and previous messages
-        if (message.isStatus || (message.timestamp * 1000 < startTime)) { return; }
-
-        // Setting: Ignore "media" messages
-        if (whatsappSettings.ignoreNonTextMessages === true && message.type !== MessageTypes.TEXT) { return; }
-
-        if (message.type === MessageTypes.E2E_NOTIFICATION || message.type === MessageTypes.NOTIFICATION_TEMPLATE ||
-            message.type === MessageTypes.NOTIFICATION || message.type === MessageTypes.GROUP_NOTIFICATION ||
-            message.type === MessageTypes.UNKNOWN) { return; }
-
-        const from: string = message.fromMe ? message.to : message.from;
-
-        // Setting: Show messages in the termianal
-        if (whatsappSettings.showMessagesInTheTerminal) { printMessage(message, from); }
-
-        /* Commands */ 
-        
-        if (commandExecution === undefined) { return; }
-        
-        // Setting: Ignore commands not coming from admin
-        if (whatsappSettings.adminOnly && !message.fromMe) { return; }
-
-        if (message.body.indexOf(commandsSettings.commandPrefix) === 0 && typeof message.body === 'string' && message.type === MessageTypes.TEXT) {          
-            commandExecution(message);
-        }
-    });
+    start();
 });
 
 // Functions
