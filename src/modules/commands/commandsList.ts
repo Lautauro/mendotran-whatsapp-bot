@@ -70,7 +70,7 @@ createCommand(['micro', 'm', '🚍'], {
                 await sendErrorResponse(COMMAND_ERROR_MESSAGES.MISSING_ARGUMENT(this, [args[0]]), message);
                 return;
             } else {
-                await getStopArrivals(args[1], args[0])
+                await getStopArrivals(args.slice(1).join(" "), args[0])
                     .then(async (arrivals) => {
                         await sendResponse(arrivals, message, {
                             reaction: '🚌',
@@ -104,7 +104,7 @@ createCommand(['parada', 'p', '🚏'], {
             })
         } else {
             if (args[0]) {
-                await getStopArrivals(args[0])
+                await getStopArrivals(args.join(" "))
                     .then(async (arrivals) => {
                         await sendResponse(arrivals, message, { 
                             reaction: '🚌',
