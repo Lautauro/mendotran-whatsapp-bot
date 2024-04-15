@@ -2,7 +2,7 @@ import { Message } from "whatsapp-web.js";
 import { commandsSettings } from "../..";
 import { botLog } from "../../utils/botLog";
 
-export const COOLDOWN_MULTIPLIER = [ 1, 1.2, 1.4, 2, 3];
+export const COOLDOWN_MULTIPLIER = [ 1, 1.3, 1.5, 2.5, 3];
 export const MESSAGES_HISTORY: Map<string, number[]> = new Map();
 export const USERS_EXECUTING_COMMANDS: Set<string> = new Set();
 
@@ -33,6 +33,8 @@ export function checkUserCoolDown(message: Message): boolean {
     if (message.fromMe === true) { return true; }
 
     const from = message.from;
+
+    if (USERS_EXECUTING_COMMANDS.has(from)) { return false; };
     
     if (MESSAGES_HISTORY.has(from)) {
         const userHistory = MESSAGES_HISTORY.get(from);
@@ -44,19 +46,17 @@ export function checkUserCoolDown(message: Message): boolean {
             const now = Date.now();
             userHistory.push(now);
 
-            const COOLDOWN = commandsSettings.initialCoolDown * COOLDOWN_MULTIPLIER[userHistory.length - 1];
+            const coolDown = commandsSettings.initialCoolDown * COOLDOWN_MULTIPLIER[userHistory.length - 1];
             const timeElapsed = now - userHistory[userHistory.length - 2];
 
-            if (timeElapsed < COOLDOWN) { return false; }
-            if (timeElapsed > (COOLDOWN + commandsSettings.initialCoolDown)) {
+            if (timeElapsed < coolDown) { return false; }
+            if (timeElapsed > (coolDown + commandsSettings.initialCoolDown)) {
                 userHistory.splice(0, userHistory.length - 1);
             }
         }
     } else {
         MESSAGES_HISTORY.set(from, [ Date.now() ]);
     }
-
-    if (USERS_EXECUTING_COMMANDS.has(from)) { return false; };
 
     return true;
 }
