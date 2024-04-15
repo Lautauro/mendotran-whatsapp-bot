@@ -1,6 +1,6 @@
 import { MessageContent, MessageSendOptions } from "whatsapp-web.js";
 import { CommandCallback, ParameterType } from "../types/commands";
-import { CommandResponse, CommandResponseType } from "../enums/commands";
+import { CommandResponseCode, CommandResponseType } from "../enums/commands";
 
 export interface ParameterInfo {
     name: string;
@@ -40,17 +40,17 @@ export interface CommandData {
 }
 
 export interface CommandResponseOptions {
-    reply?: boolean;
+    asReply?: boolean;
     asError?: boolean;
     reaction?: string;
     messageOptions?: MessageSendOptions;
 }
 
-export interface CommandReturn {
-    code: CommandResponse;
-    type: CommandResponseType | null;
+export interface CommandResponse {
+    code: CommandResponseCode;
+    type: CommandResponseType;
     data: {
-        content: MessageContent | null;
+        content?: MessageContent | null;
         reaction?: string;
         options?: MessageSendOptions;
     }

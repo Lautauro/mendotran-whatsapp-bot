@@ -4,7 +4,7 @@ import { getTimeString } from '../../utils/getTimeString.js';
 import { botLog, botLogError } from '../../utils/botLog.js';
 import { whatsappSettings, commandsSettings, packageInfo } from "../../index.js";
 
-const client = new Client({
+export const wwebClient = new Client({
     authStrategy: new LocalAuth({ 
             dataPath: `${whatsappSettings.wwebjsCache}/.wwebjs_auth`,
     }),
@@ -25,7 +25,7 @@ const client = new Client({
     },
 });
 
-client.on('qr', (qr: string) => {
+wwebClient.on('qr', (qr: string) => {
     console.clear();
     console.log("███████████████████████████████████████████████████████\n");
     qrcode.generate(qr, { small: true });
@@ -33,19 +33,19 @@ client.on('qr', (qr: string) => {
     console.log("███████████████████████████████████████████████████████\n");
 });
 
-client.on('authenticated', () => {
+wwebClient.on('authenticated', () => {
     botLog('Authenticated\n');
 });
 
-client.on('auth_failure', (msg) => {
+wwebClient.on('auth_failure', (msg) => {
     botLogError('Authentication failure\n', msg);
 });
 
-client.on('disconnected', (reason) => {
+wwebClient.on('disconnected', (reason) => {
     botLogError('Client was logged out. Reason:', reason);
 });
 
-client.on('loading_screen', (percent: number) => {
+wwebClient.on('loading_screen', (percent: number) => {
     let loading_bar: string = '';
     while (loading_bar.length < Math.round(100 * .5)) {
         if (loading_bar.length < Math.round(percent * .5)) {
@@ -80,7 +80,7 @@ client.on('loading_screen', (percent: number) => {
     console.log(` ${loading_bar} [ ${percent} % ]\n`);
 });
 
-client.on('ready', () => {
+wwebClient.on('ready', () => {
     console.clear();
     botLog('The client is ready.\n');
 
@@ -108,7 +108,7 @@ client.on('ready', () => {
 
     // Show edited messages in the termianal
     if (whatsappSettings.showMessagesInTheTerminal) {
-        client.on('message_edit', async (message: Message) => {
+        wwebClient.on('message_edit', async (message: Message) => {
             // Ignore previous messages
             if (message.timestamp * 1000 < startTime) { return; }
             const from: string = message.fromMe ? message.to : message.from;
@@ -116,7 +116,7 @@ client.on('ready', () => {
         });
     }
 
-    client.on('message_create', async (message: Message) => {
+    wwebClient.on('message_create', async (message: Message) => {
         // Ignore status messages and previous messages
         if (message.isStatus || (message.timestamp * 1000 < startTime)) { return; }
 
@@ -243,12 +243,4 @@ async function printMessage(message: Message, from: string, edited?: boolean): P
     console.log(`${terminalText}${message.body}`);
 }
 
-export async function sendMessage(content: MessageContent, messageId: MessageId, options?: MessageSendOptions | undefined): Promise<Message> {
-    if (!client) {
-        throw new Error('The Whatsapp Web client has not been initialised.');
-    } else {
-        return await client.sendMessage(messageId.remote, content, options);
-    }
-}
-
-export function startWhatsAppWebClient(): void { client.initialize(); }
+export function startWhatsAppWebClient(): void { wwebClient.initialize(); }
