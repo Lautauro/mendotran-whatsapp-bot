@@ -3,7 +3,7 @@ import { CommandResponseCode, CommandResponseType } from "../../ts/enums/command
 import { Message, MessageContent, MessageId, MessageSendOptions } from "whatsapp-web.js";
 import { botLog, botLogError } from '../../utils/botLog';
 import { commandsSettings } from "../../index.js";
-import { wwebClient } from "./whatsapp.js";
+import { wwebClient } from "./client.js";
 
 const RESPONSE_TYPE: string[] = [];
 RESPONSE_TYPE[CommandResponseType.SEND_MESSAGE] = 'SEND_MESSAGE';
@@ -57,27 +57,35 @@ export async function readResponse(response: CommandResponse, message: Message):
                     break;
             }
         }
-
+        
+        console.log();
         botLog(
-            `OK RESPONSE: ` +
+            'OK RESPONSE',
+            `\nmessage.id.remote: ${message.id.remote}`,
+            '\nresponse: ',
             `${JSON.stringify({
                 ...response,
                 type: RESPONSE_TYPE[response.type] ?? response.type,
-                code: RESPONSE_CODE[CommandResponseCode.OK] ?? response.code
-            }, null, 4)}\n`);
+                code: RESPONSE_CODE[response.code] ?? response.code
+            }, null, 4)}`
+        );
     } else {
         await sendReaction(response.data.reaction ?? '🚫', message);
         if (response.data.content && typeof response.data.content === 'string') {
             _return = await sendMessage(`🚫 *ERROR* 🚫\n\n${response.data.content}`, message.id, msgOptions);
         }
 
+        console.log();
         botLogError(
-            `ERROR RESPONSE: ` +
+            'ERROR RESPONSE',
+            `\nmessage.id.remote: ${message.id.remote}`,
+            '\nresponse: ',
             `${JSON.stringify({
                 ...response,
                 type: RESPONSE_TYPE[response.type] ?? response.type,
-                code: RESPONSE_CODE[CommandResponseCode.ERROR] ?? response.code
-            }, null, 4)}\n`);
+                code: RESPONSE_CODE[response.code] ?? response.code
+            }, null, 4)}`
+        );
     }
 
     if (_return) { return _return; }

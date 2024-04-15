@@ -1,4 +1,4 @@
-import { LocalAuth, Client, MessageTypes, Message, MessageId, MessageSendOptions, MessageContent } from 'whatsapp-web.js';
+import { LocalAuth, Client, MessageTypes, Message } from 'whatsapp-web.js';
 import * as qrcode from 'qrcode-terminal';
 import { botLog, botLogError } from '../../utils/botLog.js';
 import { whatsappSettings, commandsSettings, packageInfo } from "../../index.js";
