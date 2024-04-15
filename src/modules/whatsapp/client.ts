@@ -148,7 +148,7 @@ wwebClient.on('ready', () => {
         if (commandExecution === undefined) { return; }
         
         // Setting: Ignore commands not coming from admin
-        if (whatsappSettings.adminOnly && !message.fromMe) { return; }
+        if (commandsSettings.adminOnly && !message.fromMe) { return; }
 
         if (message.body.indexOf(commandsSettings.commandPrefix) === 0 && typeof message.body === 'string' && message.type === MessageTypes.TEXT) {
             commandExecution(message);

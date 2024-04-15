@@ -1,11 +1,10 @@
 {
     "botName": "UDMILLA-BOT",
-    "adminOnly": false,
+    "ignoreNonTextMessages": false,
     "showMessagesInTheTerminal": true,
     "showPhoneNumber": false,
     "showContactName": false,
     "showUserName": true,
     "showTimestamp": true,
-    "wwebjsCache": "./.session_cache",
-    "ignoreNonTextMessages": false
+    "wwebjsCache": "./.session_cache"
 }
