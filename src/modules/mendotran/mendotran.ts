@@ -1,7 +1,7 @@
 import { ScheduledArrival, Position, MetroStopInfo, MendotranData, StopInfo } from '../../ts/interfaces/mendotran.d.js';
 import { fetchJsonMendotran } from '../../utils/fetchJsonMendotran.js';
 import { getTimeString } from '../../utils/getTimeString.js';
-import { botLogError } from '../../utils/botLog.js';
+import { botLog, botLogError } from '../../utils/botLog.js';
 import { BusColor, MetroData, StopCode } from '../../ts/types/mendotran.js';
 import { mendotranSettings } from '../../index.js';
 import { CommandError } from '../commands/commands.js';
@@ -125,27 +125,34 @@ function busArrivalsString(arrivals: ScheduledArrival[]): string {
  * @returns {Promise<string>} Cadena de texto con los horarios ordenados por proximidad.
  */
 export async function getStopArrivals(stopNumber: string, filter?: string): Promise<string> {
-    if (!MENDOTRAN_DATABASE) {
+    if (!MENDOTRAN_DATABASE || !MENDOTRAN_DATABASE.stops) {
         throw new CommandError('No se ha podido cargar la base de datos de Mendotran.');
     }
 
-    // @ts-ignore
-    const stop: StopCode = stopNumber.match(/\bM\d+\b/i) ? stopNumber.toUpperCase() : 'M' + stopNumber;
-
-    if (stop.lastIndexOf('M') !== 0) {
+    if (!stopNumber.match(/\b(M|n)\d+\b/i) && isNaN(+stopNumber)) {
         throw new CommandError(
-            `"*${stopNumber}*" no es una parada. El formato ha de ser *M + Número de parada* ` +
-            `o simplemente el número de la misma.\n\nPor ejemplo: \`M1234\` ó \`1234\``
-            );
-    }
-        
-    if (!MENDOTRAN_DATABASE.stops || (MENDOTRAN_DATABASE.stops && !MENDOTRAN_DATABASE.stops[stop])) {
-        throw new CommandError(`No existe la parada *${stop}*`);
+            `"*${stopNumber}*" no es una parada. El formato ha de ser similar al siguiente:\n\n` +
+            `\`M1234\` *ó* \`1234\` 🤓`
+        );
     }
     
-    if (filter) { filter = filter.toString(); }
-    if (filter && !MENDOTRAN_DATABASE.stops[stop].busList.includes(filter)) {
-        throw new CommandError(`El micro *${filter}* no pasa por la parada *${stop}*`);
+    stopNumber = stopNumber.toUpperCase();
+
+    // @ts-ignore
+    const stop: StopCode = `${stopNumber.lastIndexOf('M') == 0 ? '' : 'M'}${stopNumber}`;
+
+    botLog(`Buscando parada: ${stop}`);
+    if (!MENDOTRAN_DATABASE.stops[stop]) {
+        throw new CommandError(`No existe la parada *${stop}*.`);
+    }
+    
+    if (filter) { 
+        filter = filter.toString();
+        
+        botLog(`Buscando línea:  ${filter}`);
+        if (!MENDOTRAN_DATABASE.stops[stop].busList.includes(filter)) {
+            throw new CommandError(`El micro *${filter}* no pasa por la parada *${stop}*.`);
+        }
     }
 
     return await fetchJsonMendotran(`${mendotranSettings.api}/arrivals-and-departures-for-stop/${MENDOTRAN_DATABASE.stops[stop].id}.json`)
@@ -153,7 +160,7 @@ export async function getStopArrivals(stopNumber: string, filter?: string): Prom
             let arrivals: ScheduledArrival[] = json.data?.entry?.arrivalsAndDepartures;     
 
             if (!arrivals || arrivals.length === 0 ) {
-                throw new CommandError(`🚎 Sin llegadas para la parada *${stop}* 🏃‍♀️`);
+                return `🚎 Sin llegadas para la parada *${stop}* 🏃‍♀️`;
             }
 
             // De haber sido indicado, filtrar micros
@@ -161,7 +168,7 @@ export async function getStopArrivals(stopNumber: string, filter?: string): Prom
                 arrivals = arrivals.filter((bus) => { return bus.routeShortName === filter; });
 
                 if (arrivals.length === 0) {
-                    throw new CommandError(`🚎 Sin llegadas para *${filter}* en la parada *${stop}* 🏃‍♀️`);
+                    return `🚎 Sin llegadas para *${filter}* en la parada *${stop}* 🏃‍♀️`;
                 }
             }
 
