@@ -1,4 +1,5 @@
-import { createCommand, sendResponse } from "./commands.js";
+import { createCommand } from "./commands.js";
+import { sendResponse } from "./sendResponses.js";
 
 /**
  * Basic commands
