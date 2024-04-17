@@ -32,11 +32,18 @@ async function sendReaction(reaction: string, message: Message): Promise<Message
 export async function readResponse(response: CommandResponse, message: Message): Promise<Message | void> {
     if (!wwebClient) { throw new Error('The WhatsApp Web client has not been initialised.'); }
 
-    const msgOptions = {
+    const msgOptions: MessageSendOptions = {
         sendSeen: commandsSettings.sendSeen,
         ...response.data.options
     };
     let _return = null;
+    const logString: string = `\nmessage.id.remote: ${message.id.remote}` +
+                            '\nresponse: ' +
+                            JSON.stringify({
+                                ...response,
+                                type: RESPONSE_TYPE[response.type] ?? response.type,
+                                code: RESPONSE_CODE[response.code] ?? response.code,
+                            }, null, 4);
 
     if (response.code === CommandResponseCode.OK) {
         if (response.data.reaction !== undefined) {
@@ -59,16 +66,7 @@ export async function readResponse(response: CommandResponse, message: Message):
         }
         
         console.log();
-        botLog(
-            'OK RESPONSE',
-            `\nmessage.id.remote: ${message.id.remote}`,
-            '\nresponse: ',
-            `${JSON.stringify({
-                ...response,
-                type: RESPONSE_TYPE[response.type] ?? response.type,
-                code: RESPONSE_CODE[response.code] ?? response.code
-            }, null, 4)}`
-        );
+        botLog('OK RESPONSE', logString);
     } else {
         await sendReaction(response.data.reaction ?? '🚫', message);
         if (response.data.content && typeof response.data.content === 'string') {
@@ -76,16 +74,7 @@ export async function readResponse(response: CommandResponse, message: Message):
         }
 
         console.log();
-        botLogError(
-            'ERROR RESPONSE',
-            `\nmessage.id.remote: ${message.id.remote}`,
-            '\nresponse: ',
-            `${JSON.stringify({
-                ...response,
-                type: RESPONSE_TYPE[response.type] ?? response.type,
-                code: RESPONSE_CODE[response.code] ?? response.code
-            }, null, 4)}`
-        );
+        botLogError('ERROR RESPONSE', logString);
     }
 
     if (_return) { return _return; }
