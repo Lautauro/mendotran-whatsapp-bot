@@ -338,7 +338,7 @@ function commandLog(commandName: string, commandArgs: any[], message: Message): 
     botLog(`Executing command...\n\n`,
         `> Command: "${commandName}"\n`,
         `> From:`, from, '\n',
-        `> Args:`, commandArgs, '\n');
+        `> Args:`, commandArgs);
 }
 
 export function commandExample(command: Command): string | null {
