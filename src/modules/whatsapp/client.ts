@@ -105,9 +105,8 @@ wwebClient.on('ready', () => {
             try {
                 delete require.cache[require.resolve(`${commandPath}/commands.js`)];
                 delete require.cache[require.resolve(`${commandPath}/commandsList.js`)];
-                delete require.cache[require.resolve(`./messageSending.js`)];
-
                 delete require.cache[require.resolve(`${commandPath}/sendResponses.js`)];
+                delete require.cache[require.resolve(`./messageSending.js`)];
 
                 commandExecution = require(`${commandPath}/commands.js`).commandExecution;
                 require(`${commandPath}/commandsList.js`);
