@@ -129,7 +129,7 @@ export async function getStopArrivals(stopNumber: string, filter?: string): Prom
         throw new CommandError('No se ha podido cargar la base de datos de Mendotran.');
     }
 
-    if (!stopNumber.match(/\b(M|n)\d+\b/i) && isNaN(+stopNumber)) {
+    if (!stopNumber.match(/^(M|m)+\d+$/i) && isNaN(+stopNumber)) {
         throw new CommandError(
             `"*${stopNumber}*" no es una parada. El formato ha de ser similar al siguiente:\n\n` +
             `\`M1234\` *ó* \`1234\` 🤓`
