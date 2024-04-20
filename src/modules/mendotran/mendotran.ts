@@ -204,7 +204,7 @@ function calculateDistance(x1: number, y1: number, x2: number, y2: number): numb
  * @param {Position} position - Posición geográfica.
  * @returns {Promise<string>} Lista de paradas ordenadas por proximidad.
  */
-export async function getStopsNear(position: Position): Promise<StopInfo[]> {
+async function getStopsNear(position: Position): Promise<StopInfo[]> {
     if (!MENDOTRAN_DATABASE) {
         throw new CommandError('No se ha podido cargar la base de datos de Mendotran.');
     }
@@ -235,9 +235,9 @@ export async function getStopsNear(position: Position): Promise<StopInfo[]> {
  * @param {Position} position - Posición geográfica.
  * @returns {Promise<string>} Cadena de texto con un listado de colectivos por parada.
  */
-export async function stopsAroundInfo(position: Position): Promise<string> {
+export async function stopsAroundInfo(position: Position, length: number = 0): Promise<string> {
     const stopsAround: StopInfo[] = await getStopsNear(position);
-    stopsAround.splice(4); // Recortar lista
+    stopsAround.splice(length); // Recortar lista
     let str: string = `🧭 *Las ${stopsAround.length} paradas más cercanas* 🧭\n\n`;
 
     for (let i = 0; i < stopsAround.length; i++) {

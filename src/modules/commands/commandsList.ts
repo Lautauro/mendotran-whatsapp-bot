@@ -140,7 +140,7 @@ createCommand(['paradas', '📍'], {
                     lon: +quote.location.longitude,
                 };
 
-                await sendResponse(await stopsAroundInfo(position), message, {
+                await sendResponse(await stopsAroundInfo(position, 4), message, {
                     reaction: '📍'
                 });
                 return;
