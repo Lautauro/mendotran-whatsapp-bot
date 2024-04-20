@@ -37,13 +37,13 @@ export async function readResponse(response: CommandResponse, message: Message):
         ...response.data.options
     };
     let _return = null;
-    const logString: string = `\nmessage.id.remote: ${message.id.remote}` +
-                            '\nresponse: ' +
-                            JSON.stringify({
-                                ...response,
-                                type: RESPONSE_TYPE[response.type] ?? response.type,
-                                code: RESPONSE_CODE[response.code] ?? response.code,
-                            }, null, 4);
+    const logString: string = '\n\nresponse = ' +
+                              JSON.stringify({
+                                  ...response,
+                                  type: RESPONSE_TYPE[response.type] ?? response.type,
+                                  code: RESPONSE_CODE[response.code] ?? response.code,
+                              }, null, 4) + ';\n' +
+                              `\nmessage.id.remote = "${message.id.remote}";\n`;
 
     if (response.code === CommandResponseCode.OK) {
         if (response.data.reaction !== undefined) {
