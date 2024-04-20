@@ -3,7 +3,7 @@ import { fetchJsonMendotran } from '../../utils/fetchJsonMendotran.js';
 import { BusInfo, StopInfo } from '../../ts/interfaces/mendotran.d.js';
 import { mendotranSettings } from '../../index.js';
 import { botLog, botLogError, botLogOk } from '../../utils/botLog.js';
-import { METRO_EMOJI, getBusColor } from './emojis.js';
+import { getBusColor } from './emojis.js';
 
 async function getBusesInfo(servicio: string | number): Promise<BusInfo[] | null> {
     let busList: BusInfo[] = [];
@@ -48,7 +48,7 @@ export async function getMendotranDatabase(): Promise<void> {
 
     botLog('Generando la base de datos de Mendotran:');
 
-    let obj: any = {
+    let dataBase: any = {
         stops: {},
         buses: {},
     };
@@ -69,31 +69,39 @@ export async function getMendotranDatabase(): Promise<void> {
                 let linea = busList[j].linea ?? null;
                 
                 // Ignorar repetidos
-                if (linea && !obj.buses[linea]) {
+                if (linea && !dataBase.buses[linea]) {
                     // Agregar micro al objeto
-                    obj.buses[linea] = busList[j];
+                    dataBase.buses[linea] = busList[j];
 
                     // Agregar referencia a las paradas
                     const stops: StopInfo[] | null = await getStopsFromBus(busList[j].id);
 
                     if (stops) {
                         for (let j = 0; j < stops.length; j++) {                         
-                            if (!obj.stops[stops[j].name]) {
-                                obj.stops[stops[j].name] = {
+                            if (!dataBase.stops[stops[j].name]) {
+
+                                if (isNaN(+stops[j].lat) || isNaN(+stops[j].lon)) {
+                                    botLogError(`No se pudo calcular la posición de la parada ${stops[j].name}.`);
+                                    stops[j].lat = 0;
+                                    stops[j].lon = 0;
+                                }
+
+                                // Información de la parada
+                                dataBase.stops[stops[j].name] = {
                                     id:  stops[j].id,
                                     position: {
-                                        lat:  stops[j].lat,
-                                        lon:  stops[j].lon,
+                                        lat:  +stops[j].lat,
+                                        lon:  +stops[j].lon,
                                     },
                                     address:  stops[j].address ? stops[j].address.trim() : '',
                                     busList: [],
                                 }
                                 nStops++;
                             }
-                            obj.stops[stops[j].name].busList.push(linea);
+                            dataBase.stops[stops[j].name].busList.push(linea);
                         }
                     } else {
-                        console.error(`No existen paradas para ${linea}`);
+                        botLogError(`No existen paradas para ${linea}`);
                         continue;
                     }
 
@@ -102,16 +110,15 @@ export async function getMendotranDatabase(): Promise<void> {
                 }
             }
         } else {
-            console.log();
-            botLogError(`No hay resultados para ${i}.`);
+            botLogError(`No hay resultados.`);
         }
     }
 
     // Ordenar de menor a mayor la lista de colectivos de cada parada
     botLog('Ordenando lista de colectivos.')
 
-    for (let key in obj.stops) {
-        obj.stops[key].busList = obj.stops[key].busList.sort((a: string, b: string) => (+a) - (+b));
+    for (let key in dataBase.stops) {
+        dataBase.stops[key].busList = dataBase.stops[key].busList.sort((a: string, b: string) => (+a) - (+b));
     }
 
     botLog(`Se han encontrado:\n\t${nBuses} lineas.\n\t${nStops} paradas.\n`);
@@ -124,7 +131,7 @@ export async function getMendotranDatabase(): Promise<void> {
             fs.copyFileSync(`./json/${mendotranSettings.dataFile}`, `./json/${mendotranSettings.dataFile}.old`);
         }
 
-        fs.writeFileSync(`./json/${mendotranSettings.dataFile}`, JSON.stringify(obj));
+        fs.writeFileSync(`./json/${mendotranSettings.dataFile}`, JSON.stringify(dataBase));
         botLogOk(`✔  Lista de colectivos escrita exitosamente\n`);
     } catch(error) {
         console.error(`❌  Error al guardar la lista de colectivos\n`);
