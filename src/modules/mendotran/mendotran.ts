@@ -365,13 +365,13 @@ function handleErrors(error: Error | CommandError): string | CommandError {
     if (error instanceof Error) {
         if (error.name === 'TimeoutError') {
             throw new CommandError(
-                'La petición tardó demasiado en responder. Vuelva a intentarlo.\n\n🐌 🦥'
+                'La petición tardó demasiado en responder. Esto puede deberse a una baja en la velocidad del servidor.\n\n*Por favor, vuelva a intentarlo.*\n\n🐌 🦥'
             );
         } else {
             throw new CommandError(
-                `Ha ocurrido un error al procesar la petición, "*${error.name}*". Vuelva a intentarlo.`
+                `Ha ocurrido un error al procesar la petición, "*${error.name}*".\n\n*Por favor, vuelva a intentarlo.*\n\n🤖`
             );
         }
     }
-    throw new CommandError('Ha ocurrido un error desconocido. Vuelva a intentarlo.\n\n😅');
+    throw new CommandError('Ha ocurrido un error desconocido.\n\n*Por favor, vuelva a intentarlo.*\n\n😅');
 }
