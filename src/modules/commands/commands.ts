@@ -24,7 +24,7 @@ export const COMMAND_ERROR_MESSAGES = Object.freeze({
 
         return `Faltan argumentos en el comando:\n` +
                 `*${alias}* ${commandArgs}\n\n` +
-                `Para más información ejecute:\n` +
+                `Para más información escriba:\n` +
                 `*Ayuda* \`${commandObj.alias[0]}\``;
     },
     MISSING_QUOTE: 'Este comando necesita citar un mensaje para ser ejecutado.',
