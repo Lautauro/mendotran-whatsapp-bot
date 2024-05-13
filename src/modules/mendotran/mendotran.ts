@@ -41,15 +41,18 @@ function busArrivalsString(arrivals: ScheduledArrival[]): string {
     let text: string = '';
     for (let i = 0; i < arrivals.length; i++) {
         // Corregir detalles en el letrero del colectivo
-        arrivals[i].tripHeadsign = arrivals[i].tripHeadsign
+        let tripHeadsign = arrivals[i].tripHeadsign
             .trim()
-            .replaceAll(/  +/g, ' ')                // Borrar doble espacios
-            .replaceAll(/–/g, '-')
-            .replaceAll(/ +- +|- +|-- +|-/g, ', ')  // Remplazar guiones por comas
+            .replaceAll(/\s\s+/g, ' ')                    // Borrar doble espacios
+            .replaceAll(/(\s|\b)(-|–)(\s|\b)/g, ', ')   // Remplazar guiones por comas
             .toUpperCase();
+
+        if (tripHeadsign.charAt(tripHeadsign.length).match(/\W/i)) {
+            tripHeadsign = tripHeadsign.slice(0, tripHeadsign.length);
+        }
         
         // No repetir nombres de colectivos
-        if (arrivals[i].tripHeadsign !== arrivals[i - 1]?.tripHeadsign) {
+        if (tripHeadsign !== arrivals[i - 1]?.tripHeadsign) {
             let busColor: BusColor = BUS_COLOR_LIST[0];
             if (MENDOTRAN_DATABASE.buses[arrivals[i].routeShortName]) {
                 busColor = MENDOTRAN_DATABASE.buses[arrivals[i].routeShortName].color;
@@ -59,7 +62,7 @@ function busArrivalsString(arrivals: ScheduledArrival[]): string {
 
             if (text.length > 0) { text += '\n\n'; }
 
-            text += `${busColor} *${arrivals[i].routeShortName} - ${arrivals[i].tripHeadsign}* ${busColor}\n\n`;
+            text += `${busColor} *${arrivals[i].routeShortName} - ${tripHeadsign}* ${busColor}\n\n`;
         } else {
             text += '\n\n';
         }
