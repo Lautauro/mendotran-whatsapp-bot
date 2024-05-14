@@ -108,6 +108,7 @@ export const createCommand = (alias: string[], data?: CommandData) => {
         options: {
             adminOnly: false,
             needQuotedMessage: false,
+            disableQuotationMarks: false,
             ...data?.options,
         },
         info: {
@@ -124,14 +125,13 @@ const setCallback = (command: Command) => (callback: CommandCallback) => {
     return commandBase({ ...command, callback });
 }
 
-const addParameter = (command: Command) => (type: ParameterType | ParameterType[], info?: ParameterInfo, defaultValue?: any) => {
+const addParameter = (command: Command) => (type: ParameterType, info?: ParameterInfo, defaultValue?: any) => {
     if (!Array.isArray(command.parameters)) { command.parameters = [] };
-    if (typeof type === 'string') { type = [ type ]; }
-
-    if ((defaultValue !== null && defaultValue !== undefined) && !type.some((paramType) => { return argumentType(defaultValue) === paramType; })) {
+ 
+    if ((defaultValue !== null && defaultValue !== undefined) && argumentType(defaultValue) !== type) {
         throw new Error(
-            `The dafault value "${defaultValue}" is of type "${typeof defaultValue}" ` +
-            `and doesn't match any of the types: [${type.join(', ')}]\n`);
+            `The type of the dafault value "${defaultValue}" is "${argumentType(defaultValue)}" ` +
+            `and it was expected to be: "${type}"\n`);
     }
 
     let isOptional = false;
@@ -146,7 +146,7 @@ const addParameter = (command: Command) => (type: ParameterType | ParameterType[
         defaultValue,
         isOptional,
         info: {
-            name: type[0],
+            name: type, // Default name
             example: defaultValue ? String(defaultValue) : 'UNDEFINED',
             ...info,
         },
@@ -156,11 +156,28 @@ const addParameter = (command: Command) => (type: ParameterType | ParameterType[
 }
 
 const closeCommand = (command: Command) => () => {
-    // Check if optional parameters are at the end of the command
     if (command.parameters && command.parameters.length > 1) {
-        for (let i = 0; i < command.parameters.length - 1; i++) {            
-            if (command.parameters[i].isOptional === true && command.parameters[i + 1].isOptional === false) {
+        let stringParamCount: number = 0;
+        let optionalValueDetected = false;
+        for (let i = 0; i < command.parameters.length; i++) {            
+            if (command.parameters[i].type === 'string') { stringParamCount++; }
+
+            // Check if optional parameters are at the end of the command
+            if (command.parameters[i].isOptional === true) {
+                optionalValueDetected = true;
+            } else if (optionalValueDetected === true) {
                 throw new Error(`Optional parameters must be placed at the end of the command.\n`);
+            }
+
+            if (command.options.disableQuotationMarks === true) {
+                if (stringParamCount > 1) {
+                    throw new Error(
+                        `It is not possible to have more than one parameter of the type "string" if the `+
+                        `"disableQuotationMarks" option is enabled.\n`);
+                } else if (command.parameters[i].type === 'string' && command.parameters[i + 1] !== undefined) {
+                    throw new Error(
+                        `The last parameter of the command must be of type "string", because the "disableQuotationMarks" option is enabled.\n`);
+                }
             }
         }
     }
@@ -168,7 +185,7 @@ const closeCommand = (command: Command) => () => {
     return command;
 }
 
-function argumentType(arg: any): ParameterType | null {
+function argumentType(arg: any): 'string' | 'boolean' | 'number' | null {
     if (typeof arg === 'string') {
         // Boolean
         if (arg.match(/^si$|^no$|^true$|^false$/i)) {
@@ -190,48 +207,43 @@ function argumentType(arg: any): ParameterType | null {
 
 function verifyArgs(args: any[], command: Command): boolean {
     if (!command.parameters) { return false; }
-
+    
     // Ignore excess arguments, to avoid errors when checking
     const argsLen: number = args.length > command.parameters.length ? command.parameters.length : args.length;
     
     // Check each parameter
     for (let argIndex = 0; argIndex < argsLen; argIndex++) {
         const parameter = command.parameters[argIndex];
-        // Iterate on each possible type
-        let match: boolean = false;
-        for (let typeIndex = 0; typeIndex < parameter.type.length; typeIndex++) {
-            if (parameter.type[typeIndex] === 'any') {
-                match = true;
-                break;
-            }
-            if (parameter.type[typeIndex] === 'string' || argumentType(args[argIndex]) === parameter.type[typeIndex]) {
-                match = true;
-                switch (parameter.type[typeIndex]) {
-                    case 'string':
-                        if ((args[argIndex].match(/^"([^]*)"$|^'([^]*)'$/))) {
-                            args[argIndex] = args[argIndex].slice(1,-1); // Delete quotes
-                        }
-                        break;
-                    case 'number':
-                        if (args[argIndex].charAt(0) === '-') {
-                            args[argIndex] = (+args[argIndex].slice(1)) * -1;
-                        } else {
-                            args[argIndex] = +args[argIndex];
-                        }
-                        break;
-                    case 'boolean':
-                        if (args[argIndex].match(/^si$|^true$/)) {
-                            args[argIndex] = true;
-                        } else if (args[argIndex].match(/^no$|^false$/)){
-                            args[argIndex] = false;
-                        }
-                        break;
-                }
-                break;
-            }
+
+        if (parameter.type === 'any') {
+            continue;
         }
-        // There was no match
-        if (!match) {
+        if (parameter.type === 'string' || argumentType(args[argIndex]) === parameter.type) {
+            switch (parameter.type) {
+                case 'string':
+                    if (command.options.disableQuotationMarks === true) {
+                        args[argIndex] = args.splice(argIndex).join(" ");
+                    } else if (args[argIndex].match(/^"([^]*)"$|^'([^]*)'$/)) {
+                        args[argIndex] = args[argIndex].slice(1,-1); // Delete quotes
+                    }
+                    break;
+                case 'number':
+                    if (args[argIndex].charAt(0) === '-') {
+                        args[argIndex] = (+args[argIndex].slice(1)) * -1;
+                    } else {
+                        args[argIndex] = +args[argIndex];
+                    }
+                    break;
+                case 'boolean':
+                    if (args[argIndex].match(/^si$|^true$/)) {
+                        args[argIndex] = true;
+                    } else if (args[argIndex].match(/^no$|^false$/)){
+                        args[argIndex] = false;
+                    }
+                    break;
+            }
+        } else {
+            // There was no match
             throw new CommandError(COMMAND_ERROR_MESSAGES.INVALID_ARGUMENT(command, args[argIndex], parameter));
         }
     }
