@@ -14,7 +14,7 @@ export interface CommandInfo {
 }
 
 export interface Parameter {
-    type: ParameterType[];
+    type: ParameterType;
     isOptional: boolean;
     defaultValue?: any;
     info?: ParameterInfo;
@@ -23,6 +23,7 @@ export interface Parameter {
 export interface CommandOptions {
     adminOnly?: boolean;
     needQuotedMessage?: boolean;
+    disableQuotationMarks?: boolean;
 }
 
 export interface Command {
