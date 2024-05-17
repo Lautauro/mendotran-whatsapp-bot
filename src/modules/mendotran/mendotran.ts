@@ -1,5 +1,5 @@
 import { ScheduledArrival, Position, MetroStopInfo, MendotranData, StopInfo } from '../../ts/interfaces/mendotran.d.js';
-import { fetchJsonMendotran } from '../../utils/fetchJsonMendotran.js';
+import { fetchJsonMendotran } from './fetchJsonMendotran.js';
 import { getTimeString } from '../../utils/getTimeString.js';
 import { botLog, botLogError } from '../../utils/botLog.js';
 import { BusColor, MetroData, StopCode } from '../../ts/types/mendotran.js';

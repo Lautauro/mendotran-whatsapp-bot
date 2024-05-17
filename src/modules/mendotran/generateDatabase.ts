@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { fetchJsonMendotran } from '../../utils/fetchJsonMendotran.js';
+import { fetchJsonMendotran } from './fetchJsonMendotran.js';
 import { BusInfo, StopInfo } from '../../ts/interfaces/mendotran.d.js';
 import { mendotranSettings } from '../../index.js';
 import { botLog, botLogError, botLogOk } from '../../utils/botLog.js';

@@ -1,4 +1,4 @@
-import { fetchWithTimeout } from "./fetchWithTimeout.js";
+import { fetchWithTimeout } from "../../utils/fetchWithTimeout.js";
 
 export const fetchJsonMendotran: (url: string, options?: object | null, timeout?: number) => Promise<any> = async (url: string, options?: object | null, timeout?: number) => {
     const response = await fetchWithTimeout(url, options, timeout);
