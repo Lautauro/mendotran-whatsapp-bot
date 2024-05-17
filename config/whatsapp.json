@@ -1,11 +1,10 @@
 {
     "botName": "Mendotran-BOT",
-    "adminOnly": false,
+    "ignoreNonTextMessages": true,
     "showMessagesInTheTerminal": false,
     "showPhoneNumber": false,
     "showContactName": false,
     "showUserName": true,
     "showTimestamp": true,
-    "wwebjsCache": "./.session_cache",
-    "ignoreNonTextMessages": true
+    "wwebjsCache": "./.session_cache"
 }
