@@ -40,6 +40,9 @@ async function arrivalsByLocation(message: Message, quote: Message, filter?: str
 
 // Micro
 createCommand(['micro', 'm', '🚍'], {
+    options: {
+        disableQuotationMarks: true,
+    },
     info: {
         name: 'Mendotran - Micro',
         description: 'Obtener los horarios de un colectivo en una parada.\n\n' +
@@ -85,6 +88,9 @@ createCommand(['micro', 'm', '🚍'], {
 
 // Parada 
 createCommand(['parada', 'p', '🚏'], {
+    options: {
+        disableQuotationMarks: true,
+    },
     info: {
         name: 'Mendotran - Parada',
         description: 'Obtener los horarios de una parada de colectivos.\n\n' +
@@ -105,7 +111,7 @@ createCommand(['parada', 'p', '🚏'], {
             })
         } else {
             if (args[0]) {
-                await getStopArrivals(args.join(" "))
+                await getStopArrivals(args[0])
                     .then(async (arrivals) => {
                         await sendResponse(arrivals, message, { 
                             reaction: '🚌',
@@ -154,6 +160,9 @@ createCommand(['paradas', '📍'], {
 
 // Metrotranvia
 createCommand(['metro', 'metrotranvia', 'metrotranvía', 'estacion', 'estación', '🚊'], {
+    options: {
+        disableQuotationMarks: true,
+    },
     info: {
         name: 'Mendotran - Metrotranvía',
         description: 'Obtener los horarios de una estación de metrotranvía.',
@@ -163,7 +172,7 @@ createCommand(['metro', 'metrotranvia', 'metrotranvía', 'estacion', 'estación'
         example: 'Piedra buena'
     })
     .setCallback(async (args, message) => {
-        await getMetroArrivals(args.join(' '))
+        await getMetroArrivals(args[0])
             .then(async (arrivals)=>{
                 await sendResponse(arrivals, message, { 
                     reaction: '🚋',
