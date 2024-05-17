@@ -80,7 +80,7 @@ createCommand(['alias'], {
 .closeCommand(); // Add command to list
 ```
 
-It is very important not to forget to add "closeCommand" at the end, otherwise the command will not be recognised by the bot.
+It's very important not to forget to add **".closeCommand()"** at the end, otherwise the command will not be recognised by the bot.
 
 <div align="center">
 <img src="./docs/diagram-command.png">
@@ -102,18 +102,20 @@ createCommand(['alias'])
     // Receive argument of type string
     .addParameter('string')
     // Command execution
-    .setCallback((args, message) => {
+    .setCallback(async (args, message) => {
         if (args[0] === 'Hi') {
             // Send "Hello!"
-            sendResponse('Hello!', message);
+            await sendResponse('Hello!', message);
         } else {
             // Send "Bye!"
-            sendResponse('Bye!', message);
+            await sendResponse('Bye!', message);
         }
     })
 .closeCommand(); // Add command to list
 ```
 [Send Response](#send-response)
+
+I recommend using await for sendResponse as in the example, this will make the command stop executing once the message has been sent.
 
 ### Command Data:
 
@@ -125,6 +127,9 @@ createCommand(['alias'])
 
         // The command must be or not a quoted message
         needQuotedMessage: boolean,
+
+        // If the command has a string type parameter, this overrides the need for quotes for multiple lines of text
+        disableQuotationMarks: boolean
     },
 
     // This information will be used by the "help" command to describe the command itself.
@@ -211,7 +216,7 @@ See: https://docs.wwebjs.dev/Client.html#sendMessage
 ```js
 // All are optional
 {
-    reply: boolean;     // Send message as a reply
+    asReply: boolean;   // Send message as a reply
     asError: boolean;   // Send message as error
     reaction: string;   // Reaction to message. Example: "🐕‍🦺"
     messageOptions: MessageSendOptions;
@@ -233,8 +238,10 @@ createCommand(['ping', 'pingpong'], {
             description: 'Ping-pong! 🏓',
         }
     })
-    .setCallback((args, message) => {
-        sendResponse('Pong!', message, { reaction: '🏓', });
+    .setCallback(async (args, message) => {
+        await sendResponse('Pong!', message, {
+            reaction: '🏓'
+        });
     })
 .closeCommand();
 ```
@@ -260,14 +267,17 @@ createCommand(['repeat'], {
         description: 'Number of times repeated.', 
         example: '5',
     }, 1)
-    .setCallback((args, message) => {
+    .setCallback(async (args, message) => {
         let msgToSend: string = args[0];
 
         for (let i = 1; i < args[1]; i++) {
             msgToSend += '\n' + args[0];
         }
 
-        sendResponse(msgToSend, message, { reply: true, reaction: '🗣️' });
+        await sendResponse(msgToSend, message, {
+            asReply: true,
+            reaction: '🗣️'
+        });
     })
 .closeCommand();
 ```
@@ -287,11 +297,13 @@ createCommand(['quote', 'cite'], {
         }
     })
     .setCallback(async (args, message) => {
-        message.getQuotedMessage()
-            .then((quotedMessage) => {
+        await message.getQuotedMessage()
+            .then(async (quotedMessage) => {
                 const msgToSend = `*" ${quotedMessage.body} "*\n\n` +
                                   `-  _${quotedMessage._data.notifyName}_`;
-                sendResponse(msgToSend, message, { reaction: '💭' });
+                await sendResponse(msgToSend, message, {
+                    reaction: '💭'
+                });
             });
     })
 .closeCommand();
@@ -299,7 +311,27 @@ createCommand(['quote', 'cite'], {
 
 ## Hot-swap
 
-The bot has a **command hot-swap mode**. It consists of a system that allows the developer to test the commands contained in **"/src/modules/commandsList.ts"** without having to completely restart the server, by simply recompiling the project. This is enabled by the **"hotSwappingEnabled"** configuration variable in **/config/commands.json**.
+The bot has a **command hot-swap mode**. It consists of a system that allows the developer to test the commands contained in **"./src/modules/commandsList.ts"** without having to completely restart the server, by simply recompiling the project. This is enabled by the **"hotSwappingEnabled"** configuration variable in **/config/commands.json**.
 
 > [!WARNING]
 > It is not recommended to enable this mode for non-development environments.
+
+## Cool-down system
+
+It can happen that a user decides to spam the bot with commands and make it difficult for it to work. To prevent this, there is a cool-down system. Every time a user sends a command, a timestamp is stored and based on certain conditions it is decided whether the command should be executed or not. If not enough time has elapsed since the last execution of a command, it will be ignored. The timeout will increase progressively for each command sent, you can observe these values in **"./src/modules/commands/cooldown.ts"** in the **COOLDOWN_MULTIPLIER** variable. On the other hand, if the timeout has been reached or even exceeded, the cool-down will gradually decrease.
+
+This system also makes it possible to prevent a user from executing a command if a command is already being executed by the same user. To achieve a good performance of the system, it is recommended to use asynchronous functions for callbacks and await functions to wait for the completion of a promise. For example:
+
+```ts
+createCommand(['ping'])
+    // Async
+    .setCallback(async (args, message) => {
+        // Await
+        await sendResponse('Pong!', message, {
+            reaction: '🏓',
+        });
+    })
+.closeCommand();
+```
+
+In this example, once the message "Pong!" is sent, the execution of the command is considered as completed.
