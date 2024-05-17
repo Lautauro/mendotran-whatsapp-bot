@@ -52,7 +52,7 @@ function busArrivalsString(arrivals: ScheduledArrival[]): string {
         }
         
         // No repetir nombres de colectivos
-        if (tripHeadsign !== arrivals[i - 1]?.tripHeadsign) {
+        if (arrivals[i].tripHeadsign !== arrivals[i - 1]?.tripHeadsign) {
             let busColor: BusColor = BUS_COLOR_LIST[0];
             if (MENDOTRAN_DATABASE.buses[arrivals[i].routeShortName]) {
                 busColor = MENDOTRAN_DATABASE.buses[arrivals[i].routeShortName].color;
