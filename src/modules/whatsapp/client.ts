@@ -151,7 +151,7 @@ wwebClient.on('ready', () => {
 
         const from: string = message.fromMe ? message.to : message.from;
 
-        // Setting: Show messages in the termianal
+        // Setting: Show messages in the terminal
         if (whatsappSettings.showMessagesInTheTerminal) { printMessage(message, from); }
 
         /* Commands */
