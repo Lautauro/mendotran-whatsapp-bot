@@ -30,7 +30,7 @@ async function sendReaction(reaction: string, message: Message): Promise<Message
 }
 
 export async function readResponse(response: CommandResponse, message: Message): Promise<Message | void> {
-    if (!wwebClient) { throw new Error('The WhatsApp Web client has not been initialised.'); }
+    if (!wwebClient) { throw new Error('The WhatsApp Web client has not been initialized.'); }
 
     const msgOptions: MessageSendOptions = {
         sendSeen: commandsSettings.sendSeen,
