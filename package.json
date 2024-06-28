@@ -5,7 +5,8 @@
     "main": "./build/index.js",
     "scripts": {
         "build": "tsc -p tsconfig.json",
-        "start": "node --no-deprecation --trace-uncaught ./build/index.js"
+        "start": "node --no-deprecation --trace-uncaught ./build/index.js",
+        "dev": "tsc -p tsconfig.json && node --no-deprecation --trace-uncaught ./build/index.js"
     },
     "keywords": [
         "whatsapp-web bot",

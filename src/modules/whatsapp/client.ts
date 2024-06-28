@@ -128,7 +128,7 @@ wwebClient.on('ready', () => {
         }, commandsSettings.hotSwappingTimer);
     }
 
-    // Show edited messages in the termianal
+    // Show edited messages in the terminal
     if (whatsappSettings.showMessagesInTheTerminal) {
         wwebClient.on('message_edit', async (message: Message) => {
             // Ignore previous messages
@@ -151,7 +151,7 @@ wwebClient.on('ready', () => {
 
         const from: string = message.fromMe ? message.to : message.from;
 
-        // Setting: Show messages in the termianal
+        // Setting: Show messages in the terminal
         if (whatsappSettings.showMessagesInTheTerminal) { printMessage(message, from); }
 
         /* Commands */
