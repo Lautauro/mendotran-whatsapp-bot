@@ -137,7 +137,7 @@ const addParameter = (command: Command) => (type: ParameterType, info?: Paramete
  
     if ((defaultValue !== null && defaultValue !== undefined) && argumentType(defaultValue) !== type) {
         throw new Error(
-            `The type of the dafault value "${defaultValue}" is "${argumentType(defaultValue)}" ` +
+            `The type of the default value "${defaultValue}" is "${argumentType(defaultValue)}" ` +
             `and it was expected to be: "${type}"\n`);
     }
 
@@ -388,12 +388,8 @@ export function commandExample(command: Command): string | null {
                         text += ` \`${parameter.info.name}\``;
                     }
 
-                    if (parameter.type.indexOf('string') != -1) {
-                        if (parameter.info.example.indexOf(' ') > -1) {
-                            example += ` "*${parameter.info.example}*"`;
-                        } else {
-                            example += ` *${parameter.info.example}*`;
-                        }
+                    if (parameter.type === 'string' && command.options.disableQuotationMarks === false) {
+                        example += ` "*${parameter.info.example}*"`;
                     } else {
                         example += ` *${parameter.info.example}*`;
                     }
