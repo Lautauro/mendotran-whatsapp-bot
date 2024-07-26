@@ -4,6 +4,7 @@
     "description": "",
     "main": "./build/index.js",
     "scripts": {
+        "build": "tsc -p tsconfig.json",
         "start": "node --no-deprecation --trace-uncaught ./build/index.js",
         "refresh": "node --no-deprecation --trace-uncaught ./build/index.js refresh",
         "dev": "tsc -p tsconfig.json && node --no-deprecation --trace-uncaught ./build/index.js"
