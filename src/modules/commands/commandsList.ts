@@ -20,6 +20,19 @@ createCommand(['ping'], {
     })
 .closeCommand();
 
+createCommand(['pong'], {
+    info: {
+        name: 'Pong',
+        description: 'Ping-pong! 🏓',
+    }
+    })
+    .setCallback(async (args, message) => {
+        await sendResponse('Ping!', message, {
+            reaction: '🏓',
+        });
+    })
+.closeCommand();
+
 /**
  * Mendotran
  */
