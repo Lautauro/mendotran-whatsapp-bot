@@ -212,7 +212,7 @@ async function getStopsNear(position: Position): Promise<StopInfo[]> {
         throw new CommandError('No se ha podido cargar la base de datos de Mendotran.');
     }
     
-    return await fetchJsonMendotran(`${mendotranSettings.api}/stops-for-location.json?platform=web&v=&lat=${position.lat}&lon=${position.lon}&latSpan=0.006&lonSpan=0.01&version=1.0`)
+    return await fetchJsonMendotran(`${mendotranSettings.api}/stops-for-location.json?platform=web&v=&lat=${position[0]}&lon=${position[1]}&latSpan=0.006&lonSpan=0.01&version=1.0`)
         .then(async (json) => {
             if (!json.data?.list || json.data.list.length === 0) {
                 throw new CommandError(
@@ -221,8 +221,8 @@ async function getStopsNear(position: Position): Promise<StopInfo[]> {
             }
 
             const stopsAround: StopInfo[] = json.data?.list.sort((a: StopInfo, b: StopInfo) => {
-                if (!a.distance) { a.distance = calculateDistance(position.lat, position.lon, a.lat, a.lon); }
-                if (!b.distance) { b.distance = calculateDistance(position.lat, position.lon, b.lat, b.lon); }
+                if (!a.distance) { a.distance = calculateDistance(position[0], position[1], a.lat, a.lon); }
+                if (!b.distance) { b.distance = calculateDistance(position[0], position[1], b.lat, b.lon); }
                 return a.distance - b.distance;
             });
 

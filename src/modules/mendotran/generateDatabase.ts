@@ -60,7 +60,7 @@ export async function getMendotranDatabase(): Promise<void> {
 
     for (let i = 0; i <= 80; i++) {
         console.log();
-        botLog(`Index: ${i}`);
+        botLog(`Buscando líneas que contengan: ${i}`);
 
         const busList: BusInfo[] | null = await getBusesInfo(i);
 
@@ -71,6 +71,7 @@ export async function getMendotranDatabase(): Promise<void> {
                 // Ignorar repetidos
                 if (linea && !dataBase.buses[linea]) {
                     // Agregar micro al objeto
+                    delete busList[j].linea;
                     dataBase.buses[linea] = busList[j];
 
                     // Agregar referencia a las paradas
@@ -79,7 +80,7 @@ export async function getMendotranDatabase(): Promise<void> {
                     if (stops) {
                         for (let j = 0; j < stops.length; j++) {                         
                             if (!dataBase.stops[stops[j].name]) {
-
+                                // Coordenadas
                                 if (isNaN(+stops[j].lat) || isNaN(+stops[j].lon)) {
                                     botLogError(`No se pudo calcular la posición de la parada ${stops[j].name}.`);
                                     stops[j].lat = 0;
@@ -89,10 +90,10 @@ export async function getMendotranDatabase(): Promise<void> {
                                 // Información de la parada
                                 dataBase.stops[stops[j].name] = {
                                     id:  stops[j].id,
-                                    position: {
-                                        lat:  +stops[j].lat,
-                                        lon:  +stops[j].lon,
-                                    },
+                                    pos: [
+                                        +stops[j].lat,
+                                        +stops[j].lon
+                                    ],
                                     address:  stops[j].address ? stops[j].address.trim() : '',
                                     busList: [],
                                 }
@@ -136,6 +137,7 @@ export async function getMendotranDatabase(): Promise<void> {
     } catch(error) {
         console.error(`❌  Error al guardar la lista de colectivos\n`);
         console.error(error);
+        process.exit();
     }
 
     botLog(`La operación tardó ${(Date.now() - start) / 1000} segundos en ser realizada.`);

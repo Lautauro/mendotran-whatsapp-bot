@@ -1,9 +1,11 @@
 import { RouteId, StopId, StopCode, VehicleId, BusId, MetroDirection, BusColor } from "../types/mendotran.d.ts";
 
-export interface Position {
+export interface PositionMendotran {
     lat: number;
     lon: number;
 }
+
+export type Position = [number, number];
 
 export interface MendotranData {
     stops: MendotranStopData;
@@ -13,7 +15,7 @@ export interface MendotranData {
 export interface MendotranStopData {
     [stopCode: StopCode]: {
         id: StopId;
-        position: Position;
+        pos: Position;
         address: string;
         busList: string[];
     }
@@ -21,7 +23,6 @@ export interface MendotranStopData {
 
 export interface MendotranBusesData {
     [busNumber: `${number}`]: {
-        linea: string;
         id: BusId;
         shortName: string;
         color: BusColor;
@@ -88,7 +89,7 @@ export interface ScheduledArrival {
 
     tripId: number;
     tripStatus: {
-        position: Position,
+        position: PositionMendotran,
         orientation: number,
         status: 'default' | string,
         predicted: boolean,
