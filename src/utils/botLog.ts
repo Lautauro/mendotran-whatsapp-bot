@@ -10,7 +10,7 @@ export function botLog(...content: any[]): void {
 }
 
 export function botLogError(...content: any[]): void {
-    console.error('\x1b[41m%s\x1b[0m', messageBase(), ...content);
+    console.error('\x1b[41m%s\x1b[0m', messageBase() + " ERROR:", ...content);
 }
 
 export function botLogWarn(...content: any[]): void {
