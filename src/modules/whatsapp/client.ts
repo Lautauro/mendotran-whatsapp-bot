@@ -10,9 +10,11 @@ export const wwebClient = new Client({
     }),
     restartOnAuthFail: true,
     puppeteer: {
-        headless: true,
+		executablePath: '/usr/bin/chromium',
+		headless: true,
         args: [
             '--no-sandbox',
+            '--disable-gpu',
             '--no-experiments',
             '--hide-scrollbars',
             '--disable-plugins',
