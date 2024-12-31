@@ -39,7 +39,7 @@ createCommand(['pong'], {
 
 async function arrivalsByLocation(message: Message, quote: Message, filter?: string) {
     if (quote.location) {
-        await nearestStopInfo({ lat: +quote.location.latitude, lon: +quote.location.longitude}, filter)
+        await nearestStopInfo([+quote.location.latitude, +quote.location.longitude], filter)
             .then(async (arrivals) => {
                 await sendResponse(arrivals, message, { 
                     reaction: '🚌',
@@ -155,12 +155,9 @@ createCommand(['paradas', '📍'], {
     .setCallback(async (args, message) => {
         await message.getQuotedMessage().then(async (quote) => {
             if (quote.location) {
-                const position = {
-                    lat: +quote.location.latitude,
-                    lon: +quote.location.longitude,
-                };
-
-                await sendResponse(await stopsAroundInfo(position, 4), message, {
+                await sendResponse(
+                    await stopsAroundInfo([+quote.location.latitude, +quote.location.longitude], 4),
+                    message, {
                     reaction: '📍'
                 });
                 return;
