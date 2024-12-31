@@ -71,7 +71,7 @@ export async function getMendotranDatabase(): Promise<void> {
                 // Ignorar repetidos
                 if (linea && !dataBase.buses[linea]) {
                     // Agregar micro al objeto
-                    delete busList[j].linea;
+                    delete busList[j].linea; // Es innecesario guardar esta información
                     dataBase.buses[linea] = busList[j];
 
                     // Agregar referencia a las paradas
@@ -90,10 +90,11 @@ export async function getMendotranDatabase(): Promise<void> {
                                 // Información de la parada
                                 dataBase.stops[stops[j].name] = {
                                     id:  stops[j].id,
-                                    pos: [
-                                        +stops[j].lat,
-                                        +stops[j].lon
-                                    ],
+                                    // TODO: La posición nunca es usada en el programa
+                                    // pos: [
+                                    //     +stops[j].lat,
+                                    //     +stops[j].lon
+                                    // ],
                                     address:  stops[j].address ? stops[j].address.trim() : '',
                                     busList: [],
                                 }
