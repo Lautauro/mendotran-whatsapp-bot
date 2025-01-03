@@ -8,6 +8,7 @@ export interface PositionMendotran {
 export type Position = [number, number];
 
 export interface MendotranData {
+    version: number;
     stops: MendotranStopData;
     buses: MendotranBusesData;
 }

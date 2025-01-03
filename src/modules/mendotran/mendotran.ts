@@ -10,6 +10,16 @@ import { BUS_COLOR_LIST, getBusColor, timeToEmoji } from './emojis.js';
 // Base de datos de Mendotran  
 const MENDOTRAN_DATABASE: MendotranData = require(`../../../json/${mendotranSettings.dataFile}`);
 const MENDOTRAN_METRO_DATABASE: MetroData = require(`../../../json/metrotranvia.json`);
+const DATABASE_VERSION: number = 1;
+
+// Verificar que la versión de la base de datos sea la esperada
+if (MENDOTRAN_DATABASE.version != DATABASE_VERSION) {
+    botLogError(`Su versión de la base de datos no es compatible,`
+	+ `ejecute "npm run refresh" para regenerar la base de datos.\n`
+	+ `Versión esperada: ${DATABASE_VERSION}.\n`
+	+ `Versión actual: ${MENDOTRAN_DATABASE.version}.`);
+    process.exit();
+}
 
 /**
  * Ordenar la lista de llegadas de colectivos según su proximidad.
