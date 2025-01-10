@@ -14,10 +14,11 @@ const DATABASE_VERSION: number = 1;
 
 // Verificar que la versión de la base de datos sea la esperada
 if (MENDOTRAN_DATABASE.version != DATABASE_VERSION) {
-    botLogError(`Su versión de la base de datos no es compatible,`
+    botLogError(`Su versión de la base de datos no es compatible, `
 	+ `ejecute "npm run refresh" para regenerar la base de datos.\n`
 	+ `Versión esperada: ${DATABASE_VERSION}.\n`
-	+ `Versión actual: ${MENDOTRAN_DATABASE.version}.`);
+	+ `Versión actual: ${MENDOTRAN_DATABASE.version}.\n\n`
+    + "Cerrando programa...");
     process.exit();
 }
 
