@@ -6,8 +6,8 @@
     "scripts": {
         "build": "tsc -p tsconfig.json",
         "start": "node ./build/index.js",
-        "refresh": "node --no-deprecation --trace-uncaught ./build/index.js refresh",
-        "dev": "tsc -p tsconfig.json && node --no-deprecation --trace-uncaught ./build/index.js"
+        "refresh": "node ./build/index.js refresh",
+        "dev": "tsc -p tsconfig.json && node ./build/index.js"
     },
     "keywords": [
         "Mendotran",
