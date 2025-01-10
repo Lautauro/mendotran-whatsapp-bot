@@ -49,7 +49,7 @@ export async function getMendotranDatabase(): Promise<void> {
     botLog('Generando la base de datos de Mendotran:');
 
     let dataBase: any = {
-	version: 1,
+	    version: 1,
         stops: {},
         buses: {},
     };
