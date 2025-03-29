@@ -1,5 +1,5 @@
 /node_modules
-/.session_cache
+/cache/*
 /.vscode
 /build
 TODO.md
