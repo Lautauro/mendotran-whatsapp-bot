@@ -1,0 +1,7 @@
+services:
+  bot:
+    container_name: mendotran-bot
+    image: mendotran-whatsapp-bot:latest
+    volumes:
+      - /home/server/mendobot/cache:/app/cache
+      - /home/server/mendobot/config:/app/config
