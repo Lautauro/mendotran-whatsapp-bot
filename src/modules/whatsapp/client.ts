@@ -10,8 +10,8 @@ export const wwebClient = new Client({
     }),
     restartOnAuthFail: true,
     puppeteer: {
-		executablePath: '/usr/bin/chromium',
-		headless: true,
+        executablePath: '/usr/bin/chromium',
+        headless: true,
         args: [
             '--no-sandbox',
             '--disable-gpu',
@@ -93,7 +93,8 @@ wwebClient.on('loading_screen', (percent: number) => {
         '                ###                  #####\n' +
         '                #######################\n' +
         '               ########   ##########\n\n' +
-        `                        Version: ${packageInfo.version}\n`
+        `                        Version: ${packageInfo.version}\n`+
+        `                  whatsapp-web.js: 1.28.0\n`
     );
     console.log(` ${loading_bar} [ ${percent} % ]\n`);
 });
