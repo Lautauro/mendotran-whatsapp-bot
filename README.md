@@ -164,6 +164,10 @@ Así se ve más o menos la estructura de la base de datos:
 
 ## Parada cercana a tu ubicación
 
+> [!WARNING]
+> Esta funcionalidad fue borrada debido a una actualización en la API de Mendotran.
+> Es preciso buscar una forma de re-implementarla.
+
 Si se desconoce el número de parada, enviando una ubicación al bot y respondiendo a la misma con alguno de los comando (parada, micro, etc), el sistema se encargará de buscar la parada más cercana y despachar sus horarios.
 
 **Comando "micro"** para saber los horarios de **UNA** línea en específico:
