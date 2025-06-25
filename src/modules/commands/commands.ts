@@ -395,7 +395,7 @@ export function commandExample(command: Command): string | null {
                     }
 
                     if (parameter.info.description) {
-                        parameterDescription += `\n*${parameter.info.name}*: ${parameter.info.description}`;
+                        parameterDescription += `\n\`${parameter.info.name}:\` ${parameter.info.description}`;
                     }
                 }
             })
