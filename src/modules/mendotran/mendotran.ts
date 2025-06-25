@@ -1,39 +1,52 @@
-import { ScheduledArrival, Position, MetroStopInfo, MendotranData, StopInfo } from '../../ts/interfaces/mendotran.d.js';
-import { fetchJsonMendotran } from './fetchJsonMendotran.js';
+import { Arrival, ArrivalsResponse, MetroStopInfo, MendotranBusesData, MendotranStopsData } from '../../ts/interfaces/mendotran.d.js';
+import { fetchStopArrivals } from './fetchMendotran.js';
 import { getTimeString } from '../../utils/getTimeString.js';
 import { botLog, botLogError } from '../../utils/botLog.js';
-import { BusColor, MetroData, StopCode } from '../../ts/types/mendotran.js';
-import { mendotranSettings } from '../../index.js';
+import { MetroData } from '../../ts/types/mendotran.js';
 import { CommandError } from '../commands/commands.js';
-import { BUS_COLOR_LIST, getBusColor, timeToEmoji } from './emojis.js';
+import { timeToEmoji } from './emojis.js';
+import { ACTUAL_BBDD_VERSION } from '../../index.js';
 
-// Base de datos de Mendotran  
-const MENDOTRAN_DATABASE: MendotranData = require(`../../../json/${mendotranSettings.dataFile}`);
+// Base de datos de Mendotran
+const MENDOTRAN_BUSES_DATABASE: MendotranBusesData = require(`../../../json/mendotran-buses.json`);
+const MENDOTRAN_STOPS_DATABASE: MendotranStopsData = require(`../../../json/mendotran-stops.json`);
 const MENDOTRAN_METRO_DATABASE: MetroData = require(`../../../json/metrotranvia.json`);
-const DATABASE_VERSION: number = 1;
+const CURRENT_BBDD_VERSION: any = require('../../../json/.bbdd-version.json');
 
 // Verificar que la versión de la base de datos sea la esperada
-if (MENDOTRAN_DATABASE.version != DATABASE_VERSION) {
+if (CURRENT_BBDD_VERSION == undefined || CURRENT_BBDD_VERSION.VERSION == undefined) {
+    botLogError(`No se encuentra el archivo "./json/.bbdd-version", es posible que tenga que regenerar la base de datos.\n`
+    + `Ejecute "npm run refresh" para regenerar la base de datos.\n\n`
+    + "Cerrando programa...");
+    process.exit();
+} else if (CURRENT_BBDD_VERSION.VERSION != ACTUAL_BBDD_VERSION) {
     botLogError(`Su versión de la base de datos no es compatible, `
 	+ `ejecute "npm run refresh" para regenerar la base de datos.\n`
-	+ `Versión esperada: ${DATABASE_VERSION}.\n`
-	+ `Versión actual: ${MENDOTRAN_DATABASE.version}.\n\n`
+	+ `Versión esperada: ${ACTUAL_BBDD_VERSION}.\n`
+	+ `Versión actual: ${CURRENT_BBDD_VERSION.VERSION}.\n\n`
     + "Cerrando programa...");
     process.exit();
 }
 
 /**
- * Ordenar la lista de llegadas de colectivos según su proximidad.
- * @param {ScheduledArrival[]} arrivals - Objeto de llegadas.
- * @returns {ScheduledArrival[]} Lista ordenada
+ * Ordenar la lista de arribos de colectivos según su proximidad.
+ * @param {Arrival[]} arrivals - Lista de arribos.
+ * @returns {Arrival[]} Lista ordenada
  */
-function sortByArrivalTime(arrivals: ScheduledArrival[]): ScheduledArrival[] {
+function sortByArrivalTime(arrivals: Arrival[]): Arrival[] {
     if (arrivals.length === 1) {
-        arrivals[0].arrivalTime = arrivals[0].predicted ? arrivals[0].predictedArrivalTime : arrivals[0].scheduledArrivalTime;
+        arrivals[0].arrivalTime = arrivals[0].predicted ? arrivals[0].predicted : arrivals[0].scheduled;
     } else {
-        arrivals.sort((a: ScheduledArrival, b: ScheduledArrival) => {
-            a.arrivalTime = a.predicted ? a.predictedArrivalTime : a.scheduledArrivalTime;
-            b.arrivalTime = b.predicted ? b.predictedArrivalTime : b.scheduledArrivalTime;
+        arrivals.sort((a: Arrival, b: Arrival) => {
+
+            // Esto agrega la variable "arrivalTime".
+            if (!a.arrivalTime) {
+                a.arrivalTime = a.predicted ? a.predicted : a.scheduled;
+            }
+
+            if (!b.arrivalTime) {
+                b.arrivalTime = b.predicted ? b.predicted : b.scheduled;
+            }
 
             return a.arrivalTime - b.arrivalTime;
         });
@@ -42,91 +55,104 @@ function sortByArrivalTime(arrivals: ScheduledArrival[]): ScheduledArrival[] {
 }
 
 /**
- * La función recibe el objeto con la información de las llegadas
+ * La función recibe el objeto con la información de los arribos
  * y formatea las mismas en una cadena de texto que luego será
  * enviada al usuario.
- * @param {ScheduledArrival[]} arrivals - Objeto de llegadas.
+ * @param {ArrivalsResponse} arrivalsResponse - Respuesta recibida por una solicitud al servidor de mendotran.
+ * @param {number} limit - Límite de micros que se imprimirán. Por defecto 10.
  * @returns {string} Cadena de texto con los horarios ordenados por proximidad.
  */
-function busArrivalsString(arrivals: ScheduledArrival[]): string {
-    let text: string = '';
-    for (let i = 0; i < arrivals.length; i++) {
-        // Corregir detalles en el letrero del colectivo
-        let tripHeadsign = arrivals[i].tripHeadsign
-            .trim()
-            .replaceAll(/\s\s+/g, ' ')                    // Borrar doble espacios
-            .replaceAll(/(\s|\b)(-|–)(\s|\b)/g, ', ')   // Remplazar guiones por comas
-            .toUpperCase();
+export function arrivalsToString(arrivalsResponse: ArrivalsResponse, limit: number = 10): string {
+    let text = "";
+    if (arrivalsResponse.arrivals !== undefined && arrivalsResponse.arrivals.length > 0 && arrivalsResponse.references !== undefined) {
+        // Ordenar lista por orden de llegada
+        arrivalsResponse.arrivals = sortByArrivalTime(arrivalsResponse.arrivals);
 
-        if (tripHeadsign.charAt(tripHeadsign.length).match(/\W/i)) {
-            tripHeadsign = tripHeadsign.slice(0, tripHeadsign.length);
-        }
-        
-        // No repetir nombres de colectivos
-        if (arrivals[i].tripHeadsign !== arrivals[i - 1]?.tripHeadsign) {
-            let busColor: BusColor = BUS_COLOR_LIST[0];
-            if (MENDOTRAN_DATABASE.buses[arrivals[i].routeShortName]) {
-                busColor = MENDOTRAN_DATABASE.buses[arrivals[i].routeShortName].color;
-            } else {
-                botLogError(`No se ha podido cargar el color del micro "${arrivals[i].routeShortName}".`);
+        // Esto guarda cual fue el último arribo en ser formateado.
+        let lastServiceID: number = 0;
+
+        for (let i = 0; i < limit && i < arrivalsResponse.arrivals.length; i++) {
+            const arrival = arrivalsResponse.arrivals[i];
+
+            // De acá sacamos información como el letrero del micro.
+            const referencia = arrivalsResponse.references.services[arrival.service_id];
+
+            if (referencia == undefined) {
+                botLogError("No se pudo encontrar información sobre el colectivo.")
+                continue;
             }
+            // Si el micro actual es el mismo que el anterior, se evitará imprimir el letrero nuevamente.
+            if (arrival.service_id != lastServiceID) {
+                // Letrero
+                let color = MENDOTRAN_BUSES_DATABASE[`${referencia.code}`].color;
+                let letrero = referencia.name;
+                letrero = letrero.trim()
+                                .replaceAll(/\s\s+/g, ' ')                // Borrar doble espacios.
+                                .replaceAll(/(\s|\b)(-|–)(\s|\b)/g, ', ') // Remplazar guiones por comas.
+                                .toUpperCase();
 
-            if (text.length > 0) { text += '\n\n'; }
-
-            text += `${busColor} *${arrivals[i].routeShortName} - ${tripHeadsign}* ${busColor}\n\n`;
-        } else {
-            text += '\n\n';
-        }
-
-        // Hora de llegada
-        text += `> ${timeToEmoji(arrivals[i].arrivalTime)} ${getTimeString(arrivals[i].arrivalTime, true, true)} hs`;
-        
-        const minutesLeft = Math.floor((arrivals[i].arrivalTime - Date.now()) / 60000);
-        
-        if (minutesLeft > 0) {
-            // Indicar cuantos minutos y/o horas faltan.
-            if (minutesLeft >= 60) {
-                const hours = Math.trunc(minutesLeft / 60);
-                text += `\n> ⏳ ${hours} hora${hours > 1 ? 's' : ''} `;
-                
-                const minutes = minutesLeft % 60;
-                if (minutes) {
-                    text += `y ${minutes} minuto${minutes > 1 ? 's' : ''} `;
+                // TODO: Revisar. No sé qué hace esto.
+                if (letrero.charAt(letrero.length).match(/\W/i)) {
+                    letrero = letrero.slice(0, letrero.length);
                 }
 
-                // Emojis expresivos
-                if (minutesLeft < 90) {
-                    text += `😩`;
-                } else if (minutesLeft < 120) {
-                    text += `😭`;
+                if (text.length > 0) text += '\n\n';
+
+                text += `${color} *${referencia.code} - ${letrero}* ${color}\n\n`;
+            } else {
+                text += '\n\n';
+            }
+            lastServiceID = arrival.service_id;
+
+            // Horarios
+            text += `> ${timeToEmoji(arrival.arrivalTime)} ${getTimeString(arrival.arrivalTime, true, true)} hs`;
+
+            const minutesLeft = Math.floor((arrival.arrivalTime - Date.now()) / 60000);
+            if (minutesLeft > 0) {
+                // Indicar cuantos minutos y/o horas faltan.
+                if (minutesLeft >= 60) {
+                    const hours = Math.trunc(minutesLeft / 60);
+                    text += `\n> ⏳ En ${hours} hora${hours > 1 ? 's' : ''} `;
+
+                    const minutes = minutesLeft % 60;
+                    if (minutes) {
+                        text += `y ${minutes} minuto${minutes > 1 ? 's' : ''} `;
+                    }
+
+                    // Emojis expresivos
+                    if (minutesLeft < 90) {
+                        text += `😩`;
+                    } else if (minutesLeft < 120) {
+                        text += `😭`;
+                    } else {
+                        text += `💀`;
+                    }
+
                 } else {
-                    text += `💀`;
+                    text += `\n> ⏳ En ${minutesLeft} minuto${minutesLeft > 1 ? 's' : ''}`;
                 }
 
-            } else {
-                text += `\n> ⏳ ${minutesLeft} minuto${minutesLeft > 1 ? 's' : ''}`;
-            }
-            
-            if (arrivals[i].predicted) {
-                const delay = Math.floor((arrivals[i].scheduledArrivalTime - arrivals[i].predictedArrivalTime) / 60000);
-                
-                // Retraso
-                if (delay === 0) {
-                    text += `\n> 🟢 A tiempo`;
-                } else if (delay > 0) {
-                    text += `\n> 🔴 ${delay} minuto${delay > 1 ? 's' : ''} antes`;
-                } else if (delay < 0) {
-                    text += `\n> 🔵 ${Math.abs(delay)} minuto${delay < -1 ? 's' : ''} tarde`;
-                    if (delay <= -10 && delay > -15) { text += ' 😬'; }
-                    if (delay <= -15 && delay > -20) { text += '... Aún hay esperanzas 🫠'; }
-                    if (delay <= -20) { text += '... Quizá deba buscar una alternativa 🫥'; }
+                if (arrival.predicted) {
+                    const delay = Math.floor((arrival.scheduled - arrival.predicted) / 60000);
+
+                    // Retraso
+                    if (delay === 0) {
+                        text += `\n> 🟢 A tiempo`;
+                    } else if (delay > 0) {
+                        text += `\n> 🔴 ${delay} minuto${delay > 1 ? 's' : ''} antes`;
+                    } else if (delay < 0) {
+                        text += `\n> 🔵 ${Math.abs(delay)} minuto${delay < -1 ? 's' : ''} tarde`;
+                        if (delay <= -10 && delay > -15) { text += ' 😬'; }
+                        if (delay <= -15 && delay > -20) { text += '... Aún hay esperanzas 🫠'; }
+                        if (delay <= -20) { text += '... Quizá deba buscar una alternativa 🫥'; }
+                    }
+                } else {
+                    // Horario planificado
+                    text += `\n> ⚫ Planificada`;
                 }
             } else {
-                // Horario planificado
-                text += `\n> ⚫ Planificada`;
+                text += `\n> 🚍 *Arribando*`;
             }
-        } else {
-            text += `\n> 🚍 *Arribando*`;
         }
     }
     return text;
@@ -135,11 +161,11 @@ function busArrivalsString(arrivals: ScheduledArrival[]): string {
 /**
  * Busca los horarios de una parada de colectivos, opcionalmente los filtra.
  * @param {string} stopNumber - Número de la parada.
- * @param {string} filter - Opcional: Indica una linea de colectivo para ser filtrada.
+ * @param {string} bus - Opcional: Indica una linea de colectivo para ser filtrada.
  * @returns {Promise<string>} Cadena de texto con los horarios ordenados por proximidad.
  */
-export async function getStopArrivals(stopNumber: string, filter?: string): Promise<string> {
-    if (!MENDOTRAN_DATABASE || !MENDOTRAN_DATABASE.stops) {
+export async function getStopArrivals(stopNumber: string, bus?: string): Promise<string> {
+    if (!MENDOTRAN_BUSES_DATABASE || !MENDOTRAN_STOPS_DATABASE) {
         throw new CommandError('No se ha podido cargar la base de datos de Mendotran.');
     }
 
@@ -151,144 +177,52 @@ export async function getStopArrivals(stopNumber: string, filter?: string): Prom
     }
     
     stopNumber = stopNumber.toUpperCase();
-
-    // @ts-ignore
-    const stop: StopCode = `${stopNumber.lastIndexOf('M') == 0 ? '' : 'M'}${stopNumber}`;
-
-    botLog(`Buscando parada: ${stop}`);
-    if (!MENDOTRAN_DATABASE.stops[stop]) {
-        throw new CommandError(`No existe la parada *${stop}*.`);
+    botLog(`Buscando parada "${stopNumber}".`);
+    if (!MENDOTRAN_STOPS_DATABASE[stopNumber]) {
+        if (MENDOTRAN_STOPS_DATABASE["M" + stopNumber]) {
+            stopNumber = "M" + stopNumber;
+        } else if (MENDOTRAN_STOPS_DATABASE["L" + stopNumber]) {
+            stopNumber = "L" + stopNumber;
+        } else {
+            throw new CommandError(`No existe la parada *${stopNumber}*.`);
+        }
     }
     
-    if (filter) { 
-        filter = filter.toString();
-        
-        botLog(`Buscando línea:  ${filter}`);
-        if (!MENDOTRAN_DATABASE.stops[stop].busList.includes(filter)) {
-            throw new CommandError(`El micro *${filter}* no pasa por la parada *${stop}*.`);
+    if (bus) {
+        botLog(`Buscando línea ${bus} en la parada "${stopNumber}".`);
+        if (!MENDOTRAN_STOPS_DATABASE[stopNumber].bus_list.includes(bus)) {
+            throw new CommandError(`El micro *${bus}* no pasa por la parada *${stopNumber}*.`);
         }
     }
 
-    return await fetchJsonMendotran(`${mendotranSettings.api}/arrivals-and-departures-for-stop/${MENDOTRAN_DATABASE.stops[stop].id}.json`)
-        .then((json) => {
-            let arrivals: ScheduledArrival[] = json.data?.entry?.arrivalsAndDepartures;     
+    return await fetchStopArrivals(MENDOTRAN_STOPS_DATABASE[stopNumber].stop_id).then((arrivalsResponse) => {
+        // Verificar que hayan arribos para la parada.
+        if (!arrivalsResponse || arrivalsResponse.arrivals.length === 0) {
+            return `🚎 Sin arribos para la parada *${stopNumber}* 🏃‍♀️`;
+        }
 
-            if (!arrivals || arrivals.length === 0 ) {
-                return `🚎 Sin llegadas para la parada *${stop}* 🏃‍♀️`;
-            }
+        // Filtrar por colectivo.
+        if (bus) {
+            const serviceID = MENDOTRAN_BUSES_DATABASE[bus].service_id;
+            arrivalsResponse.arrivals = arrivalsResponse.arrivals.filter((bus) => {
+                return bus.service_id === serviceID;
 
-            // De haber sido indicado, filtrar micros
-            if (filter) {
-                arrivals = arrivals.filter((bus) => { return bus.routeShortName === filter; });
-
-                if (arrivals.length === 0) {
-                    return `🚎 Sin llegadas para *${filter}* en la parada *${stop}* 🏃‍♀️`;
-                }
-            }
-
-            // Ordenar micros según horario de llegada
-            sortByArrivalTime(arrivals);
-
-            // String
-            let text = `🚦 *Parada ${stop}${filter ? ' - Línea ' + filter : ''}* 🚦\n\n`
-                        + busArrivalsString(arrivals)
-                        + `\n\n📍 *${MENDOTRAN_DATABASE.stops[stop].address}* 📍`;
-
-            return text;
-        })
-        .catch((error) => {
-            throw handleErrors(error);
-        });
-}
-
-/**
- * Calcular distancia entre un punto (x1, y1) y (x2, y2).
- * @param x1 - Valor de x1.
- * @param y1 - Valor de y1.
- * @param x2 - Valor de x2.
- * @param y2 - Valor de y2.
- * @returns {number} Distancia.
- */
-function calculateDistance(x1: number, y1: number, x2: number, y2: number): number {
-    return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
-}
-
-/**
- * Busca la parada más cercana a una ubicación geográfica.
- * @param {Position} position - Posición geográfica.
- * @returns {Promise<string>} Lista de paradas ordenadas por proximidad.
- */
-async function getStopsNear(position: Position): Promise<StopInfo[]> {
-    if (!MENDOTRAN_DATABASE) {
-        throw new CommandError('No se ha podido cargar la base de datos de Mendotran.');
-    }
-    
-    return await fetchJsonMendotran(`${mendotranSettings.api}/stops-for-location.json?platform=web&v=&lat=${position[0]}&lon=${position[1]}&latSpan=0.006&lonSpan=0.01&version=1.0`)
-        .then(async (json) => {
-            if (!json.data?.list || json.data.list.length === 0) {
-                throw new CommandError(
-                    'No se han encontrado paradas de Mendotran cercanas a la ubicación.\n\n🧭 ❓'
-                );
-            }
-
-            const stopsAround: StopInfo[] = json.data?.list.sort((a: StopInfo, b: StopInfo) => {
-                if (!a.distance) { a.distance = calculateDistance(position[0], position[1], a.lat, a.lon); }
-                if (!b.distance) { b.distance = calculateDistance(position[0], position[1], b.lat, b.lon); }
-                return a.distance - b.distance;
             });
 
-            return stopsAround;
-        })
-        .catch((error) => {
-            throw handleErrors(error);
-        });
-}
-
-/**
- * Busca las parada más cercana a una ubicación geográfica.
- * @param {Position} position - Posición geográfica.
- * @returns {Promise<string>} Cadena de texto con un listado de colectivos por parada.
- */
-export async function stopsAroundInfo(position: Position, length: number = 0): Promise<string> {
-    const stopsAround: StopInfo[] = await getStopsNear(position);
-    stopsAround.splice(length); // Recortar lista
-    let str: string = `🧭 *Las ${stopsAround.length} paradas más cercanas* 🧭\n\n`;
-
-    for (let i = 0; i < stopsAround.length; i++) {
-        const stopData = MENDOTRAN_DATABASE.stops[stopsAround[i].code];
-        let linea: string = '';
-
-        str +=  `🚏 *${stopsAround[i].code}:* ${stopsAround[i].address} 🚏\n`;
-
-        for (let j = 0; j < stopData.busList.length; j++) {
-            if (linea !== stopData.busList[j].charAt(0)) {
-                str += `\n> ${getBusColor(stopData.busList[j])} `;
-                linea = stopData.busList[j].charAt(0);
-            } 
-
-            str += `*${stopData.busList[j]}*`;
-
-            if (stopData.busList.length > 1 && j !== stopData.busList.length - 1) {
-                if (linea === stopData.busList[j + 1].charAt(0)) {
-                    str += ', ';
-                }
+            if (arrivalsResponse.arrivals.length === 0) {
+                return `🚎 Sin arribos para el micro *${bus}* en la parada *${stopNumber}* 🏃‍♀️`;
             }
         }
-        if (i !== stopsAround.length - 1) { str += `\n\n`; }
-    }
-    return str;
-}
 
-/**
- * Busca la parada más cercana a una ubicación geográfica, opcionalmente filtra
- * los horarios de un colectivo particular.
- * @param {Position} position - Posición geográfica.
- * @param {string} filter - Linea de colectivo que se desea filtrar.
- * @returns {Promise<string> } Cadena de texto con los horarios ordenados por proximidad.
- */
-export async function nearestStopInfo(position: Position, filter?: string): Promise<string> {   
-    const stopsAround: StopInfo[] = await getStopsNear(position);
-    return await getStopArrivals(stopsAround[0].code, filter);
+        // String
+        let text = `🚦 *Parada ${stopNumber}${bus ? ' - Línea ' + bus : ''}* 🚦\n\n`
+                    + arrivalsToString(arrivalsResponse, bus ? 5 : 10)
+                    + `\n\n📍 *${MENDOTRAN_STOPS_DATABASE[stopNumber].location}* 📍`;
+
+        return text;
+    }).catch((error) => {
+        throw handleErrors(error);
+    });
 }
 
 /**
@@ -298,37 +232,32 @@ export async function nearestStopInfo(position: Position, filter?: string): Prom
  */
 export async function getMetroArrivals(stopName: string): Promise<string> {
     return await searchMetroStop(stopName)
-        .then(async (stop: MetroStopInfo) => {           
-            const metro100Json = await fetchJsonMendotran(
-                `${mendotranSettings.api}/arrivals-and-departures-for-stop/${MENDOTRAN_DATABASE.stops[stop["100"]].id}.json`
-            );
+        .then(async (stop: MetroStopInfo) => {
+            const metro100Arrivals = await fetchStopArrivals(MENDOTRAN_STOPS_DATABASE[stop["100"]].stop_id);
+            const metro101Arrivals = await fetchStopArrivals(MENDOTRAN_STOPS_DATABASE[stop["101"]].stop_id);
 
-            const metro101Json = await fetchJsonMendotran(
-                `${mendotranSettings.api}/arrivals-and-departures-for-stop/${MENDOTRAN_DATABASE.stops[stop["101"]].id}.json`
-            );
-            
-            const metro100Arrivals = sortByArrivalTime(metro100Json.data?.entry?.arrivalsAndDepartures);
-            const metro101Arrivals = sortByArrivalTime(metro101Json.data?.entry?.arrivalsAndDepartures);
+            metro100Arrivals.arrivals = sortByArrivalTime(metro100Arrivals.arrivals);
+            metro101Arrivals.arrivals = sortByArrivalTime(metro101Arrivals.arrivals);
 
-            // Limitar número de llegadas que se muestran
-            const arrivalsLimit = 2;
-            const metro100Restantes = metro100Arrivals.length - arrivalsLimit;
-            const metro101Restantes = metro101Arrivals.length - arrivalsLimit;
+            // Limitar número de arribos que se muestran.
+            const arrivalsLimit = 3;
+            const metro100Restantes = metro100Arrivals.arrivals.length - arrivalsLimit;
+            const metro101Restantes = metro101Arrivals.arrivals.length - arrivalsLimit;
 
-            metro100Arrivals.splice(arrivalsLimit);
-            metro101Arrivals.splice(arrivalsLimit);
+            metro100Arrivals.arrivals.splice(arrivalsLimit);
+            metro101Arrivals.arrivals.splice(arrivalsLimit);
 
-            if (metro100Arrivals.length > 0 || metro101Arrivals.length > 0) {
+            if (metro100Arrivals.arrivals.length > 0 || metro101Arrivals.arrivals.length > 0) {
                 let text = `🚦 *Estación ${Array.isArray(stop.name) ? stop.name.join(' / ') : stop.name}* 🚦\n\n`
-                        + (metro100Arrivals.length > 0 ? busArrivalsString(metro100Arrivals) : `🚋 *Sin llegadas para el andén ${stop.direction[0]}* 🏃‍♀️`)
+                        + (metro100Arrivals.arrivals.length > 0 ? arrivalsToString(metro100Arrivals) : `🚋 *Sin arribos para el andén ${stop.direction[0]}* 🏃‍♀️`)
                         + (metro100Restantes > 0 ? `\n\n> 🚏 *${metro100Restantes} más en camino*` : '')
                         + '\n\n'
-                        + (metro101Arrivals.length > 0 ? busArrivalsString(metro101Arrivals) : `🚋 *Sin llegadas para el andén ${stop.direction[1]}* 🏃‍♀️`)
+                        + (metro101Arrivals.arrivals.length > 0 ? arrivalsToString(metro101Arrivals) : `🚋 *Sin arribos para el andén ${stop.direction[1]}* 🏃‍♀️`)
                         + (metro101Restantes > 0 ? `\n\n> 🚏 *${metro101Restantes} más en camino*` : '')
-                        + `\n\n📍 *${MENDOTRAN_DATABASE.stops[stop['100']].address}* 📍`;
+                        + `\n\n📍 *${MENDOTRAN_STOPS_DATABASE[stop["100"]].location}* 📍`;
                 return text;
             } else {
-                return `🚋 Sin llegadas para la estación 🏃‍♀️`;
+                return `🚋 Sin arribos para la estación 🏃‍♀️`;
             }
         })
         .catch((error) => {
@@ -344,30 +273,33 @@ export async function getMetroArrivals(stopName: string): Promise<string> {
  * @returns {Promise<MetroStopInfo>}
  */
 async function searchMetroStop(stopName: string): Promise<MetroStopInfo> {
-    if (MENDOTRAN_METRO_DATABASE && MENDOTRAN_DATABASE) {
-        stopName =  stopName.replaceAll(/á/gi, 'a') // Ignorar tildes
-                    .replaceAll(/é/gi, 'e')
-                    .replaceAll(/í/gi, 'i')
-                    .replaceAll(/ó/gi, 'o')
-                    .replaceAll(/ú/gi, 'u');
+    if (!MENDOTRAN_METRO_DATABASE || !MENDOTRAN_STOPS_DATABASE) {
+        throw new CommandError('No se ha podido cargar la base de datos de Mendotran.');
+    }
 
-        for (let key of MENDOTRAN_METRO_DATABASE) {
-            if (key.name) {
-                if (Array.isArray(key.name)) {
-                    if (key.name.some((stationName) => stationName.search(new RegExp(stopName, 'i')) >= 0)) {
-                        return key;
-                    } 
-                } else {
-                    if (key.name.search(new RegExp(stopName, 'i')) >= 0) {
-                        return key;
-                    }
+    // Ignorar tildes
+    stopName = stopName.replaceAll(/á/gi, 'a')
+                       .replaceAll(/é/gi, 'e')
+                       .replaceAll(/í/gi, 'i')
+                       .replaceAll(/ó/gi, 'o')
+                       .replaceAll(/ú/gi, 'u');
+
+    // Buscar estación
+    for (const estacion of MENDOTRAN_METRO_DATABASE) {
+        if (estacion.name) {
+            if (Array.isArray(estacion.name)) {
+                if (estacion.name.some((stationName) => stationName.search(new RegExp(stopName, 'i')) >= 0)) {
+                    return estacion;
+                }
+            } else {
+                if (estacion.name.search(new RegExp(stopName, 'i')) >= 0) {
+                    return estacion;
                 }
             }
         }
-        throw new CommandError(`No se ha encontrado la estación *"${stopName}"*.`);
-    } else {
-        throw new CommandError('No se ha podido cargar la base de datos de Mendotran.');
     }
+
+    throw new CommandError(`No se ha encontrado la estación *"${stopName}"*.`);
 }
 
 function handleErrors(error: Error | CommandError): string | CommandError {

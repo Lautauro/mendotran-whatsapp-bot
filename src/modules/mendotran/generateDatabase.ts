@@ -1,146 +1,148 @@
 import fs from 'node:fs';
-import { fetchJsonMendotran } from './fetchJsonMendotran.js';
-import { BusInfo, StopInfo } from '../../ts/interfaces/mendotran.d.js';
-import { mendotranSettings } from '../../index.js';
 import { botLog, botLogError, botLogOk } from '../../utils/botLog.js';
-import { getBusColor } from './emojis.js';
-
-async function getBusesInfo(servicio: string | number): Promise<BusInfo[] | null> {
-    let busList: BusInfo[] = [];
-
-    return fetchJsonMendotran(`${mendotranSettings.api}/routes-for-location.json?platform=web&v=&lat=-32.89084&lon=-68.82717&query=${servicio}&radius=40000&version=1.0`, null, 10000)
-        .then((json) => {
-            if (json.data?.list && json.data.list.length) {
-                json.data.list.forEach((element: any) => {
-                    const linea = element.shortName.match(/\d+/)[0];
-                    const color = getBusColor(linea);
-
-                    busList.push({
-                        linea,
-                        id: element.id,
-                        shortName: element.shortName,
-                        color,
-                    });
-                });
-                return busList; 
-            }
-            return null;
-        });
-}
-
-// Lista de paradas por las que pasa un micro
-async function getStopsFromBus(busId: string): Promise<StopInfo[] | null> {
-    return fetchJsonMendotran(`${mendotranSettings.api}/where/stops-for-route/${busId}.json?platform=web&v=&version=1.0`, null, 10000)
-        .then((json) => {
-            if (json.data?.references?.stops) {
-                return json.data.references.stops;
-            } else {
-                return null;
-            }
-        }).catch((error) => {
-            console.error(error);
-            return null;
-        });
-}
+import { getBusColor } from './emojis';
+import { fetchAllStopsInfo, fetchAllBusesInfo, fetchBusInfo } from './fetchMendotran.js';
+import { StopData, MendotranBusesData, MendotranStopsData } from '../../ts/interfaces/mendotran.js';
+import { ACTUAL_BBDD_VERSION } from '../../index.js';
 
 export async function getMendotranDatabase(): Promise<void> {
-    const start = Date.now();
+    botLog('Generando la base de datos de Mendotran.');
+    //
+    // Extraemos la lista de paradas de la base de datos.
+    //
+    const stopListJSON = await fetchAllStopsInfo();
+    const stopList: MendotranStopsData = {};
+    // Este mapa lo usaremos como una especie de diccionario, donde el "key" será el ID de la parada y el "value" el código.
+    // Ejemplo: 12345: "M1000"
+    const stopIDDictionary = new Map();
 
-    botLog('Generando la base de datos de Mendotran:');
-
-    let dataBase: any = {
-	    version: 1,
-        stops: {},
-        buses: {},
-    };
-
-    let nStops = 0; // Número de paradas
-    let nBuses = 0; // Número de colectivos
-
-    botLog('Buscando líneas de colectivos');
-
-    for (let i = 0; i <= 80; i++) {
-        console.log();
-        botLog(`Buscando líneas que contengan: ${i}`);
-
-        const busList: BusInfo[] | null = await getBusesInfo(i);
-
-        if (busList && busList.length) {
-            for (let j = 0; j < busList.length; j++) {
-                let linea = busList[j].linea ?? null;
-                
+    if (stopListJSON.search && stopListJSON.search.length > 0) {
+        for(const stopInfo of stopListJSON.search) {
+            // Verificamos estar recibiendo los datos esperados, esto es útil por si en un futuro Mendotran decide cambiar los datos de la base de datos.
+            if (stopInfo.stop_id !== undefined && stopInfo.code !== undefined && stopInfo.location !== undefined && stopInfo.coordinates !== undefined) {
                 // Ignorar repetidos
-                if (linea && !dataBase.buses[linea]) {
-                    // Agregar micro al objeto
-                    delete busList[j].linea; // Es innecesario guardar esta información
-                    dataBase.buses[linea] = busList[j];
+                if (stopList[`${stopInfo.code}`]) {
+                    botLog(`La parada "${stopInfo.code}" está repetida, se ignorará.`);
+                    continue;
+                }
 
-                    // Agregar referencia a las paradas
-                    const stops: StopInfo[] | null = await getStopsFromBus(busList[j].id);
+                stopList[stopInfo.code] = {
+                    "stop_id": stopInfo.stop_id,
+                    "location": stopInfo.location,
+                    //"coordinates": item.coordinates,
+                    "bus_list": [],
+                };
 
-                    if (stops) {
-                        for (let j = 0; j < stops.length; j++) {                         
-                            if (!dataBase.stops[stops[j].name]) {
-                                // Coordenadas
-                                if (isNaN(+stops[j].lat) || isNaN(+stops[j].lon)) {
-                                    botLogError(`No se pudo calcular la posición de la parada ${stops[j].name}.`);
-                                    stops[j].lat = 0;
-                                    stops[j].lon = 0;
-                                }
+                stopIDDictionary.set(stopInfo.stop_id, stopInfo.code);
+            } else {
+                botLogError("Se intentó obtener los datos de una parada pero se recibieron valores inesperados. Quizá la estructura de la base de datos de Mendotran haya sido actualizada.", stopInfo);
+            }
+        }
+    } else {
+        throw new Error("No se pudo obtener la lista de paradas de colectivos del servidor de Mendotran.");
+    }
 
-                                // Información de la parada
-                                dataBase.stops[stops[j].name] = {
-                                    id:  stops[j].id,
-                                    // TODO: La posición nunca es usada en el programa
-                                    // pos: [
-                                    //     +stops[j].lat,
-                                    //     +stops[j].lon
-                                    // ],
-                                    address:  stops[j].address ? stops[j].address.trim() : '',
-                                    busList: [],
-                                }
-                                nStops++;
-                            }
-                            dataBase.stops[stops[j].name].busList.push(linea);
-                        }
-                    } else {
-                        botLogError(`No existen paradas para ${linea}`);
-                        continue;
-                    }
+    // Si de algún modo la lista de paradas está vacía, tirar error.
+    if (Object.keys(stopList).length === 0) {
+        throw new Error("Ocurrió un error al intentar generar la lista de paradas de colectivos.");
+    }
 
-                    nBuses++;
-                    console.log(`\tLínea ${linea}`);
+    //
+    // Extraemos la lista de colectivos de la base de datos.
+    //
+    const busesListJSON = await fetchAllBusesInfo();
+    const busesList: MendotranBusesData = {};
+
+    if (busesListJSON.search && busesListJSON.search.length > 0) {
+        for (const busInfo of busesListJSON.search) {
+            if (busInfo.service_id != undefined && busInfo.group_id != undefined && busInfo.code != undefined && busInfo.name != undefined && busInfo.color != undefined) {
+                if (busesList[`${busInfo.code}`]) {
+                    botLog(`El micro "${busInfo.code}" está repetido, se ignorará.`);
+                    continue;
+                }
+
+                busesList[`${busInfo.code}`] = {
+                    // "group_id": busInfo.group_id,
+                    "service_id": busInfo.service_id,
+                    // "name": busInfo.name,
+                    "color": getBusColor(busInfo.code),
+                };
+            } else {
+                botLogError("Se intentó obtener los datos de un colectivo pero se recibieron valores inesperados. Quizá la estructura de la base de datos de Mendotran haya sido actualizada.", busInfo);
+            }
+        }
+    } else {
+        throw new Error("No se pudo obtener la lista de colectivos del servidor de Mendotran.");
+    }
+
+    // Si de algún modo la lista de colectivos está vacía, tirar error.
+    if (Object.keys(stopList).length === 0) {
+        throw new Error("Ocurrió un error al intentar generar la lista de colectivos.");
+    }
+
+    //
+    // Añadimos a las paradas los micros que pasan por ella.
+    //
+    let busesAñadidos: boolean = false;
+
+    for (const linea in busesList) {
+        const busInfoJSON = await fetchBusInfo(busesList[linea].service_id);
+
+        if (busInfoJSON.service != undefined && busInfoJSON.service.stops != undefined && busInfoJSON.service.stops.length > 0) {
+            botLog(`Añadido paradas del micro "${linea}".`)
+            for (const stop_id of busInfoJSON.service.stops) {
+                // Verificamos que exista la parada en nuestra base de datos local.
+                let stop: StopData;
+                if (stopIDDictionary.has(stop_id) && (stop = stopList[stopIDDictionary.get(stop_id)]) != undefined) {
+                    stop.bus_list.push(linea);
+
+                    //botLogOk(`Añadido el micro "${linea}" a la parada "${stopIDDictionary.get(stop_id)}".`);
+                    busesAñadidos = true;
+                } else {
+                    botLogError("Se intentó agregar un bus a la lista de buses de una parada, pero ésta no existe en la base de datos local.\n"
+                                +`stop_id: ${stop_id}\n`
+                                +`bus: ${linea}`);
                 }
             }
         } else {
-            botLogError(`No hay resultados.`);
+            botLogError(`Se intentó obtener las paradas del colectivo "${linea}" pero se recibieron valores inesperados. Quizá la estructura de la base de datos de Mendotran haya sido actualizada.`);
         }
     }
 
-    // Ordenar de menor a mayor la lista de colectivos de cada parada
-    botLog('Ordenando lista de colectivos.')
-
-    for (let key in dataBase.stops) {
-        dataBase.stops[key].busList = dataBase.stops[key].busList.sort((a: string, b: string) => (+a) - (+b));
+    if (busesAñadidos === false) {
+        throw new Error("No se pudieron añadir los colectivos a la lista de colectivos que pasan por cada parada.");
     }
-
-    botLog(`Se han encontrado:\n\t${nBuses} lineas.\n\t${nStops} paradas.\n`);
 
     // Escribir archivo
     try {
-        if (!fs.existsSync('./json')) { fs.mkdirSync('./json', { recursive: true }); }
-
-        if (fs.existsSync(`./json/${mendotranSettings.dataFile}`)) {
-            fs.copyFileSync(`./json/${mendotranSettings.dataFile}`, `./json/${mendotranSettings.dataFile}.old`);
+        // Si no exite la carpeta la generamos
+        if (!fs.existsSync('./json')) {
+            fs.mkdirSync('./json', { recursive: true });
         }
 
-        fs.writeFileSync(`./json/${mendotranSettings.dataFile}`, JSON.stringify(dataBase));
-        botLogOk(`✔  Lista de colectivos escrita exitosamente\n`);
+        guardarArchivos("./json", "mendotran-buses.json",  busesList);
+        guardarArchivos("./json", "mendotran-stops.json",  stopList);
+        guardarArchivos("./json", ".bbdd-version.json", { "VERSION": ACTUAL_BBDD_VERSION }, false);
     } catch(error) {
-        console.error(`❌  Error al guardar la lista de colectivos\n`);
-        console.error(error);
-        process.exit();
+        throw new Error("Error al guardar la base de datos en archivos JSON. " + error);
+    }
+    // TODO: Habría que esperar a que terminen de guardarse los tres archivos para mandar este mensaje y finalizar la función.
+    botLogOk("La base de datos fue generada exitosamente.")
+}
+
+async function guardarArchivos(path: string, nombreArchivo: string, data: object, createBackup: boolean = true) {
+    // Verificar si es la primera vez que se guarda el archivo, de lo contrario hacer un back-up de la versión anterior al mismo.
+    if (createBackup === true && fs.existsSync(`${path}/${nombreArchivo}`)) {
+        fs.copyFile(`${path}/${nombreArchivo}`, `${path}/${nombreArchivo}.old`, (error) => {
+            if (error) throw new Error(`Error al crear una copia del archivo "${nombreArchivo}" ya existente.`, error);
+
+            botLog(`Se copió el archivo "${nombreArchivo}" existente a "${nombreArchivo}.old".`)
+        });
     }
 
-    botLog(`La operación tardó ${(Date.now() - start) / 1000} segundos en ser realizada.`);
+    return fs.writeFile(`${path}/${nombreArchivo}`, JSON.stringify(data), (error) => {
+        if (error) throw new Error(`Ocurrió un error al guardar el archivo "${path}/${nombreArchivo}".`, error);
+
+        botLogOk(`Archivo "${path}/${nombreArchivo}" creado con éxito.`)
+    });
 }

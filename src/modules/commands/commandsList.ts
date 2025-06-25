@@ -1,7 +1,6 @@
-import { Message } from "whatsapp-web.js";
-import { createCommand, COMMAND_ERROR_MESSAGES } from "./commands.js";
+import { createCommand } from "./commands.js";
 import { sendResponse, sendErrorResponse } from "./sendResponses.js";
-import { nearestStopInfo, getMetroArrivals, getStopArrivals, stopsAroundInfo } from "../mendotran/mendotran.js";
+import { getMetroArrivals, getStopArrivals } from "../mendotran/mendotran.js";
 
 /**
  * Genéricos
@@ -37,20 +36,6 @@ createCommand(['pong'], {
  * Mendotran
  */
 
-async function arrivalsByLocation(message: Message, quote: Message, filter?: string) {
-    if (quote.location) {
-        await nearestStopInfo([+quote.location.latitude, +quote.location.longitude], filter)
-            .then(async (arrivals) => {
-                await sendResponse(arrivals, message, { 
-                    reaction: '🚌',
-                    messageOptions: { linkPreview: false },
-                });
-            });
-    } else {
-        await sendErrorResponse('Para usar este comando debe citar a un mensaje con una ubicación', message);
-    }
-}
-
 // Micro
 createCommand(['micro', 'm', '🚍'], {
     options: {
@@ -58,10 +43,7 @@ createCommand(['micro', 'm', '🚍'], {
     },
     info: {
         name: 'Mendotran - Micro',
-        description: 'Obtener los horarios de un colectivo en una parada.\n\n' +
-        '*Opcionalmente puede buscar los horarios de un micro enviando su ubicación.* ' +
-        'Primero debe enviar la ubicación y luego citar el mensaje con el comando:\n\n' +
-        '*Micro* `Línea`',
+        description: 'Obtener los horarios de un colectivo en una parada.'
     }})
     .addParameter('number', {
         name: 'Línea',
@@ -70,32 +52,17 @@ createCommand(['micro', 'm', '🚍'], {
     })
     .addParameter('string', {
         name: 'Nº de parada',
-        description: 'El número de parada del colectivo. No es estrictamente necesaria la letra "M" al comienzo.',
+        description: 'El código de parada del colectivo.',
         example: 'M1028',
-    }, null)
+    })
     .setCallback(async function (args, message) {
-        if (message.hasQuotedMsg) {
-            await message.getQuotedMessage()
-                .then(async (quote) => {
-                    await arrivalsByLocation(message, quote, args[0]);
-                    return;
-                });
-            return;
-        } else {
-            if (args[1] === null) {
-                // @ts-ignore
-                await sendErrorResponse(COMMAND_ERROR_MESSAGES.MISSING_ARGUMENT(this, [args[0]]), message);
-                return;
-            } else {
-                await getStopArrivals(args.slice(1).join(" "), args[0])
-                    .then(async (arrivals) => {
-                        await sendResponse(arrivals, message, {
-                            reaction: '🚌',
-                            messageOptions: { linkPreview: false },
-                        });
-                    });
-            }
-        }
+        await getStopArrivals(args.slice(1).join(" "), args[0] ? args[0].toString() : args[0])
+        .then(async (arrivals) => {
+            await sendResponse(arrivals, message, {
+                reaction: '🚌',
+                messageOptions: { linkPreview: false },
+            });
+        });
     })
 .closeCommand();
 
@@ -106,67 +73,25 @@ createCommand(['parada', 'p', '🚏'], {
     },
     info: {
         name: 'Mendotran - Parada',
-        description: 'Obtener los horarios de una parada de colectivos.\n\n' +
-        '*Opcionalmente puede buscar los horarios de una parada enviando su ubicación.* ' +
-        'Primero debe enviar la ubicación y luego citar el mensaje con el comando:\n\n*Parada*',
+        description: 'Obtener los horarios de una parada de colectivos.',
     }})
     .addParameter('string', {
         name: 'Nº de parada',
-        description: 'El número de parada de la cual desea saber sus horarios. ' +
-            'No es estríctamente necesaria la letra "M" al comienzo.',
+        description: 'El código de parada de la cual desea saber sus horarios.',
         example: 'M1012',
-    }, null)
+    })
     .setCallback(async function (args, message) {
-        if (message.hasQuotedMsg) {
-            await message.getQuotedMessage().then(async (quote) => {
-                await arrivalsByLocation(message, quote);
-                return;
-            })
-        } else {
-            if (args[0]) {
-                await getStopArrivals(args[0])
-                    .then(async (arrivals) => {
-                        await sendResponse(arrivals, message, { 
-                            reaction: '🚌',
-                            messageOptions: {
-                                linkPreview: false,
-                            },
-                        });
-                    });
-            } else {
-                // @ts-ignore
-                await sendErrorResponse(COMMAND_ERROR_MESSAGES.MISSING_ARGUMENT(this, []), message);
-                return;
-            }
-        }
+        await getStopArrivals(args[0])
+            .then(async (arrivals) => {
+                await sendResponse(arrivals, message, {
+                    reaction: '🚌',
+                    messageOptions: {
+                        linkPreview: false,
+                    },
+                });
+            });
     })
 .closeCommand();
-
-// Paradas cercanas
-createCommand(['paradas', '📍'], {
-    options: {
-        needQuotedMessage: true,
-    },
-    info: {
-        name: 'Mendotran - Paradas cercanas',
-        description: 'Permite buscar las paradas más cercanas a una ubicación. ' +
-        'Primero debe enviar la ubicación y luego citar el mensaje con el comando:\n\n*Paradas*',
-    }})
-    .setCallback(async (args, message) => {
-        await message.getQuotedMessage().then(async (quote) => {
-            if (quote.location) {
-                await sendResponse(
-                    await stopsAroundInfo([+quote.location.latitude, +quote.location.longitude], 4),
-                    message, {
-                    reaction: '📍'
-                });
-                return;
-            } else {
-                await sendErrorResponse('Para usar este comando debe citar a un mensaje con una ubicación', message);
-            }
-        })
-    })
-.closeCommand()
 
 // Metrotranvia
 createCommand(['metro', 'metrotranvia', 'metrotranvía', 'estacion', 'estación', '🚊'], {

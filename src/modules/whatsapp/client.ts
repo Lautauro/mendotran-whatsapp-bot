@@ -1,6 +1,6 @@
 import { LocalAuth, Client, MessageTypes, Message } from 'whatsapp-web.js';
 import * as qrcode from 'qrcode-terminal';
-import { botLog, botLogError } from '../../utils/botLog.js';
+import { botLog, botLogError, botLogOk } from '../../utils/botLog.js';
 import { whatsappSettings, commandsSettings, packageInfo } from "../../index.js";
 import { printMessage } from './printMessage.js';
 
@@ -111,6 +111,7 @@ wwebClient.on('ready', () => {
     const commandPath: string = '../commands';
     let commandExecution = require(`${commandPath}/commands.js`).commandExecution;
     require(`${commandPath}/commandsList.js`);
+    botLogOk("Comandos cargados.")
 
     if (!whatsappSettings.showMessagesInTheTerminal) { botLog('Mensajes ocultos.\n'); }
 

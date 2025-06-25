@@ -1,127 +1,65 @@
-import { RouteId, StopId, StopCode, VehicleId, BusId, MetroDirection, BusColor } from "../types/mendotran.d.ts";
+import { MetroDirection, BusColor } from "../types/mendotran.d.ts";
 
-export interface PositionMendotran {
-    lat: number;
-    lon: number;
+export interface StopData {
+    stop_id: number;
+    location: string;
+    bus_list: string[];
 }
 
-export type Position = [number, number];
-
-export interface MendotranData {
-    version: number;
-    stops: MendotranStopData;
-    buses: MendotranBusesData;
+export interface BusData {
+    service_id: number;
+    // group_id: number;
+    // name: string;
+    color: BusColor
 }
 
-export interface MendotranStopData {
-    [stopCode: StopCode]: {
-        id: StopId;
-        pos: Position;
-        address: string;
-        busList: string[];
-    }
+export interface MendotranStopsData {
+    [stopCode: string]: StopData;
 }
 
 export interface MendotranBusesData {
-    [busNumber: `${number}`]: {
-        id: BusId;
-        shortName: string;
-        color: BusColor;
-    }
+    [busNumber: string]: BusData;
 }
 
 export interface MetroStopInfo {
     name: string | string[];
     direction: MetroDirection[];
-    "101": StopCode;
-    "100": StopCode;
+    "101": string;
+    "100": string;
 }
 
-export interface ScheduledArrival {
-    arrivalEnabled: boolean;
-    
+export interface Service {
+    [service_id: number]: {
+        // Número del micro.
+        code: string;
+        // Letrero.
+        name: string;
+        color: string;
+        group_id: number;
+    }
+}
+
+export interface ArrivalsResponse {
+    stop_id: number;
+    arrivals: Arrival[];
+    references: {
+        services: Service;
+    }
+}
+
+export interface Arrival {
     /**
      * Indica la hora de llegada del colectivo
      * independientemente de si es o no planificada.
-     * 
+     *
      * NO EN LA API OFICIAL
      */
-
     arrivalTime: number;
 
-    blockTripSequence: number;
-    color: string;
-    departureEnabled: boolean;
-    distanceFromStop: number;
-    frequency: number | null;
-    lastUpdateTime: number;
-    numberOfStopsAway: number;
-    occupancyStatus: string;
-    predicted: boolean;
-    predictedArrivalInterval: number | null;
-    predictedArrivalTime: number;
-    predictedDepartureInterval: number | null;
-    predictedDepartureTime: number;
-    predictedOccupancy: string;
-    routeId: RouteId;
-    routeLongName: string;
-
-    /**
-     * Número de linea
-     */
-
-    routeShortName: `${number}`;
-
-    scheduledArrivalInterval: number | null;
-    scheduledArrivalTime: number;
-    scheduledDepartureInterval: number | null;
-    scheduledDepartureTime: number;
-    serviceDate: number;
-    situationIds: [];
-    status: 'default' | string;
-    stopId: StopId;
-    stopSequence: number;
-
-    /**
-     * Cartel del colectivo
-     */
-
-    tripHeadsign: string;
-
-    tripId: number;
-    tripStatus: {
-        position: PositionMendotran,
-        orientation: number,
-        status: 'default' | string,
-        predicted: boolean,
-        lastUpdateTime: number,
-        lastLocationUpdateTime: number,
-    };
-    vehicleId: VehicleId;
-}
-
-export interface StopInfo {
-    code: StopCode;
-    address: string;
-    direction: string;
-    id: StopId;
-    lat: number;
-    lon: number;
-    locationType: number;
-    name: StopCode;
-    routeIds: RouteId[];
-    wheelchairBoarding: 'UNKNOWN' | string;
-
-    /**
-     * NO EN LA API OFICIAL
-     */
-
-    distance?: number;
-}
-
-export interface BusInfo {
-    linea?: string;
-    id: string;
-    shortName: string;
-    color: BusColor;
+    service_id: number;
+    stop_sequence: number;
+    scheduled: number;
+    predicted: number;
+    vehicle_id: number;
+    trip_id: string;
 }
