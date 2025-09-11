@@ -94,7 +94,7 @@ wwebClient.on('loading_screen', (percent: number) => {
         '                #######################\n' +
         '               ########   ##########\n\n' +
         `                        Version: ${packageInfo.version}\n`+
-        `                  whatsapp-web.js: 1.28.0\n`
+        `                  whatsapp-web.js: 1.34.1\n`
     );
     console.log(` ${loading_bar} [ ${percent} % ]\n`);
 });
