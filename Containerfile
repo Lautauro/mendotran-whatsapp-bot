@@ -7,6 +7,8 @@ RUN apk upgrade -U && \
     cp /usr/share/zoneinfo/America/Argentina/Mendoza /etc/localtime && \
     apk del tzdata
 
+ENV TZ=America/Argentina/Mendoza
+
 # Instalar paquetes npm
 COPY package.json ./
 RUN npm i --omit=dev 

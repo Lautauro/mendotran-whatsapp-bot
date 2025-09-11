@@ -1,6 +1,7 @@
 services:
   bot:
     container_name: mendotran-bot
+    restart: always
     image: mendotran-whatsapp-bot:latest
     volumes:
       - /home/server/mendobot/cache:/app/cache
