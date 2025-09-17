@@ -203,14 +203,27 @@ export async function getStopArrivals(stopNumber: string, bus?: string): Promise
 
         // Filtrar por colectivo.
         if (bus) {
-            const serviceID = MENDOTRAN_BUSES_DATABASE[bus].service_id;
-            arrivalsResponse.arrivals = arrivalsResponse.arrivals.filter((bus) => {
-                return bus.service_id === serviceID;
+            let filtroExitoso = false;
+            // Debemos buscar el ID del servicio.
+            for (const key in arrivalsResponse.references.services) {
+                if (arrivalsResponse.references.services[key].code != bus) {
+                    continue;
+                }
+                const serviceID = key;
+                filtroExitoso = true;
 
-            });
+                arrivalsResponse.arrivals = arrivalsResponse.arrivals.filter((busInfo) => {
+                    return busInfo.service_id === Number(serviceID);
+                });
 
-            if (arrivalsResponse.arrivals.length === 0) {
-                return `🚎 Sin arribos para el micro *${bus}* en la parada *${stopNumber}* 🏃‍♀️`;
+                if (arrivalsResponse.arrivals.length === 0) {
+                    return `🚎 Sin arribos para el micro *${bus}* en la parada *${stopNumber}* 🏃‍♀️`;
+                }
+            }
+
+            // Si por algún motivo el filtro falla, tirar error.
+            if (filtroExitoso === false) {
+                throw new CommandError(`Ocurrió un error al intentar filtrar los micros de la parada. Si el problema persiste, pruebe con el comando:\n\n\`Parada ${stopNumber}\``);
             }
         }
 
