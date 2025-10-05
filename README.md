@@ -1,7 +1,7 @@
 <h1 align="center">mendotran-whatsapp-bot</h1>
 
 <div align="center">
-<img src="./docs/WSP-plus-Mendotran.svg" alt="Banner del proyecto">
+<img src="./docs/WSP-plus-Mendotran.png" alt="Banner del proyecto">
 </div>
 
 **Mendotran-whatsapp-bot** es un bot para WhatsApp que permite a los usuarios consultar los horarios de colectivos de la provincia de Mendoza de manera rápida y sencilla. Valiéndose del servicio [Mendotran](https://mendotran.mendoza.gov.ar/), el bot responde a comandos específicos para proporcionar información sobre los horarios de paradas y líneas de colectivos específicas, así como también sobre el metrotranvía. 
@@ -101,7 +101,7 @@ La primera vez que inicie el servidor tendrá que escanear un QR para sincroniza
 ## ¿Cómo funciona?
 
 <div align="center">
-<img src="./docs/mendotran-gráfico.svg" alt="Gráfica del funcionamiento del bot">
+<img src="./docs/mendotran-grafico.png" alt="Gráfica del funcionamiento del bot">
 </div>
 
 *Fuentes: [smartphone.svg](https://commons.wikimedia.org/wiki/File:Smartphone-.svg) [whatsapp-icon.svg](https://commons.wikimedia.org/wiki/File:2062095_application_chat_communication_logo_whatsapp_icon.svg) [server.svg](https://commons.wikimedia.org/wiki/File:Server2_by_mimooh.svg) [Isotipo de Mendotran](https://designacomunicacion.com/wp-content/uploads/2025/05/manual-corporativo-mendotran.pdf)*
