@@ -12,6 +12,9 @@
 * [Identificar parada](#identificar-parada)
 * [Lista de comandos](#lista-de-comandos)
 * [Demostración](#demostración)
+    * [Horario de un micro específico en una parada](#horario-de-un-micro-específico-en-una-parada)
+    * [Todos los horarios de una parada](#todos-los-horarios-de-una-parada)
+    * [Horarios del metrotranvía en cierta estación](#horarios-del-metrotranvía-en-cierta-estación)
 * [Instalación](#instalación)
 * [¿Cómo funciona?](#cómo-funciona)
 * [Parada cercana a tu ubicación](#parada-cercana-a-tu-ubicación)
@@ -28,13 +31,14 @@
 
 ## Lista de comandos
 
-|                    Alias                    | Sintaxis                           |                                             Función                                             | Ejemplo                  |
-|:-------------------------------------------:|------------------------------------|:-----------------------------------------------------------------------------------------------:|--------------------------|
-|        **❓<br>Ayuda<br>Help<br>?**         | Ayuda *[Comando]*                  |                        Recibir información acerca del uso de un comando.                        | Ayuda **Micro**          |
-|            **🚍<br>Micro<br>M**             | Micro *[Línea]* *[Nº de parada]*   |                 Obtener los horarios de **UN** colectivo en determinada parada.                 | Micro **120** **M14408** |
-|            **🚏<br>Parada<br>P**            | Parada *[Nº de parada]*            |                   Obtener **TODOS** los horarios de una parada de colectivos.                   | Parada **M5707**         |
-|              **📍<br>Paradas**              | **> [Citar ubicación]**<br>Paradas | **ACTUALMENTE DESHABILITADO DESDE LA VERSIÓN 1.1**. Lista las paradas cercanas a una ubicación. | Paradas                  |
-| **🚊<br>Estación<br>Metro<br>Metrotranvía** | Estacion *[Nombre de la estación]* |                      Obtener los horarios de una estación de metrotranvía.                      | Estacion **Godoy**       |
+|Alias|Sintaxis|Función|Ejemplo|
+|:---:|:------:|:-----:|:-----:|
+|**❓<br>Ayuda<br>Help<br>?** | Ayuda *[Comando]*|Recibir información acerca del uso de un comando.| Ayuda **Micro**|
+|**🚍<br>Micro<br>M** | Micro *[Línea]* *[Nº de parada]* | Obtener los horarios de **UN** colectivo en determinada parada. | Micro **120** **M14408** |
+|**🚏<br>Parada<br>P**| Parada *[Nº de parada]*| Obtener **TODOS** los horarios de una parada de colectivos. | Parada **M5707** |
+|**📍<br>Paradas**| **> [Citar ubicación]**<br>Paradas | **ACTUALMENTE DESHABILITADO DESDE LA VERSIÓN 1.1**. Lista las paradas cercanas a una ubicación. | Paradas|
+| **🚊<br>Estación<br>Metro<br>Metrotranvía** | Estacion *[Nombre de la estación]* |Obtener los horarios de una estación de metrotranvía.| Estacion **Godoy** |
+
 <!---
 > [!NOTE]
 > Existe la alternativa de localizar una parada por cercanía a una ubicación. Tan solo basta con enviar primero la ubicación, citarla (es decir darle a "responder" al mensaje) y utilizar alguno de estos comandos: parada, micro ó paradas. [Vea el ejemplo](#parada-cercana-a-tu-ubicación).
