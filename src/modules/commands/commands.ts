@@ -437,19 +437,28 @@ createCommand(['ayuda', 'help', '?', '❓'], {
                 await sendErrorResponse(`El comando *${args[0]}* no existe.`, message);
             }
         } else {
-            const ayuda = '📚 *¿Cómo usar el bot?* 📚\n\n' +
-                'Para ejecutar un comando formule un mensaje que comience ' +
-                'con el nombre del comando seguido de los parámetros del mismo ' +
-                'espaciados entre si. Por ejemplo:\n\n' +
-                '> *Micro* `120` `M1040`\n\n' +            
+                const ayuda = '📚 *¿Cómo usar el bot?* 📚\n\n' +
+                'Para usar el bot, solo tiene que escribir un mensaje que comience con el nombre del comando. ' +
+                'Luego, añada los detalles necesarios, separados por espacios.\n\n' +
+
+                'Por ejemplo, si quiere saber los horarios de la parada *M1040*, escriba:\n\n' +
+                
+                '`Parada M1040`\n\n' +
+
+                'Si quiere saber *específicamente* sobre el micro *120* en la parada *M1040*, escriba:\n\n' +
+
+                '`Micro 120 M1040`\n\n' +
+
                 '📒 *Lista de comandos* 📒\n\n' +
+
                 '🚏 *Parada* `N° de parada`\n' +
                 '🚍 *Micro* `Línea` `Nº de parada`\n' +
                 '🚊 *Metro* `Nombre de la estación`\n\n' +
+                
                 'Si desea saber más información sobre un comando, conocer más usos, utilice:\n' +
                 '❓ *Ayuda* `Nombre del comando`';
             await sendResponse(ayuda, message, {
-                reaction: '👍',
+                reaction: '🤓',
                 messageOptions: { linkPreview: false },
             });
         }
