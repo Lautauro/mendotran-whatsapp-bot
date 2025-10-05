@@ -8,7 +8,7 @@
 
 *Núcleo del bot: [udmilla-whatsapp-bot](https://github.com/Lautauro/udmilla-whatsapp-bot).*
 
-## Guia
+## Guía
 * [Identificar parada](#identificar-parada)
 * [Lista de comandos](#lista-de-comandos)
 * [Demostración](#demostración)
@@ -117,7 +117,7 @@ El bot utiliza una versión local de la base de datos de Mendotran ubicada en **
 npm run refresh
 ```
 
-Esto sobreescribirá a **mendotran-buses.json** y **mendotran-stops.json**. Los archivos viejos serán conservados bajo el nombre de **mendotran-buses.json.old** y **mendotran-stops.json.old** respectivamente.
+Esto sobrescribirá a **mendotran-buses.json** y **mendotran-stops.json**. Los archivos viejos serán conservados bajo el nombre de **mendotran-buses.json.old** y **mendotran-stops.json.old** respectivamente.
 
 > [!NOTE]
 > En mi experiencia el número de paradas de colectivos detectadas por la regeneración de la base de datos varía según si se ejecuta un fin de semana o no. No estoy seguro del porqué de esto pero es necesario que lo mencione.
