@@ -4,23 +4,27 @@
 <img src="./docs/WSP-plus-Mendotran.png" alt="Banner del proyecto">
 </div>
 
-**Mendotran-whatsapp-bot** es un bot para WhatsApp que permite a los usuarios consultar los horarios de colectivos de la provincia de Mendoza de manera rápida y sencilla. Valiéndose del servicio [Mendotran](https://mendotran.mendoza.gov.ar/), el bot responde a comandos específicos para proporcionar información sobre los horarios de paradas y líneas de colectivos específicas, así como también sobre el metrotranvía. 
+**Mendotran-whatsapp-bot** es un bot para WhatsApp que permite a los usuarios consultar los horarios de colectivos de la provincia de Mendoza de manera rápida y sencilla. Valiéndose del servicio [Mendotran](https://mendotran.mendoza.gov.ar/) y la librería [whatsapp-web.js](https://github.com/pedroslopez/whatsapp-web.js), el bot responde a comandos específicos para proporcionar información sobre los horarios de paradas y líneas de colectivos específicas, así como también sobre el metrotranvía. 
 
-<div align="center">
-<img src="./docs/ejemplo-parada.jpg" alt="Donde localizar el número de parada">
-</div>
-
-*Fuente de la fotografía: ["MendoTran: comenzaron a instalar la señalética en algunas paradas" - Diario El Sol Mendoza](https://www.elsol.com.ar/el-sol/mendotran-comenzaron-a-instalar-la-senaletica-en-algunas-paradas/)*
+*Núcleo del bot: [udmilla-whatsapp-bot](https://github.com/Lautauro/udmilla-whatsapp-bot).*
 
 ## Guia
+* [Identificar parada](#identificar-parada)
 * [Lista de comandos](#lista-de-comandos)
 * [Demostración](#demostración)
 * [Instalación](#instalación)
 * [¿Cómo funciona?](#cómo-funciona)
 * [Parada cercana a tu ubicación](#parada-cercana-a-tu-ubicación)
 * [Pros y contras](#pros-y-contras)
+* [Descargo de responsabilidad](#descargo-de-responsabilidad)
 
-*Núcleo del bot: [udmilla-whatsapp-bot](https://github.com/Lautauro/udmilla-whatsapp-bot). Librería: [whatsapp-web.js](https://github.com/pedroslopez/whatsapp-web.js)*
+## Identificar parada
+
+<div align="center">
+<img src="./docs/ejemplo-parada.jpg" alt="Donde localizar el número de parada">
+</div>
+
+*Fuente de la fotografía: ["MendoTran: comenzaron a instalar la señalética en algunas paradas" - Diario El Sol Mendoza](https://www.elsol.com.ar/el-sol/mendotran-comenzaron-a-instalar-la-senaletica-en-algunas-paradas/)*
 
 ## Lista de comandos
 
@@ -29,11 +33,12 @@
 |        **❓<br>Ayuda<br>Help<br>?**         | Ayuda *[Comando]*                  |                        Recibir información acerca del uso de un comando.                        | Ayuda **Micro**          |
 |            **🚍<br>Micro<br>M**             | Micro *[Línea]* *[Nº de parada]*   |                 Obtener los horarios de **UN** colectivo en determinada parada.                 | Micro **120** **M14408** |
 |            **🚏<br>Parada<br>P**            | Parada *[Nº de parada]*            |                   Obtener **TODOS** los horarios de una parada de colectivos.                   | Parada **M5707**         |
-|              **📍<br>Paradas**              | **> [Citar ubicación]**<br>Paradas | **Actualmente deshabilitado desde la versión 1.1**. Lista las paradas cercanas a una ubicación. | Paradas                  |
+|              **📍<br>Paradas**              | **> [Citar ubicación]**<br>Paradas | **ACTUALMENTE DESHABILITADO DESDE LA VERSIÓN 1.1**. Lista las paradas cercanas a una ubicación. | Paradas                  |
 | **🚊<br>Estación<br>Metro<br>Metrotranvía** | Estacion *[Nombre de la estación]* |                      Obtener los horarios de una estación de metrotranvía.                      | Estacion **Godoy**       |
-
+<!---
 > [!NOTE]
 > Existe la alternativa de localizar una parada por cercanía a una ubicación. Tan solo basta con enviar primero la ubicación, citarla (es decir darle a "responder" al mensaje) y utilizar alguno de estos comandos: parada, micro ó paradas. [Vea el ejemplo](#parada-cercana-a-tu-ubicación).
+--->
 
 ## Demostración
 
@@ -96,7 +101,7 @@ npm run dev
 > [!NOTE]
 > Puede también usar ```npm build``` para compilar el proyecto y luego ejecutarlo con ```npm start```. 
 
-La primera vez que inicie el servidor tendrá que escanear un QR para sincronizar la cuenta de WhatsApp que utilizará el bot. Es recomendable usar un teléfono celular específico para este uso, ya que que el bot utiliza la librería [whatsapp-web.js](https://github.com/pedroslopez/whatsapp-web.js) para funcionar y esta NO es soportada oficialmente por Meta. Esto quiere decir que, a pesar de que en mi experiencia no ha sucedido, la cuenta puede ser baneada si Meta considera que incumple alguna de sus normas. 
+La primera vez que inicie el servidor tendrá que escanear un QR para sincronizar la cuenta de WhatsApp que utilizará el bot. Es recomendable usar un número de teléfono celular específico para este uso, ya que que el bot utiliza la librería [whatsapp-web.js](https://github.com/pedroslopez/whatsapp-web.js) para funcionar y esta NO es soportada oficialmente por Meta. Esto quiere decir que, a pesar de que en mi experiencia no ha sucedido, **la cuenta puede ser baneada si Meta considera que incumple alguna de sus normas**. 
 
 ## ¿Cómo funciona?
 
@@ -106,13 +111,13 @@ La primera vez que inicie el servidor tendrá que escanear un QR para sincroniza
 
 *Fuentes: [smartphone.svg](https://commons.wikimedia.org/wiki/File:Smartphone-.svg) [whatsapp-icon.svg](https://commons.wikimedia.org/wiki/File:2062095_application_chat_communication_logo_whatsapp_icon.svg) [server.svg](https://commons.wikimedia.org/wiki/File:Server2_by_mimooh.svg) [Isotipo de Mendotran](https://designacomunicacion.com/wp-content/uploads/2025/05/manual-corporativo-mendotran.pdf)*
 
-El bot utiliza una base datos local para funcionar más rápidamente ubicada en **"./json/mendotran-data.json"**. Si por cualquier motivo necesita regenerar este archivo, bastará con iniciar el bot de la siguiente manera:
+El bot utiliza una versión local de la base de datos de Mendotran ubicada en **.json/**, en especial hablamos de los archivos **mendotran-buses.json** y **mendotran-stops.json**. Esto es especialmente útil para reducir la cantidad de peticiones que se hacen al servidor de Mendotran. Si por cualquier motivo necesita regenerar este archivo, bastará con iniciar el bot de la siguiente manera:
 
 ```bash
 npm run refresh
 ```
 
-Esto sobreescribirá a **"mendotran-data.json"**, el archivo viejo será conservado bajo el nombre de **"mendotran-data.json.old"**.
+Esto sobreescribirá a **mendotran-buses.json** y **mendotran-stops.json**. Los archivos viejos serán conservados bajo el nombre de **mendotran-buses.json.old** y **mendotran-stops.json.old** respectivamente.
 
 > [!NOTE]
 > En mi experiencia el número de paradas de colectivos detectadas por la regeneración de la base de datos varía según si se ejecuta un fin de semana o no. No estoy seguro del porqué de esto pero es necesario que lo mencione.
@@ -192,3 +197,8 @@ Si se desconoce el número de parada, enviando una ubicación al bot y respondie
 |Puede ser más rápido que usar la aplicación oficial, esto dependerá de la velocidad del servidor y de la experiencia previa del usuario con el uso de bots.|Requiere más o menos tiempo habituarse a la lógica de los comandos. Habrá personas que prefieran el uso de una interfaz gráfica de usuario ([GUI](https://en.wikipedia.org/wiki/Graphical_user_interface)) antes que una interfaz de texto ([TUI](https://en.wikipedia.org/wiki/Text-based_user_interface)).|
 |Si la privacidad le concierne, ésta forma de usar el servicio debería ser más privada, ya que el usuario no interactúa directamente con Mendotran sino el servidor. Mendotran afirma en su [Play Store](https://play.google.com/store/apps/details?id=com.wara.mendotran&hl=es_AR) que no recolecta datos del usuario, sin embargo se contradice en las [políticas de privacidad](https://mendotran.mendoza.gov.ar/politica) de su sitio web.|Si la privacidad le concierne probablemente no deba utilizar WhatsApp.|
 |Más espacio libre en su dispositivo móvil al no tener instalada la aplicación.|Necesita saber el número de la parada de colectivos, en el caso contrario puede pedirle al bot que [busque la parada más cercana a su ubicación actual](#parada-cercana-a-tu-ubicación). Esto último hace que pierda sentido el punto de usar menos datos, ya que Google Maps haría uso de los mismos.|
+
+## Descargo de responsabilidad
+Este proyecto no está afiliado, asociado, autorizado, respaldado ni relacionado de ninguna manera oficialmente con WhatsApp ni con ninguna de sus subsidiarias o afiliadas. El sitio web oficial de WhatsApp se encuentra en [whatsapp.com](https://whatsapp.com/). "WhatsApp", así como los nombres, marcas, emblemas e imágenes relacionados, son marcas registradas de sus respectivos propietarios. Además, no se garantiza que no se le bloquee por utilizar este método. WhatsApp no permite bots ni clientes no oficiales en su plataforma, por lo que no debe considerarse totalmente seguro.
+
+*Descargo adaptado del [descargo de responsabilidad de whatsapp-web.js](https://github.com/pedroslopez/whatsapp-web.js/?tab=readme-ov-file#disclaimer).*
