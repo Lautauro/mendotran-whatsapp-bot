@@ -1,7 +1,7 @@
 <h1 align="center">mendotran-whatsapp-bot</h1>
 
 <div align="center">
-<img src="./docs/WSP-plus-Mendotran.png" alt="Banner del proyecto">
+<img src="./docs/WSP-plus-Mendotran.svg" alt="Banner del proyecto">
 </div>
 
 **Mendotran-whatsapp-bot** es un bot para WhatsApp que permite a los usuarios consultar los horarios de colectivos de la provincia de Mendoza de manera rápida y sencilla. Valiéndose del servicio [Mendotran](https://mendotran.mendoza.gov.ar/), el bot responde a comandos específicos para proporcionar información sobre los horarios de paradas y líneas de colectivos específicas, así como también sobre el metrotranvía. 
@@ -24,13 +24,13 @@
 
 ## Lista de comandos
 
-|Alias|Sintaxis|Función|Ejemplo|
-|:---:|:---|:---:|:---|
-|**❓<br>Ayuda<br>Help<br>?**|Ayuda *[Comando]*|Recibir información acerca del uso de un comando.|Ayuda **Micro**|
-|**🚍<br>Micro<br>M**|Micro *[Línea]* *[Nº de parada]*|Obtener los horarios de **UN** colectivo en determinada parada.|Micro **120** **M14408**|
-|**🚏<br>Parada<br>P**|Parada *[Nº de parada]*|Obtener **TODOS** los horarios de una parada de colectivos.|Parada **M5707**|
-|**📍<br>Paradas**|**> [Citar ubicación]**<br>Paradas|Lista las paradas cercanas a una ubicación.|Paradas|
-|**🚊<br>Estación<br>Metro<br>Metrotranvía**|Estacion *[Nombre de la estación]*|Obtener los horarios de una estación de metrotranvía.|Estacion **Godoy**|
+|                    Alias                    | Sintaxis                           |                                             Función                                             | Ejemplo                  |
+|:-------------------------------------------:|------------------------------------|:-----------------------------------------------------------------------------------------------:|--------------------------|
+|        **❓<br>Ayuda<br>Help<br>?**         | Ayuda *[Comando]*                  |                        Recibir información acerca del uso de un comando.                        | Ayuda **Micro**          |
+|            **🚍<br>Micro<br>M**             | Micro *[Línea]* *[Nº de parada]*   |                 Obtener los horarios de **UN** colectivo en determinada parada.                 | Micro **120** **M14408** |
+|            **🚏<br>Parada<br>P**            | Parada *[Nº de parada]*            |                   Obtener **TODOS** los horarios de una parada de colectivos.                   | Parada **M5707**         |
+|              **📍<br>Paradas**              | **> [Citar ubicación]**<br>Paradas | **Actualmente deshabilitado desde la versión 1.1**. Lista las paradas cercanas a una ubicación. | Paradas                  |
+| **🚊<br>Estación<br>Metro<br>Metrotranvía** | Estacion *[Nombre de la estación]* |                      Obtener los horarios de una estación de metrotranvía.                      | Estacion **Godoy**       |
 
 > [!NOTE]
 > Existe la alternativa de localizar una parada por cercanía a una ubicación. Tan solo basta con enviar primero la ubicación, citarla (es decir darle a "responder" al mensaje) y utilizar alguno de estos comandos: parada, micro ó paradas. [Vea el ejemplo](#parada-cercana-a-tu-ubicación).
@@ -101,10 +101,10 @@ La primera vez que inicie el servidor tendrá que escanear un QR para sincroniza
 ## ¿Cómo funciona?
 
 <div align="center">
-<img src="./docs/mendotran-gráfico.png" alt="Gráfica del funcionamiento del bot">
+<img src="./docs/mendotran-gráfico.svg" alt="Gráfica del funcionamiento del bot">
 </div>
 
-*Fuentes: [smartphone.svg](https://commons.wikimedia.org/wiki/File:Smartphone-.svg) [whatsapp-icon.svg](https://commons.wikimedia.org/wiki/File:2062095_application_chat_communication_logo_whatsapp_icon.svg) [server.svg](https://commons.wikimedia.org/wiki/File:Server2_by_mimooh.svg)*
+*Fuentes: [smartphone.svg](https://commons.wikimedia.org/wiki/File:Smartphone-.svg) [whatsapp-icon.svg](https://commons.wikimedia.org/wiki/File:2062095_application_chat_communication_logo_whatsapp_icon.svg) [server.svg](https://commons.wikimedia.org/wiki/File:Server2_by_mimooh.svg) [Isotipo de Mendotran](https://designacomunicacion.com/wp-content/uploads/2025/05/manual-corporativo-mendotran.pdf)*
 
 El bot utiliza una base datos local para funcionar más rápidamente ubicada en **"./json/mendotran-data.json"**. Si por cualquier motivo necesita regenerar este archivo, bastará con iniciar el bot de la siguiente manera:
 
