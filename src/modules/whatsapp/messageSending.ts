@@ -37,13 +37,11 @@ export async function readResponse(response: CommandResponse, message: Message):
         ...response.data.options
     };
     let _return = null;
-    const logString: string = '\n\nresponse = ' +
-                              JSON.stringify({
+    const logString: string = JSON.stringify({
                                   ...response,
                                   type: RESPONSE_TYPE[response.type] ?? response.type,
                                   code: RESPONSE_CODE[response.code] ?? response.code,
-                              }, null, 4) + ';\n' +
-                              `\nmessage.id.remote = "${message.id.remote}";\n`;
+                              }) + `; message.id.remote = "${message.id.remote}"`;
 
     if (response.code === CommandResponseCode.OK) {
         if (response.data.reaction !== undefined) {
@@ -65,16 +63,14 @@ export async function readResponse(response: CommandResponse, message: Message):
             }
         }
         
-        console.log();
-        botLog('OK RESPONSE', logString);
+        botLog('OK RESPONSE:', logString);
     } else {
         await sendReaction(response.data.reaction ?? '😵', message);
         if (response.data.content && typeof response.data.content === 'string') {
             _return = await sendMessage(`⚠️ *Ha ocurrido un error* ⚠️\n\n${response.data.content}`, message.id, msgOptions);
         }
 
-        console.log();
-        botLogError('ERROR RESPONSE', logString);
+        botLogError('ERROR RESPONSE:', logString);
     }
 
     if (_return) { return _return; }
