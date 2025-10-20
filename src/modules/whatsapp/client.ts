@@ -50,11 +50,11 @@ wwebClient.on('qr', (qr: string) => {
 });
 
 wwebClient.on('authenticated', () => {
-    botLog('Autenticado\n');
+    botLog('Autenticado.');
 });
 
 wwebClient.on('auth_failure', (msg) => {
-    botLogError('Fallo de autenticación\n', msg);
+    botLogError('Fallo de autenticación.', msg);
 });
 
 wwebClient.on('disconnected', (reason) => {
@@ -105,7 +105,7 @@ wwebClient.on('ready', () => {
     } else { return; }
 
     console.clear();
-    botLog('El cliente ha iniciado.\n');
+    botLog('El cliente ha iniciado.');
 
     const startTime = Date.now();
     const commandPath: string = '../commands';
@@ -113,7 +113,7 @@ wwebClient.on('ready', () => {
     require(`${commandPath}/commandsList.js`);
     botLogOk("Comandos cargados.")
 
-    if (!whatsappSettings.showMessagesInTheTerminal) { botLog('Mensajes ocultos.\n'); }
+    if (!whatsappSettings.showMessagesInTheTerminal) { botLog('Mensajes ocultos.'); }
 
     // Hot-Swap
     if (commandsSettings.hotSwappingEnabled) {

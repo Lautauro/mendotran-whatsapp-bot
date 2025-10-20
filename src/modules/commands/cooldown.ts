@@ -15,14 +15,12 @@ setInterval(() => {
     const now = Date.now();
     for (let [user, timestampList] of MESSAGES_HISTORY) {
         if (now - timestampList[timestampList.length - 1] > commandsSettings.initialCoolDown * COOLDOWN_MULTIPLIER[COOLDOWN_MULTIPLIER.length - 1]) {
-            if (cleared === false) { console.log(); }
             cleared = true;
             MESSAGES_HISTORY.delete(user);
             botLog(user, '=>', timestampList);
         }
     }
     if (cleared === true) {
-        console.log();
         botLog('MESSAGES_HISTORY: Command timestamp history cleared.');
     } else {
         botLog('MESSAGES_HISTORY: Nothing to clean.');
