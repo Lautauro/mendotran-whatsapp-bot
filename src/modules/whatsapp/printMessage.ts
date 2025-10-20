@@ -1,15 +1,11 @@
 import { MessageTypes, Message } from 'whatsapp-web.js';
 import { getTimeString } from '../../utils/getTimeString.js';
+import { botLogNeutral } from '../../utils/botLog';
 import { whatsappSettings } from "../../index.js";
 
 // Functions
 export async function printMessage(message: Message, from: string, edited?: boolean): Promise<void> {
     let terminalText: string = '';
-
-    // Timestamp: Time the message was sent
-    if (whatsappSettings.showTimestamp === true) {
-        terminalText += `[${getTimeString(message.timestamp * 1000, true, true, true)}] `;
-    }
 
     // Show contact name if it is booked
     let userName: string = 'DESCONOCIDO';
@@ -90,11 +86,11 @@ export async function printMessage(message: Message, from: string, edited?: bool
     // Setting: Show phone number
     if (whatsappSettings.showPhoneNumber === true) { terminalText += `${from}`; }
     // User name
-    terminalText += `| <${userName}> `;
+    terminalText += ` <${userName}>: `;
     // Media
     if (messageMedia) { terminalText += messageMedia; }
     // Edited
     if (edited) { terminalText += '[✍️ EDITADO ✍️] '; }
 
-    console.log(`${terminalText}${message.body}`);
+    botLogNeutral(`${terminalText}${message.body}`);
 }

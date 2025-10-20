@@ -353,7 +353,7 @@ function commandLog(commandName: string, commandArgs: any[], message: Message): 
         from = message.rawData.notifyName;
     }
     
-    botLog(`Executing command:"${commandName}"; from:`, from, `; args:`, commandArgs);
+    botLog(from ,`executing command: ${commandName} ${commandArgs.join(" ")}`);
 }
 
 export function commandExample(command: Command): string | null {

@@ -1,9 +1,10 @@
 import { CommandResponse } from "../../ts/interfaces/commands.js";
 import { CommandResponseCode, CommandResponseType } from "../../ts/enums/commands.js";
 import { Message, MessageContent, MessageId, MessageSendOptions } from "whatsapp-web.js";
-import { botLog, botLogError } from '../../utils/botLog';
+import { botLog, botLogError, botLogOk } from '../../utils/botLog';
 import { commandsSettings } from "../../index.js";
 import { wwebClient } from "./client.js";
+import { whatsappSettings } from "../../index.js";
 
 const RESPONSE_TYPE: string[] = [];
 RESPONSE_TYPE[CommandResponseType.SEND_MESSAGE] = 'SEND_MESSAGE';
@@ -41,7 +42,8 @@ export async function readResponse(response: CommandResponse, message: Message):
                                   ...response,
                                   type: RESPONSE_TYPE[response.type] ?? response.type,
                                   code: RESPONSE_CODE[response.code] ?? response.code,
-                              }) + `; message.id.remote = "${message.id.remote}"`;
+                                }) + `; message.id.remote = ` +
+                                (whatsappSettings.showPhoneNumber === true ? "${message.id.remote}" : "OCULTO" );
 
     if (response.code === CommandResponseCode.OK) {
         if (response.data.reaction !== undefined) {
@@ -63,7 +65,7 @@ export async function readResponse(response: CommandResponse, message: Message):
             }
         }
         
-        botLog('OK RESPONSE:', logString);
+        botLogOk('OK RESPONSE:', logString);
     } else {
         await sendReaction(response.data.reaction ?? '😵', message);
         if (response.data.content && typeof response.data.content === 'string') {
