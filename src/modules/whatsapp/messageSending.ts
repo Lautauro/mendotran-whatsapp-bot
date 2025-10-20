@@ -43,7 +43,7 @@ export async function readResponse(response: CommandResponse, message: Message):
                                   type: RESPONSE_TYPE[response.type] ?? response.type,
                                   code: RESPONSE_CODE[response.code] ?? response.code,
                                 }) + `; message.id.remote = ` +
-                                (whatsappSettings.showPhoneNumber === true ? "${message.id.remote}" : "OCULTO" );
+                                (whatsappSettings.showPhoneNumber === true ? message.id.remote : "OCULTO" );
 
     if (response.code === CommandResponseCode.OK) {
         if (response.data.reaction !== undefined) {
