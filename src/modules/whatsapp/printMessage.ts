@@ -92,5 +92,5 @@ export async function printMessage(message: Message, from: string, edited?: bool
     // Edited
     if (edited) { terminalText += '[✍️ EDITADO ✍️] '; }
 
-    botLogNeutral(`${terminalText}${message.body}`);
+    botLogNeutral(`${terminalText}${message.body.replaceAll('\n', '\\n')}`);
 }
